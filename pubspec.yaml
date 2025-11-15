@@ -33,6 +33,9 @@ dependencies:
   google_mobile_ads: ^6.0.0
   provider: ^6.1.5
   audioplayers: ^6.1.0
+  vibration: ^1.8.4
+  package_info_plus: ^8.0.0
+  intl: ^0.19.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

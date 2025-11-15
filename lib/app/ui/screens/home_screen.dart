@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:tic_tac_toe_3_player/app/logic/game_logic.dart';
 import 'package:tic_tac_toe_3_player/app/logic/game_provider.dart';
 import 'package:tic_tac_toe_3_player/app/logic/settings_provider.dart';
 import 'package:tic_tac_toe_3_player/app/ui/widgets/game_board.dart';
@@ -125,8 +124,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Widget _buildAppBar(BuildContext context, SettingsProvider settingsProvider) {
     final themeType = settingsProvider.currentTheme.toAppThemeType();
-    final glassColor = AppTheme.getGlassColor(themeType);
-    final glassBorderColor = AppTheme.getGlassBorderColor(themeType);
+    final glassColor = theme.AppTheme.getGlassColor(themeType);
+    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
 
     return Container(
       margin: const EdgeInsets.all(16.0),
@@ -428,9 +427,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       constraints: const BoxConstraints(maxHeight: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20.0),
-        color: AppTheme.getGlassColor(settingsProvider.currentTheme.toAppThemeType()),
+        color: theme.AppTheme.getGlassColor(settingsProvider.currentTheme.toAppThemeType()),
         border: Border.all(
-          color: AppTheme.getGlassBorderColor(settingsProvider.currentTheme.toAppThemeType()),
+          color: theme.AppTheme.getGlassBorderColor(settingsProvider.currentTheme.toAppThemeType()),
           width: 1.5,
         ),
       ),

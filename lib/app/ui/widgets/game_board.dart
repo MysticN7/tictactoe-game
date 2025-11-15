@@ -98,7 +98,7 @@ class _AnimatedTile extends StatefulWidget {
   final bool isWinning;
   final String playerIcon;
   final String playerName;
-  final AppThemeType themeType;
+  final theme.AppThemeType themeType;
 
   const _AnimatedTile({
     required Key key,

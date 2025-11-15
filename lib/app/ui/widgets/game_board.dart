@@ -1,47 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tic_tac_toe_3_player/app/logic/game_logic.dart';
 import 'package:tic_tac_toe_3_player/app/logic/game_provider.dart';
 import 'package:tic_tac_toe_3_player/app/logic/settings_provider.dart';
 import 'package:tic_tac_toe_3_player/app/ui/theme.dart' as theme;
 
-class GameBoard extends StatefulWidget {
+class GameBoard extends StatelessWidget {
   const GameBoard({super.key});
-
-  @override
-  State<GameBoard> createState() => _GameBoardState();
-}
-
-class _GameBoardState extends State<GameBoard> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  Map<int, Animation<double>> _tileAnimations = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _animateTile(int index) {
-    if (!_tileAnimations.containsKey(index)) {
-      _tileAnimations[index] = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _animationController,
-          curve: Curves.elasticOut,
-        ),
-      );
-    }
-    _animationController.forward(from: 0.0);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,8 +24,8 @@ class _GameBoardState extends State<GameBoard> with SingleTickerProviderStateMix
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: game.boardSize,
-              crossAxisSpacing: 12.0,
-              mainAxisSpacing: 12.0,
+              crossAxisSpacing: 10.0,
+              mainAxisSpacing: 10.0,
             ),
             itemCount: game.boardSize * game.boardSize,
             itemBuilder: (context, index) {
@@ -67,23 +33,16 @@ class _GameBoardState extends State<GameBoard> with SingleTickerProviderStateMix
               final col = index % game.boardSize;
               final player = game.board![row][col];
               final isWinningTile = winningPositions.contains(index);
-              final playerIcon = player != null
-                  ? settingsProvider.getPlayerIcon(player)
-                  : '';
-              final playerName = player != null
-                  ? settingsProvider.getPlayerName(player)
-                  : '';
 
-              return _AnimatedTile(
-                key: ValueKey('$row-$col-${player?.toString()}'),
-                onTap: () {
-                  gameProvider.makeMove(row, col);
-                  _animateTile(index);
-                },
+              return _GameTile(
+                key: ValueKey('tile-$row-$col-${player?.toString()}'),
+                row: row,
+                col: col,
+                player: player,
                 isWinning: isWinningTile,
-                playerIcon: playerIcon,
-                playerName: playerName,
+                settingsProvider: settingsProvider,
                 themeType: themeType,
+                onTap: () => gameProvider.makeMove(row, col),
               );
             },
           ),
@@ -93,27 +52,31 @@ class _GameBoardState extends State<GameBoard> with SingleTickerProviderStateMix
   }
 }
 
-class _AnimatedTile extends StatefulWidget {
-  final VoidCallback onTap;
+class _GameTile extends StatefulWidget {
+  final int row;
+  final int col;
+  final Player? player;
   final bool isWinning;
-  final String playerIcon;
-  final String playerName;
+  final SettingsProvider settingsProvider;
   final theme.AppThemeType themeType;
+  final VoidCallback onTap;
 
-  const _AnimatedTile({
-    required Key key,
-    required this.onTap,
+  const _GameTile({
+    required super.key,
+    required this.row,
+    required this.col,
+    required this.player,
     required this.isWinning,
-    required this.playerIcon,
-    required this.playerName,
+    required this.settingsProvider,
     required this.themeType,
-  }) : super(key: key);
+    required this.onTap,
+  });
 
   @override
-  State<_AnimatedTile> createState() => _AnimatedTileState();
+  State<_GameTile> createState() => _GameTileState();
 }
 
-class _AnimatedTileState extends State<_AnimatedTile>
+class _GameTileState extends State<_GameTile>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
@@ -124,9 +87,9 @@ class _AnimatedTileState extends State<_AnimatedTile>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 150),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.92).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
     _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -135,13 +98,16 @@ class _AnimatedTileState extends State<_AnimatedTile>
   }
 
   @override
-  void didUpdateWidget(_AnimatedTile oldWidget) {
+  void didUpdateWidget(_GameTile oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isWinning && !oldWidget.isWinning) {
       _controller.repeat(reverse: true);
     } else if (!widget.isWinning && oldWidget.isWinning) {
       _controller.stop();
       _controller.reset();
+    }
+    if (widget.player != null && oldWidget.player == null) {
+      _controller.forward(from: 0.0);
     }
   }
 
@@ -155,7 +121,12 @@ class _AnimatedTileState extends State<_AnimatedTile>
   Widget build(BuildContext context) {
     final glassColor = theme.AppTheme.getGlassColor(widget.themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(widget.themeType);
-    final neonGlow = theme.AppTheme.getNeonGlowColor(widget.themeType);
+    final playerColor = widget.player != null
+        ? widget.settingsProvider.getPlayerColor(widget.player!)
+        : Colors.transparent;
+    final playerIcon = widget.player != null
+        ? widget.settingsProvider.getPlayerIcon(widget.player!)
+        : '';
     final winningColor = theme.AppTheme.getWinningLineColor(widget.themeType);
 
     return GestureDetector(
@@ -172,61 +143,63 @@ class _AnimatedTileState extends State<_AnimatedTile>
             scale: _scaleAnimation.value,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20.0),
+                borderRadius: BorderRadius.circular(18.0),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
                     glassColor,
-                    glassColor.withOpacity(0.5),
+                    glassColor.withOpacity(0.6),
                   ],
                 ),
                 border: Border.all(
                   color: widget.isWinning
-                      ? winningColor.withOpacity(0.8 + _glowAnimation.value * 0.2)
-                      : glassBorderColor,
-                  width: widget.isWinning ? 3.0 : 1.5,
+                      ? winningColor.withOpacity(0.9 + _glowAnimation.value * 0.1)
+                      : widget.player != null
+                          ? playerColor.withOpacity(0.4)
+                          : glassBorderColor,
+                  width: widget.isWinning ? 3.0 : 2.0,
                 ),
                 boxShadow: [
                   if (widget.isWinning)
                     BoxShadow(
-                      color: winningColor.withOpacity(0.6 + _glowAnimation.value * 0.4),
-                      blurRadius: 20.0,
-                      spreadRadius: 2.0,
+                      color: winningColor.withOpacity(0.7 + _glowAnimation.value * 0.3),
+                      blurRadius: 25.0,
+                      spreadRadius: 3.0,
                     )
-                  else if (widget.playerIcon.isNotEmpty)
+                  else if (widget.player != null)
                     BoxShadow(
-                      color: neonGlow.withOpacity(0.3),
-                      blurRadius: 10.0,
+                      color: playerColor.withOpacity(0.3),
+                      blurRadius: 12.0,
                       spreadRadius: 1.0,
                     ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 5.0,
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 8.0,
                     spreadRadius: 0.5,
                   ),
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20.0),
+                borderRadius: BorderRadius.circular(18.0),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                  filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
                   child: Center(
-                    child: widget.playerIcon.isNotEmpty
+                    child: playerIcon.isNotEmpty
                         ? Text(
-                            widget.playerIcon,
+                            playerIcon,
                             style: TextStyle(
-                              fontSize: widget.playerIcon.length == 1 ? 48.0 : 36.0,
+                              fontSize: playerIcon.length == 1 ? 42.0 : 32.0,
                               fontWeight: FontWeight.bold,
                               color: widget.isWinning
                                   ? winningColor
-                                  : Colors.white,
+                                  : playerColor,
                               shadows: [
                                 Shadow(
                                   color: widget.isWinning
-                                      ? winningColor.withOpacity(0.8)
-                                      : neonGlow.withOpacity(0.5),
-                                  blurRadius: 10.0,
+                                      ? winningColor.withOpacity(0.9)
+                                      : playerColor.withOpacity(0.6),
+                                  blurRadius: 12.0,
                                 ),
                               ],
                             ),

@@ -47,7 +47,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   void setBoardSize(int size) {
-    if (size >= 3 && size <= 10) {
+    if (size >= 3 && size <= 5) {
       _boardSize = size;
       notifyListeners();
     }
@@ -110,5 +110,16 @@ class SettingsProvider extends ChangeNotifier {
       orElse: () => PlayerConfig(player: player, name: 'Player', icon: '?'),
     );
     return config.icon;
+  }
+
+  Color getPlayerColor(Player player) {
+    switch (player) {
+      case Player.x:
+        return const Color(0xFFFF1744); // Red
+      case Player.o:
+        return const Color(0xFF2196F3); // Blue
+      case Player.triangle:
+        return const Color(0xFFFFEB3B); // Yellow
+    }
   }
 }

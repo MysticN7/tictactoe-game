@@ -32,6 +32,11 @@ class GameProvider extends ChangeNotifier {
 
   void setSettingsProvider(SettingsProvider settingsProvider) {
     _settingsProvider = settingsProvider;
+    _settingsProvider?.addListener(_onSettingsChanged);
+    _updateGameFromSettings();
+  }
+
+  void _onSettingsChanged() {
     _updateGameFromSettings();
   }
 

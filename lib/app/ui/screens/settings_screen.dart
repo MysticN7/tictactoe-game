@@ -37,7 +37,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final themeType = settingsProvider.currentTheme.toAppThemeType();
     final gradientColors = theme.AppTheme.getGradientColors(themeType);
 
-        return Scaffold(
+    return Scaffold(
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -56,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Column(
                     children: [
                       AppBar(
-                        title: const Text('Settings'),
+        title: const Text('Settings'),
                         backgroundColor: Colors.transparent,
                         elevation: 0,
                       ),
@@ -91,14 +91,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               'Audio & Haptics',
                               [
-                                _buildSwitchTile(
+                                buildSwitchTile(
                                   context,
                                   'Sound',
                                   settingsProvider.isSoundEnabled,
                                   () => settingsProvider.toggleSound(),
                                   Icons.volume_up,
                                 ),
-                                _buildSwitchTile(
+                                buildSwitchTile(
                                   context,
                                   'Vibration',
                                   settingsProvider.isVibrationEnabled,
@@ -111,7 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               'About',
                               [
-                                _buildInfoTile(
+                                buildInfoTile(
                                   context,
                                   'App Version',
                                   _appVersion,
@@ -217,8 +217,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Slider(
             value: settingsProvider.boardSize.toDouble(),
             min: 3,
-            max: 10,
-            divisions: 7,
+            max: 5,
+            divisions: 2,
             label: '${settingsProvider.boardSize}x${settingsProvider.boardSize}',
             onChanged: (value) {
               settingsProvider.setBoardSize(value.toInt());
@@ -266,38 +266,112 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildPlayerModeSelector(BuildContext context, SettingsProvider settingsProvider) {
+    final isTwoPlayer = settingsProvider.activePlayers.length == 2;
+    final isThreePlayer = settingsProvider.activePlayers.length == 3;
+    
     return _buildGlassCard(
       context,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text('Player Mode'),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Player Mode',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
           ),
-          RadioListTile<List<Player>>(
-            title: const Text('2 Players (X, O)'),
-            value: [Player.x, Player.o],
-            groupValue: settingsProvider.activePlayers,
-            onChanged: (value) {
-              if (value != null) {
-                settingsProvider.setActivePlayers(value);
-                Provider.of<GameProvider>(context, listen: false).resetGame();
-              }
-            },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildModeButton(
+                    context,
+                    '2 Players',
+                    'X  O',
+                    isTwoPlayer,
+                    () {
+                      settingsProvider.setActivePlayers([Player.x, Player.o]);
+                      Provider.of<GameProvider>(context, listen: false).resetGame();
+                    },
+                    settingsProvider,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildModeButton(
+                    context,
+                    '3 Players',
+                    'X  O  △',
+                    isThreePlayer,
+                    () {
+                      settingsProvider.setActivePlayers([Player.x, Player.o, Player.triangle]);
+                      Provider.of<GameProvider>(context, listen: false).resetGame();
+                    },
+                    settingsProvider,
+                  ),
+                ),
+              ],
+            ),
           ),
-          RadioListTile<List<Player>>(
-            title: const Text('3 Players (X, O, △)'),
-            value: [Player.x, Player.o, Player.triangle],
-            groupValue: settingsProvider.activePlayers,
-            onChanged: (value) {
-              if (value != null) {
-                settingsProvider.setActivePlayers(value);
-                Provider.of<GameProvider>(context, listen: false).resetGame();
-              }
-            },
-          ),
+          const SizedBox(height: 16),
         ],
+      ),
+    );
+  }
+
+  Widget _buildModeButton(
+    BuildContext context,
+    String title,
+    String icons,
+    bool isSelected,
+    VoidCallback onTap,
+    SettingsProvider settingsProvider,
+  ) {
+    final themeType = settingsProvider.currentTheme.toAppThemeType();
+    final glassColor = theme.AppTheme.getGlassColor(themeType);
+    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16.0),
+          color: isSelected
+              ? glassBorderColor.withOpacity(0.3)
+              : glassColor,
+          border: Border.all(
+            color: isSelected
+                ? glassBorderColor
+                : glassBorderColor.withOpacity(0.5),
+            width: isSelected ? 2.5 : 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              icons,
+              style: TextStyle(
+                fontSize: 24.0,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14.0,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.white : Colors.white70,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -307,6 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SettingsProvider settingsProvider,
   ) {
     return settingsProvider.playerConfigs.map((config) {
+      final playerColor = settingsProvider.getPlayerColor(config.player);
       return Padding(
         padding: const EdgeInsets.only(bottom: 12.0),
         child: _buildGlassCard(
@@ -314,33 +389,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             children: [
               ListTile(
-                title: Text(config.name),
-                subtitle: Text('Icon: ${config.icon}'),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: playerColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: playerColor, width: 2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      config.icon,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: playerColor,
+                      ),
+                    ),
+                  ),
+                ),
+                title: Text(
+                  config.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text('${config.player.toString().split('.').last.toUpperCase()} Player'),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Player Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  controller: TextEditingController(text: config.name),
-                  onSubmitted: (value) {
-                    settingsProvider.updatePlayerName(config.player, value);
+                child: _PlayerNameField(
+                  initialValue: config.name,
+                  label: 'Player Name',
+                  onChanged: (value) {
+                    if (value.isNotEmpty) {
+                      settingsProvider.updatePlayerName(config.player, value);
+                    }
                   },
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Player Icon',
-                    border: OutlineInputBorder(),
-                  ),
-                  controller: TextEditingController(text: config.icon),
+                child: _PlayerIconField(
+                  initialValue: config.icon,
+                  label: 'Player Icon',
                   maxLength: 2,
-                  onSubmitted: (value) {
-                    settingsProvider.updatePlayerIcon(config.player, value);
+                  onChanged: (value) {
+                    if (value.isNotEmpty) {
+                      settingsProvider.updatePlayerIcon(config.player, value);
+                    }
                   },
                 ),
               ),
@@ -350,8 +445,126 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }).toList();
   }
+}
 
-  Widget _buildSwitchTile(
+class _PlayerNameField extends StatefulWidget {
+  final String initialValue;
+  final String label;
+  final ValueChanged<String> onChanged;
+
+  const _PlayerNameField({
+    required this.initialValue,
+    required this.label,
+    required this.onChanged,
+  });
+
+  @override
+  State<_PlayerNameField> createState() => _PlayerNameFieldState();
+}
+
+class _PlayerNameFieldState extends State<_PlayerNameField> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void didUpdateWidget(_PlayerNameField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialValue != oldWidget.initialValue) {
+      _controller.text = widget.initialValue;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.1),
+      ),
+      style: const TextStyle(color: Colors.white),
+      onChanged: widget.onChanged,
+    );
+  }
+}
+
+class _PlayerIconField extends StatefulWidget {
+  final String initialValue;
+  final String label;
+  final int maxLength;
+  final ValueChanged<String> onChanged;
+
+  const _PlayerIconField({
+    required this.initialValue,
+    required this.label,
+    required this.maxLength,
+    required this.onChanged,
+  });
+
+  @override
+  State<_PlayerIconField> createState() => _PlayerIconFieldState();
+}
+
+class _PlayerIconFieldState extends State<_PlayerIconField> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void didUpdateWidget(_PlayerIconField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialValue != oldWidget.initialValue) {
+      _controller.text = widget.initialValue;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.1),
+      ),
+      style: const TextStyle(color: Colors.white, fontSize: 18),
+      maxLength: widget.maxLength,
+      textAlign: TextAlign.center,
+      onChanged: widget.onChanged,
+    );
+  }
+}
+
+extension SettingsScreenHelpers on _SettingsScreenState {
+  Widget buildSwitchTile(
     BuildContext context,
     String title,
     bool value,
@@ -369,7 +582,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildInfoTile(
+  Widget buildInfoTile(
     BuildContext context,
     String title,
     String value,

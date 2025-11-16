@@ -48,7 +48,7 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
             child: Stack(
               children: [
                 BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                  filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
                   child: Container(color: Colors.black.withOpacity(0.2)),
                 ),
                 SafeArea(
@@ -85,7 +85,7 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
             ),
             child: ClipRRect(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
                 child: NavigationBar(
                   selectedIndex: _index,
                   onDestinationSelected: (i) => setState(() => _index = i),
@@ -131,7 +131,7 @@ class _GlassCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20.0),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+          filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
           child: child,
         ),
       ),
@@ -441,12 +441,6 @@ class _AboutPage extends StatelessWidget {
       _GlassCard(
         child: Column(
           children: [
-            const ListTile(
-              leading: Icon(Icons.emoji_events_rounded, color: Colors.amber),
-              title: Text('Tournament Mode', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('3-player competitive mode'),
-            ),
-            const Divider(),
             const ListTile(
               leading: Icon(Icons.grid_on_rounded, color: Colors.blue),
               title: Text('Customizable Board', style: TextStyle(fontWeight: FontWeight.bold)),

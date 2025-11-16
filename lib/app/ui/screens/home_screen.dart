@@ -10,7 +10,6 @@ import 'package:tic_tac_toe_3_player/app/logic/game_logic.dart';
 import 'package:tic_tac_toe_3_player/app/logic/game_provider.dart';
 import 'package:tic_tac_toe_3_player/app/logic/settings_provider.dart';
 import 'package:tic_tac_toe_3_player/app/ui/widgets/game_board.dart';
-import 'package:tic_tac_toe_3_player/app/ui/screens/tournament_screen.dart';
 import 'package:tic_tac_toe_3_player/app/utils/admob_service.dart';
 import 'package:tic_tac_toe_3_player/app/ui/screens/settings_root_screen.dart';
 import 'package:tic_tac_toe_3_player/app/ui/theme.dart' as theme;
@@ -75,14 +74,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         final gradientColors = theme.AppTheme.getGradientColors(themeType);
         final neonGlow = theme.AppTheme.getNeonGlowColor(themeType);
 
-        // Handle confetti on win (only for VS matches, not tournaments)
+        // Handle confetti on win
         if (game.isGameOver && game.winner != null && game.winner != _lastWinner) {
           _lastWinner = game.winner;
           if (settingsProvider.isConfettiEnabled) {
             _particlesController.play();
           }
-          // Only increment scores for VS matches (not tournament matches)
-          // Tournament matches are handled separately in tournament_screen.dart
           try {
             Provider.of<ScoresProvider>(context, listen: false).increment(game.winner!);
           } catch (_) {}
@@ -90,9 +87,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           _lastWinner = null;
         }
 
-        // Animate turn change
-        if (game.currentPlayer != null) {
+        // Animate turn change (only if game is not over)
+        if (game.currentPlayer != null && !game.isGameOver) {
           _turnAnimationController.forward(from: 0.0);
+        } else if (game.isGameOver) {
+          _turnAnimationController.stop();
         }
 
         return Scaffold(
@@ -110,30 +109,33 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 child: Stack(
                   children: [
                     BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                      filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
                       child: Container(color: Colors.black.withOpacity(0.25)),
                     ),
                     SafeArea(
                       child: Column(
                         children: [
                           Expanded(
-                            child: SingleChildScrollView(
-                              child: Column(
-                                children: [
-                                  const SizedBox(height: 10),
-                                  _buildScoreboardBanner(context),
-                                  const SizedBox(height: 10),
-                                  _buildTurnIndicator(context, gameProvider, settingsProvider, neonGlow),
-                                  const SizedBox(height: 16),
-                                  _buildGameStatus(context, gameProvider, settingsProvider),
-                                  const SizedBox(height: 16),
-                                  const GameBoard(),
-                                  const SizedBox(height: 16),
-                                  _buildScoreboard(context),
-                                  const SizedBox(height: 16),
-                                  if (_showHistory) _buildMatchHistory(context, gameProvider, settingsProvider),
-                                  const SizedBox(height: 20),
-                                ],
+                            child: RepaintBoundary(
+                              child: SingleChildScrollView(
+                                physics: const ClampingScrollPhysics(),
+                                child: Column(
+                                  children: [
+                                    const SizedBox(height: 10),
+                                    _buildScoreboardBanner(context),
+                                    const SizedBox(height: 10),
+                                    _buildTurnIndicator(context, gameProvider, settingsProvider, neonGlow),
+                                    const SizedBox(height: 16),
+                                    _buildGameStatus(context, gameProvider, settingsProvider),
+                                    const SizedBox(height: 16),
+                                    const GameBoard(),
+                                    const SizedBox(height: 16),
+                                    _buildScoreboard(context),
+                                    const SizedBox(height: 16),
+                                    if (_showHistory) _buildMatchHistory(context, gameProvider, settingsProvider),
+                                    const SizedBox(height: 20),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -168,8 +170,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildScoreboardBanner(BuildContext context) {
-    return Consumer2<ScoresProvider, SettingsProvider>(
-      builder: (context, scores, settings, _) {
+    return RepaintBoundary(
+      child: Consumer2<ScoresProvider, SettingsProvider>(
+        builder: (context, scores, settings, _) {
         final wins = scores.wins;
         final activePlayers = settings.activePlayers;
         final themeType = settings.currentTheme.toAppThemeType();
@@ -195,15 +198,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.15),
-                blurRadius: 12.0,
-                spreadRadius: 1.0,
+                blurRadius: 8.0,
+                spreadRadius: 0.5,
               ),
             ],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20.0),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+              filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: activePlayers.map((p) {
@@ -282,6 +285,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         );
       },
+      ),
     );
   }
 
@@ -329,7 +333,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             borderRadius: BorderRadius.circular(size / 2),
             clipBehavior: Clip.antiAlias,
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+              filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
               child: Icon(
                 Icons.settings_rounded,
                 color: Colors.white,
@@ -343,6 +347,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildTurnIndicator(
+    BuildContext context,
+    GameProvider gameProvider,
+    SettingsProvider settingsProvider,
+    Color neonGlow,
+  ) {
+    return RepaintBoundary(
+      child: _buildTurnIndicatorContent(context, gameProvider, settingsProvider, neonGlow),
+    );
+  }
+
+  Widget _buildTurnIndicatorContent(
     BuildContext context,
     GameProvider gameProvider,
     SettingsProvider settingsProvider,
@@ -387,18 +402,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 color: playerColor.withOpacity(0.6),
                 width: 2.5,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: playerColor.withOpacity(0.4),
-                  blurRadius: 25.0,
-                  spreadRadius: 2.0,
-                ),
-              ],
+                boxShadow: [
+                  BoxShadow(
+                    color: playerColor.withOpacity(0.4),
+                    blurRadius: 12.0,
+                    spreadRadius: 1.0,
+                  ),
+                ],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(28.0),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -442,6 +457,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     GameProvider gameProvider,
     SettingsProvider settingsProvider,
   ) {
+    return RepaintBoundary(
+      child: _buildGameStatusContent(context, gameProvider, settingsProvider),
+    );
+  }
+
+  Widget _buildGameStatusContent(
+    BuildContext context,
+    GameProvider gameProvider,
+    SettingsProvider settingsProvider,
+  ) {
     final game = gameProvider.gameLogic;
     if (!game.isGameOver) return const SizedBox.shrink();
 
@@ -475,15 +500,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         boxShadow: [
           BoxShadow(
             color: winnerColor.withOpacity(0.5),
-            blurRadius: 30.0,
-            spreadRadius: 3.0,
+            blurRadius: 15.0,
+            spreadRadius: 2.0,
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28.0),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -528,6 +553,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildScoreboard(BuildContext context) {
+    return RepaintBoundary(
+      child: _buildScoreboardContent(context),
+    );
+  }
+
+  Widget _buildScoreboardContent(BuildContext context) {
     return Consumer2<ScoresProvider, SettingsProvider>(
       builder: (context, scores, settings, _) {
         final wins = scores.wins;
@@ -562,6 +593,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildActionButtons(BuildContext context, GameProvider gameProvider) {
+    return RepaintBoundary(
+      child: _buildActionButtonsContent(context, gameProvider),
+    );
+  }
+
+  Widget _buildActionButtonsContent(BuildContext context, GameProvider gameProvider) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
         final themeType = settingsProvider.currentTheme.toAppThemeType();
@@ -588,23 +625,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Icons.refresh_rounded,
                 true,
                 () => gameProvider.resetGame(),
-                glassColor,
-                glassBorderColor,
-              ),
-              _buildGlassButton(
-                context,
-                'Tournament',
-                Icons.emoji_events_rounded,
-                settingsProvider.activePlayers.length == 3,
-                () {
-                  if (settingsProvider.activePlayers.length != 3) {
-                    settingsProvider.setActivePlayers([Player.x, Player.o, Player.triangle]);
-                  }
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TournamentScreen()),
-                  );
-                },
                 glassColor,
                 glassBorderColor,
               ),
@@ -644,15 +664,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.15),
-                blurRadius: 12.0,
-                spreadRadius: 1.0,
+                blurRadius: 8.0,
+                spreadRadius: 0.5,
               ),
             ],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20.0),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -706,7 +726,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24.0),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
             child: const Text(
               'No match history yet',
               textAlign: TextAlign.center,
@@ -731,7 +751,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24.0),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
           child: Column(
             children: [
               Padding(

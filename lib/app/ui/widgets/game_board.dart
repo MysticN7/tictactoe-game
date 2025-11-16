@@ -89,7 +89,7 @@ class _GameTileState extends State<_GameTile>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
@@ -164,18 +164,18 @@ class _GameTileState extends State<_GameTile>
                   if (widget.isWinning)
                     BoxShadow(
                       color: winningColor.withOpacity(0.5 + _glowAnimation.value * 0.2),
-                      blurRadius: 20.0,
-                      spreadRadius: 2.0,
+                      blurRadius: 12.0,
+                      spreadRadius: 1.0,
                     )
                   else if (widget.player != null)
                     BoxShadow(
                       color: playerColor.withOpacity(0.3),
-                      blurRadius: 12.0,
-                      spreadRadius: 1.0,
+                      blurRadius: 8.0,
+                      spreadRadius: 0.5,
                     ),
                   BoxShadow(
                     color: Colors.black.withOpacity(0.15),
-                    blurRadius: 8.0,
+                    blurRadius: 6.0,
                     spreadRadius: 0.5,
                   ),
                 ],
@@ -183,7 +183,7 @@ class _GameTileState extends State<_GameTile>
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(18.0),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+                  filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
                   child: Center(
                     child: playerIcon.isNotEmpty
                         ? Text(
@@ -199,7 +199,7 @@ class _GameTileState extends State<_GameTile>
                                   color: widget.isWinning
                                       ? winningColor.withOpacity(0.9)
                                       : playerColor.withOpacity(0.6),
-                                  blurRadius: 12.0,
+                                  blurRadius: 8.0,
                                 ),
                               ],
                             ),

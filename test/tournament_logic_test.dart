@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tictactoe/app/logic/tournament_logic.dart';
+import 'package:tic_tac_toe_3_player/app/logic/tournament_logic.dart';
 
 void main() {
   test('Tournament progresses 3->2->final', () {

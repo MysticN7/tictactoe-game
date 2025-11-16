@@ -89,12 +89,12 @@ class _GameTileState extends State<_GameTile>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 150),
+      duration: const Duration(milliseconds: 800),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.92).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
-    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _glowAnimation = Tween<double>(begin: 0.3, end: 0.8).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
     if (widget.isWinning) {
@@ -159,18 +159,18 @@ class _GameTileState extends State<_GameTile>
                 ),
                 border: Border.all(
                   color: widget.isWinning
-                      ? winningColor.withOpacity(0.9 + _glowAnimation.value * 0.1)
+                      ? winningColor.withOpacity(0.7 + _glowAnimation.value * 0.2)
                       : widget.player != null
                           ? playerColor.withOpacity(0.4)
                           : glassBorderColor,
-                  width: widget.isWinning ? 3.0 : 2.0,
+                  width: widget.isWinning ? 2.5 : 2.0,
                 ),
                 boxShadow: [
                   if (widget.isWinning)
                     BoxShadow(
-                      color: winningColor.withOpacity(0.7 + _glowAnimation.value * 0.3),
-                      blurRadius: 25.0,
-                      spreadRadius: 3.0,
+                      color: winningColor.withOpacity(0.5 + _glowAnimation.value * 0.2),
+                      blurRadius: 20.0,
+                      spreadRadius: 2.0,
                     )
                   else if (widget.player != null)
                     BoxShadow(

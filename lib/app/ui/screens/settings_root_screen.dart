@@ -24,6 +24,19 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
         final gradientColors = theme.AppTheme.getGradientColors(themeType);
 
         return Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: const Text(
+              'Settings',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(

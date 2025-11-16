@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tictactoe/app/logic/scores_provider.dart';
-import 'package:tictactoe/app/logic/game_logic.dart';
+import 'package:tic_tac_toe_3_player/app/logic/scores_provider.dart';
+import 'package:tic_tac_toe_3_player/app/logic/game_logic.dart';
 
 void main() {
   test('Scores increment and reset work', () async {

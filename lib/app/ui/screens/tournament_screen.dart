@@ -16,7 +16,10 @@ class TournamentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => GameProvider()),
+        ChangeNotifierProxyProvider<SettingsProvider, GameProvider>(
+          create: (_) => GameProvider(),
+          update: (_, settings, game) => game!..setSettingsProvider(settings),
+        ),
         ChangeNotifierProvider(create: (_) => TournamentProvider()),
       ],
       child: Consumer2<TournamentProvider, SettingsProvider>(
@@ -51,6 +54,10 @@ class TournamentScreen extends StatelessWidget {
                     child: t == null
                         ? _TournamentStartScreen(
                             onStart: () {
+                              // Ensure 3 players are active
+                              if (settings.activePlayers.length != 3) {
+                                settings.setActivePlayers([Player.x, Player.o, Player.triangle]);
+                              }
                               final players = settings.playerConfigs
                                   .where((c) => settings.activePlayers.contains(c.player))
                                   .map((c) => c.name)
@@ -58,6 +65,9 @@ class TournamentScreen extends StatelessWidget {
                                   .toList();
                               if (players.length == 3) {
                                 tProvider.startTournament(players);
+                                // Initialize game with 3 players
+                                final gameProvider = context.read<GameProvider>();
+                                gameProvider.resetGame();
                               }
                             },
                           )
@@ -71,7 +81,33 @@ class TournamentScreen extends StatelessWidget {
               elevation: 0,
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (t != null && !t.isOver) {
+                    // Show confirmation dialog if tournament is in progress
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Exit Tournament?'),
+                        content: const Text('Are you sure you want to exit? Your progress will be lost.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context); // Close dialog
+                              Navigator.pop(context); // Exit tournament
+                            },
+                            child: const Text('Exit'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
               ),
               title: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -265,10 +301,21 @@ class _TournamentGameScreen extends StatelessWidget {
     final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
     
-    // Ensure 3 players are active
-    if (settings.activePlayers.length != 3) {
-      settings.setActivePlayers([Player.x, Player.o, Player.triangle]);
-      gameProvider.resetGame();
+    // Ensure correct players are active for current round
+    final currentPlayers = t.playersForCurrentGame;
+    if (currentPlayers.isNotEmpty) {
+      final currentPlayerEnums = currentPlayers.map((name) {
+        return settings.playerConfigs.firstWhere(
+          (c) => c.name == name,
+          orElse: () => settings.playerConfigs.first,
+        ).player;
+      }).toList();
+      
+      if (settings.activePlayers.length != currentPlayerEnums.length ||
+          !settings.activePlayers.every((p) => currentPlayerEnums.contains(p))) {
+        settings.setActivePlayers(currentPlayerEnums);
+        gameProvider.resetGame();
+      }
     }
     
     return SingleChildScrollView(

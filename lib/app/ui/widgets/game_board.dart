@@ -17,7 +17,8 @@ class GameBoard extends StatelessWidget {
         final themeType = settingsProvider.currentTheme.toAppThemeType();
         final winningPositions = game.winningLine?.positions ?? <int>[];
 
-        return Container(
+        return RepaintBoundary(
+          child: Container(
           padding: const EdgeInsets.all(16.0),
           child: GridView.builder(
             shrinkWrap: true,
@@ -35,7 +36,7 @@ class GameBoard extends StatelessWidget {
               final isWinningTile = winningPositions.contains(index);
 
               return _GameTile(
-                key: ValueKey('tile-$row-$col-${player?.toString()}'),
+                key: ValueKey('tile-$row-$col'),
                 row: row,
                 col: col,
                 player: player,
@@ -46,6 +47,7 @@ class GameBoard extends StatelessWidget {
               );
             },
           ),
+        ),
         );
       },
     );
@@ -95,6 +97,9 @@ class _GameTileState extends State<_GameTile>
     _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
+    if (widget.isWinning) {
+      _controller.repeat(reverse: true);
+    }
   }
 
   @override
@@ -183,13 +188,13 @@ class _GameTileState extends State<_GameTile>
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(18.0),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                  filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
                   child: Center(
                     child: playerIcon.isNotEmpty
                         ? Text(
                             playerIcon,
                             style: TextStyle(
-                              fontSize: playerIcon.length == 1 ? 42.0 : 32.0,
+                              fontSize: _markerFontSize(widget.settingsProvider.boardSize, playerIcon),
                               fontWeight: FontWeight.bold,
                               color: widget.isWinning
                                   ? winningColor
@@ -213,5 +218,18 @@ class _GameTileState extends State<_GameTile>
         },
       ),
     );
+  }
+
+  double _markerFontSize(int boardSize, String icon) {
+    final isSingleChar = icon.length == 1;
+    switch (boardSize) {
+      case 3:
+        return isSingleChar ? 64.0 : 52.0;
+      case 4:
+        return isSingleChar ? 52.0 : 44.0;
+      case 5:
+      default:
+        return isSingleChar ? 44.0 : 36.0;
+    }
   }
 }

@@ -18,6 +18,7 @@ class PlayerConfig {
 class SettingsProvider extends ChangeNotifier {
   bool _isSoundEnabled = true;
   bool _isVibrationEnabled = true;
+  bool _isConfettiEnabled = true;
   int _boardSize = 3;
   int _winCondition = 3;
   GameThemeMode _currentTheme = GameThemeMode.liquidGlow;
@@ -30,6 +31,7 @@ class SettingsProvider extends ChangeNotifier {
 
   bool get isSoundEnabled => _isSoundEnabled;
   bool get isVibrationEnabled => _isVibrationEnabled;
+  bool get isConfettiEnabled => _isConfettiEnabled;
   int get boardSize => _boardSize;
   int get winCondition => _winCondition;
   GameThemeMode get currentTheme => _currentTheme;
@@ -43,6 +45,11 @@ class SettingsProvider extends ChangeNotifier {
 
   void toggleVibration() {
     _isVibrationEnabled = !_isVibrationEnabled;
+    notifyListeners();
+  }
+
+  void toggleConfetti() {
+    _isConfettiEnabled = !_isConfettiEnabled;
     notifyListeners();
   }
 

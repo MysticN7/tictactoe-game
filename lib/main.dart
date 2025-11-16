@@ -3,6 +3,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import 'package:tic_tac_toe_3_player/app/logic/game_provider.dart';
 import 'package:tic_tac_toe_3_player/app/logic/settings_provider.dart';
+import 'package:tic_tac_toe_3_player/app/logic/scores_provider.dart';
 import 'package:tic_tac_toe_3_player/app/ui/screens/home_screen.dart';
 import 'package:tic_tac_toe_3_player/app/ui/theme.dart' as theme;
 
@@ -14,6 +15,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => ScoresProvider()..load()),
         ChangeNotifierProxyProvider<SettingsProvider, GameProvider>(
           create: (_) => GameProvider(),
           update: (_, settings, game) => game!..setSettingsProvider(settings),

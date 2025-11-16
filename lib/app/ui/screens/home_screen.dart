@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:tic_tac_toe_3_player/app/logic/scores_provider.dart';
 import 'package:tic_tac_toe_3_player/app/logic/game_logic.dart';
 import 'package:tic_tac_toe_3_player/app/logic/game_provider.dart';
 import 'package:tic_tac_toe_3_player/app/logic/settings_provider.dart';
 import 'package:tic_tac_toe_3_player/app/ui/widgets/game_board.dart';
+import 'package:tic_tac_toe_3_player/app/ui/screens/tournament_screen.dart';
 import 'package:tic_tac_toe_3_player/app/utils/admob_service.dart';
 import 'package:tic_tac_toe_3_player/app/ui/screens/settings_screen.dart';
+import 'package:tic_tac_toe_3_player/app/ui/screens/settings_root_screen.dart';
 import 'package:tic_tac_toe_3_player/app/ui/theme.dart' as theme;
 
 class HomeScreen extends StatefulWidget {
@@ -72,7 +75,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         // Handle confetti on win
         if (game.isGameOver && game.winner != null && game.winner != _lastWinner) {
           _lastWinner = game.winner;
-          _confettiController.play();
+          if (settingsProvider.isConfettiEnabled) {
+            _confettiController.play();
+          }
+          try {
+            // Update persistent scoreboard
+            Provider.of<ScoresProvider>(context, listen: false).increment(game.winner!);
+          } catch (_) {}
         } else if (!game.isGameOver) {
           _lastWinner = null;
         }
@@ -97,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 child: Stack(
                   children: [
                     BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                      filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
                       child: Container(color: Colors.black.withOpacity(0.25)),
                     ),
                     SafeArea(
@@ -114,6 +123,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                   _buildGameStatus(context, gameProvider, settingsProvider),
                                   const SizedBox(height: 16),
                                   const GameBoard(),
+                                  const SizedBox(height: 16),
+                                  _buildScoreboard(context),
                                   const SizedBox(height: 16),
                                   _buildActionButtons(context, gameProvider),
                                   const SizedBox(height: 16),
@@ -134,12 +145,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 alignment: Alignment.topCenter,
                 child: ConfettiWidget(
                   confettiController: _confettiController,
-                  blastDirection: 1.57, // Down
-                  maxBlastForce: 5,
-                  minBlastForce: 2,
-                  emissionFrequency: 0.05,
-                  numberOfParticles: 50,
-                  gravity: 0.1,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  maxBlastForce: 12,
+                  minBlastForce: 6,
+                  emissionFrequency: 0.025,
+                  numberOfParticles: 35,
+                  gravity: 0.75,
                   shouldLoop: false,
                   colors: const [
                     Colors.red,
@@ -185,9 +196,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24.0),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
-          child: AppBar(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                child: AppBar(
             title: const Text(
               'Tic Tac Toe',
               style: TextStyle(
@@ -204,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    MaterialPageRoute(builder: (context) => const SettingsRootScreen()),
                   );
                 },
               ),
@@ -400,6 +411,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
+  Widget _buildScoreboard(BuildContext context) {
+    return Consumer2<ScoresProvider, SettingsProvider>(
+      builder: (context, scores, settings, _) {
+        final wins = scores.wins;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24.0),
+            color: Colors.black.withOpacity(0.15),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: Player.values.map((p) {
+              final name = settings.getPlayerName(p);
+              final color = settings.getPlayerColor(p);
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  const SizedBox(height: 4),
+                  Text('${wins[p] ?? 0}', style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
+                ],
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildActionButtons(BuildContext context, GameProvider gameProvider) {
     return Consumer<SettingsProvider>(
       builder: (context, settingsProvider, child) {
@@ -427,6 +469,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Icons.refresh_rounded,
                 true,
                 () => gameProvider.resetGame(),
+                glassColor,
+                glassBorderColor,
+              ),
+              _buildGlassButton(
+                context,
+                'Tournament',
+                Icons.emoji_events_rounded,
+                true,
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TournamentScreen()),
+                  );
+                },
                 glassColor,
                 glassBorderColor,
               ),

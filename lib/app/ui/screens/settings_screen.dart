@@ -105,6 +105,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   () => settingsProvider.toggleVibration(),
                                   Icons.vibration,
                                 ),
+                                buildSwitchTile(
+                                  context,
+                                  'Confetti',
+                                  settingsProvider.isConfettiEnabled,
+                                  () => settingsProvider.toggleConfetti(),
+                                  Icons.celebration,
+                                ),
                               ],
                             ),
                             _buildSection(

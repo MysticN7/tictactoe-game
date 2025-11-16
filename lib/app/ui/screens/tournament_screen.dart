@@ -664,23 +664,16 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     final winnerColor = settings.getPlayerColor(winner);
     final t = tProvider.tournament!;
     
-    // Determine which players should be active for next round
+    // Determine players for next round based on current round and actual winner
+    final currentRound = t.currentRound;
     List<Player> nextRoundPlayers = [];
-    if (t.currentRound == 1) {
-      // Round 2: remaining 2 players (exclude round 1 winner)
+    if (currentRound == 1) {
+      nextRoundPlayers = settings.activePlayers.where((p) => p != winner).toList();
+    } else if (currentRound == 2) {
       final round1WinnerPlayer = settings.playerConfigs
           .firstWhere((c) => c.name == t.round1Winner, orElse: () => settings.playerConfigs.first)
           .player;
-      nextRoundPlayers = settings.activePlayers.where((p) => p != round1WinnerPlayer).toList();
-    } else if (t.currentRound == 2) {
-      // Round 3 (Final): round 1 winner vs round 2 winner
-      final round1WinnerPlayer = settings.playerConfigs
-          .firstWhere((c) => c.name == t.round1Winner, orElse: () => settings.playerConfigs.first)
-          .player;
-      final round2WinnerPlayer = settings.playerConfigs
-          .firstWhere((c) => c.name == t.round2Winner, orElse: () => settings.playerConfigs.first)
-          .player;
-      nextRoundPlayers = [round1WinnerPlayer, round2WinnerPlayer];
+      nextRoundPlayers = [round1WinnerPlayer, winner];
     }
     
     return Container(
@@ -715,7 +708,6 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
           ElevatedButton(
             onPressed: () {
               tProvider.recordWin(winnerName);
-              // Set up players for next round
               if (nextRoundPlayers.isNotEmpty) {
                 settings.setActivePlayers(nextRoundPlayers);
               }

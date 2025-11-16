@@ -77,11 +77,13 @@ class GameLogic {
     winner = null;
     isGameOver = false;
 
-    // Restore previous player
-    if (moveHistory.isNotEmpty) {
-      currentPlayer = moveHistory.last.player;
-    } else {
+    // Restore current player to the one who made the last move (before it was undone)
+    // This is correct because after undoing, it should be that player's turn again
+    // If no moves remain, reset to first player
+    if (moveHistory.isEmpty) {
       currentPlayer = players[0];
+    } else {
+      currentPlayer = lastMove.player;
     }
 
     return true;

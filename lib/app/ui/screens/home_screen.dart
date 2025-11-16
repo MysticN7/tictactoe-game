@@ -96,7 +96,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         }
 
         return Scaffold(
-          extendBodyBehindAppBar: true,
+          extendBodyBehindAppBar: false,
+          appBar: _buildAppBar(context, settingsProvider),
           body: Stack(
             children: [
               Container(
@@ -116,7 +117,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     SafeArea(
                       child: Column(
                         children: [
-                          _buildAppBar(context, settingsProvider),
                           Expanded(
                             child: SingleChildScrollView(
                               child: Column(
@@ -132,14 +132,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                   const SizedBox(height: 16),
                                   _buildScoreboard(context),
                                   const SizedBox(height: 16),
-                                  _buildActionButtons(context, gameProvider),
-                                  const SizedBox(height: 16),
                                   if (_showHistory) _buildMatchHistory(context, gameProvider, settingsProvider),
                                   const SizedBox(height: 20),
                                 ],
                               ),
                             ),
                           ),
+                          // Fixed action buttons at bottom
+                          _buildActionButtons(context, gameProvider),
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
@@ -274,51 +275,54 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildAppBar(BuildContext context, SettingsProvider settingsProvider) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, SettingsProvider settingsProvider) {
     final themeType = settingsProvider.currentTheme.toAppThemeType();
     final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.0),
-        color: glassColor,
-        border: Border.all(color: glassBorderColor, width: 2.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 15.0,
-            spreadRadius: 2.0,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24.0),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
-                child: AppBar(
-            title: const Text(
-              'Tic Tac Toe',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 22.0,
-              ),
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24.0),
+          color: glassColor,
+          border: Border.all(color: glassBorderColor, width: 2.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 15.0,
+              spreadRadius: 2.0,
             ),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            centerTitle: true,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.settings_rounded),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SettingsRootScreen()),
-                  );
-                },
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24.0),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+            child: AppBar(
+              title: const Text(
+                'Tic Tac Toe',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22.0,
+                ),
               ),
-            ],
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.settings_rounded),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SettingsRootScreen()),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

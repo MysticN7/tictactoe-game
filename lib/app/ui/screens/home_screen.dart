@@ -97,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
         return Scaffold(
           extendBodyBehindAppBar: false,
-          appBar: _buildAppBar(context, settingsProvider),
           body: Stack(
             children: [
               Container(
@@ -146,6 +145,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                   ],
                 ),
+              ),
+              // Liquidy settings button in top right
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 8,
+                right: 12,
+                child: _buildLiquidSettingsButton(context, settingsProvider),
               ),
               // Confetti overlay
               Positioned.fill(child: ParticlesOverlay(controller: _particlesController, enabled: settingsProvider.isConfettiEnabled)),
@@ -280,58 +285,56 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, SettingsProvider settingsProvider) {
+  Widget _buildLiquidSettingsButton(BuildContext context, SettingsProvider settingsProvider) {
     final themeType = settingsProvider.currentTheme.toAppThemeType();
     final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < 600;
+    final size = isMobile ? 48.0 : 52.0;
 
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(kToolbarHeight),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24.0),
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [
-              glassColor,
-              glassColor.withOpacity(0.95),
-              glassColor.withOpacity(0.9),
-            ],
-            stops: const [0.0, 0.7, 1.0],
-          ),
-          border: Border.all(color: glassBorderColor, width: 2.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 15.0,
-              spreadRadius: 2.0,
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24.0),
-          clipBehavior: Clip.antiAlias,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
-            child: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              centerTitle: false,
-              title: const SizedBox.shrink(), // Explicitly remove any title
-              automaticallyImplyLeading: false, // Remove default back button
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.settings_rounded),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SettingsRootScreen()),
-                    );
-                  },
-                ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SettingsRootScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(size / 2),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                glassColor,
+                glassColor.withOpacity(0.8),
               ],
+            ),
+            border: Border.all(color: glassBorderColor, width: 2.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 12.0,
+                spreadRadius: 2.0,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(size / 2),
+            clipBehavior: Clip.antiAlias,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+              child: Icon(
+                Icons.settings_rounded,
+                color: Colors.white,
+                size: isMobile ? 22 : 24,
+              ),
             ),
           ),
         ),

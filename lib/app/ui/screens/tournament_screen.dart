@@ -9,92 +9,6 @@ import '../../logic/game_logic.dart';
 import '../widgets/game_board.dart';
 import '../theme.dart' as theme;
 
-PreferredSizeWidget _buildTournamentAppBar(BuildContext context, TournamentLogic? t, SettingsProvider settings) {
-  final themeType = settings.currentTheme.toAppThemeType();
-  final glassColor = theme.AppTheme.getGlassColor(themeType);
-  final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-
-  return PreferredSize(
-    preferredSize: const Size.fromHeight(kToolbarHeight),
-    child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.0),
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            glassColor,
-            glassColor.withOpacity(0.95),
-            glassColor.withOpacity(0.9),
-          ],
-          stops: const [0.0, 0.7, 1.0],
-        ),
-        border: Border.all(color: glassBorderColor, width: 2.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 15.0,
-            spreadRadius: 2.0,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24.0),
-        clipBehavior: Clip.antiAlias,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
-          child: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () {
-                if (t != null && !t.isOver) {
-                  // Show confirmation dialog if tournament is in progress
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Exit Tournament?'),
-                      content: const Text('Are you sure you want to exit? Your progress will be lost.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context); // Close dialog
-                            Navigator.pop(context); // Exit tournament
-                          },
-                          child: const Text('Exit'),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-            ),
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.emoji_events_rounded, color: Colors.amber),
-                const SizedBox(width: 8),
-                const Text(
-                  'Tournament',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
 class TournamentScreen extends StatelessWidget {
   const TournamentScreen({super.key});
 
@@ -122,7 +36,6 @@ class TournamentScreen extends StatelessWidget {
           
           return Scaffold(
             extendBodyBehindAppBar: false,
-            appBar: _buildTournamentAppBar(context, t, settings),
             body: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -141,9 +54,8 @@ class TournamentScreen extends StatelessWidget {
                   ),
                   SafeArea(
                     child: t == null
-                        ? _TournamentStartScreen(
+                        ? _TournamentStartView(
                             onStart: () {
-                              // Ensure 3 players are active
                               if (settings.activePlayers.length != 3) {
                                 settings.setActivePlayers([Player.x, Player.o, Player.triangle]);
                               }
@@ -154,13 +66,11 @@ class TournamentScreen extends StatelessWidget {
                                   .toList();
                               if (players.length == 3) {
                                 tProvider.startTournament(players);
-                                // Initialize game with 3 players
-                                final gameProvider = context.read<GameProvider>();
-                                gameProvider.resetGame();
+                                context.read<GameProvider>().resetGame();
                               }
                             },
                           )
-                        : _TournamentGameScreen(),
+                        : _TournamentGameView(),
                   ),
                 ],
               ),
@@ -172,9 +82,9 @@ class TournamentScreen extends StatelessWidget {
   }
 }
 
-class _TournamentStartScreen extends StatelessWidget {
+class _TournamentStartView extends StatelessWidget {
   final VoidCallback onStart;
-  const _TournamentStartScreen({required this.onStart});
+  const _TournamentStartView({required this.onStart});
 
   @override
   Widget build(BuildContext context) {
@@ -294,7 +204,7 @@ class _TournamentStartScreen extends StatelessWidget {
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),
@@ -334,16 +244,20 @@ class _TournamentStartScreen extends StatelessWidget {
   }
 }
 
-class _TournamentGameScreen extends StatefulWidget {
+class _TournamentGameView extends StatefulWidget {
+  const _TournamentGameView();
+
   @override
-  State<_TournamentGameScreen> createState() => _TournamentGameScreenState();
+  State<_TournamentGameView> createState() => _TournamentGameViewState();
 }
 
-class _TournamentGameScreenState extends State<_TournamentGameScreen> {
+class _TournamentGameViewState extends State<_TournamentGameView> {
   int? _lastRound;
   bool _playersInitialized = false;
 
   void _ensurePlayersForRound(TournamentLogic t, SettingsProvider settings, GameProvider gameProvider) {
+    if (!mounted) return;
+    
     final currentPlayers = t.playersForCurrentGame;
     if (currentPlayers.isEmpty) return;
     
@@ -354,7 +268,6 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
       ).player;
     }).toList();
     
-    // Check if players need to be updated
     final needsUpdate = settings.activePlayers.length != currentPlayerEnums.length ||
         !settings.activePlayers.every((p) => currentPlayerEnums.contains(p));
     
@@ -363,7 +276,6 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
       gameProvider.resetGame();
       _playersInitialized = true;
     } else if (!_playersInitialized) {
-      // Ensure game is reset if players are already correct but game wasn't initialized
       gameProvider.resetGame();
       _playersInitialized = true;
     }
@@ -383,7 +295,6 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
         _playersInitialized = false;
       }
       
-      // Use post frame callback to ensure this happens after build
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && t == tProvider.tournament) {
           _ensurePlayersForRound(t, settings, gameProvider);
@@ -401,32 +312,33 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     final themeType = settings.currentTheme.toAppThemeType();
     final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
     
     return ClipRect(
       child: SingleChildScrollView(
         clipBehavior: Clip.antiAlias,
         physics: const ClampingScrollPhysics(),
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
         child: Column(
           children: [
-            const SizedBox(height: 60),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(24.0),
-              clipBehavior: Clip.antiAlias,
-              child: _buildRoundHeader(context, t, settings, glassColor, glassBorderColor),
-            ),
-            const SizedBox(height: 24),
-            _buildProgressIndicator(context, t, settings),
-            const SizedBox(height: 24),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20.0),
-              clipBehavior: Clip.antiAlias,
-              child: _buildCurrentPlayers(context, t, settings, glassColor, glassBorderColor),
-            ),
-            const SizedBox(height: 24),
+            SizedBox(height: isMobile ? 8 : 16),
+            // Back button and title
+            _buildHeader(context, t, settings, glassColor, glassBorderColor, isMobile),
+            SizedBox(height: isMobile ? 16 : 24),
+            // Round header
+            _buildRoundHeader(context, t, settings, glassColor, glassBorderColor, isMobile),
+            SizedBox(height: isMobile ? 16 : 24),
+            // Progress indicator
+            _buildProgressIndicator(context, t, settings, isMobile),
+            SizedBox(height: isMobile ? 16 : 24),
+            // Current players
+            _buildCurrentPlayers(context, t, settings, glassColor, glassBorderColor, isMobile),
+            SizedBox(height: isMobile ? 16 : 24),
+            // Game board
             Container(
               clipBehavior: Clip.antiAlias,
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24.0),
                 color: glassColor,
@@ -441,20 +353,83 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: isMobile ? 16 : 24),
+            // Next round button or winner
             if (gameProvider.gameLogic.isGameOver && !t.isOver)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(24.0),
-                clipBehavior: Clip.antiAlias,
-                child: _buildNextRoundButton(context, gameProvider, tProvider, settings),
-              ),
+              _buildNextRoundButton(context, gameProvider, tProvider, settings, isMobile),
             if (t.isOver)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(28.0),
-                clipBehavior: Clip.antiAlias,
-                child: _buildTournamentWinner(context, t, tProvider, settings),
-              ),
+              _buildTournamentWinner(context, t, tProvider, settings, isMobile),
+            SizedBox(height: isMobile ? 16 : 24),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(
+    BuildContext context,
+    TournamentLogic t,
+    SettingsProvider settings,
+    Color glassColor,
+    Color glassBorderColor,
+    bool isMobile,
+  ) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12.0 : 16.0, vertical: isMobile ? 10.0 : 12.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20.0),
+        color: glassColor,
+        border: Border.all(color: glassBorderColor, width: 2.0),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20.0),
+        clipBehavior: Clip.antiAlias,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                onPressed: () {
+                  if (!t.isOver) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Exit Tournament?'),
+                        content: const Text('Are you sure you want to exit? Your progress will be lost.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Exit'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.emoji_events_rounded, color: Colors.amber, size: isMobile ? 20 : 24),
+              const SizedBox(width: 8),
+              Text(
+                'Tournament',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: isMobile ? 16 : 18,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -466,15 +441,18 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     SettingsProvider settings,
     Color glassColor,
     Color glassBorderColor,
+    bool isMobile,
   ) {
     final roundNames = ['Round 1', 'Round 2', 'Final'];
     final roundName = t.currentRound <= 3 ? roundNames[t.currentRound - 1] : 'Complete';
-    
-    final width = MediaQuery.of(context).size.width;
-    final isMobile = width < 600;
+    final roundDescriptions = [
+      'All 3 players compete',
+      'Remaining 2 players',
+      'Championship Match',
+    ];
+    final roundDescription = t.currentRound <= 3 ? roundDescriptions[t.currentRound - 1] : '';
     
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: isMobile ? 8.0 : 0),
       padding: EdgeInsets.all(isMobile ? 16.0 : 20.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24.0),
@@ -493,80 +471,68 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
           ),
         ],
       ),
-      child: BackdropFilter(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24.0),
+        clipBehavior: Clip.antiAlias,
+        child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
           child: Column(
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 32),
-                  const SizedBox(width: 12),
-                  Text(
-                    roundName,
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                  Icon(Icons.emoji_events_rounded, color: Colors.amber, size: isMobile ? 28 : 32),
+                  SizedBox(width: isMobile ? 8 : 12),
+                  Flexible(
+                    child: Text(
+                      roundName,
+                      style: TextStyle(
+                        fontSize: isMobile ? 20 : 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ],
               ),
-              if (t.currentRound == 1)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    'All 3 players compete',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white70,
-                        ),
+              if (roundDescription.isNotEmpty) ...[
+                SizedBox(height: isMobile ? 8 : 12),
+                Text(
+                  roundDescription,
+                  style: TextStyle(
+                    fontSize: isMobile ? 12 : 14,
+                    color: Colors.white70,
                   ),
-                )
-              else if (t.currentRound == 2)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    'Remaining 2 players',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white70,
-                        ),
-                  ),
-                )
-              else if (t.currentRound == 3)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    'Championship Match',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white70,
-                        ),
-                  ),
+                  textAlign: TextAlign.center,
                 ),
+              ],
             ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildProgressIndicator(
     BuildContext context,
     TournamentLogic t,
     SettingsProvider settings,
+    bool isMobile,
   ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildProgressStep(context, 1, t.currentRound > 1, t.currentRound > 1),
-        _buildProgressLine(t.currentRound > 1),
-        _buildProgressStep(context, 2, t.currentRound > 2, t.currentRound > 2),
-        _buildProgressLine(t.currentRound > 2),
-        _buildProgressStep(context, 3, t.isOver, t.currentRound >= 3),
+        _buildProgressStep(context, 1, t.currentRound > 1, t.currentRound > 1, isMobile),
+        _buildProgressLine(t.currentRound > 1, isMobile),
+        _buildProgressStep(context, 2, t.currentRound > 2, t.currentRound > 2, isMobile),
+        _buildProgressLine(t.currentRound > 2, isMobile),
+        _buildProgressStep(context, 3, t.isOver, t.currentRound >= 3, isMobile),
       ],
     );
   }
 
-  Widget _buildProgressStep(BuildContext context, int round, bool completed, bool active) {
-    final width = MediaQuery.of(context).size.width;
-    final isMobile = width < 600;
+  Widget _buildProgressStep(BuildContext context, int round, bool completed, bool active, bool isMobile) {
     final size = isMobile ? 40.0 : 50.0;
     final fontSize = isMobile ? 16.0 : 18.0;
     
@@ -600,11 +566,11 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     );
   }
 
-  Widget _buildProgressLine(bool completed) {
+  Widget _buildProgressLine(bool completed, bool isMobile) {
     return Expanded(
       child: Container(
-        height: 3,
-        margin: const EdgeInsets.symmetric(horizontal: 8),
+        height: isMobile ? 2.5 : 3,
+        margin: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8),
         decoration: BoxDecoration(
           color: completed ? Colors.green : Colors.grey.withOpacity(0.3),
           borderRadius: BorderRadius.circular(2),
@@ -619,29 +585,34 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     SettingsProvider settings,
     Color glassColor,
     Color glassBorderColor,
+    bool isMobile,
   ) {
     final currentPlayers = t.playersForCurrentGame;
     if (currentPlayers.isEmpty) return const SizedBox.shrink();
     
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(isMobile ? 12.0 : 16.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20.0),
         color: glassColor,
         border: Border.all(color: glassBorderColor, width: 2.0),
       ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-        child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20.0),
+        clipBehavior: Clip.antiAlias,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+          child: Column(
             children: [
               Text(
                 'Current Match',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                style: TextStyle(
+                  fontSize: isMobile ? 14 : 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: isMobile ? 12 : 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: currentPlayers.map((playerName) {
@@ -651,32 +622,40 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
                   );
                   final color = settings.getPlayerColor(config.player);
                   return Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 60,
-                        height: 60,
+                        width: isMobile ? 50 : 60,
+                        height: isMobile ? 50 : 60,
                         decoration: BoxDecoration(
                           color: color.withOpacity(0.3),
                           shape: BoxShape.circle,
-                          border: Border.all(color: color, width: 3),
+                          border: Border.all(color: color, width: isMobile ? 2.5 : 3),
                         ),
                         child: Center(
                           child: Text(
                             config.icon,
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: isMobile ? 24 : 28,
                               fontWeight: FontWeight.bold,
                               color: color,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        playerName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                      SizedBox(height: isMobile ? 6 : 8),
+                      SizedBox(
+                        width: isMobile ? 60 : 80,
+                        child: Text(
+                          playerName,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isMobile ? 11 : 12,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -686,7 +665,8 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
             ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildNextRoundButton(
@@ -694,6 +674,7 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     GameProvider gameProvider,
     TournamentProvider tProvider,
     SettingsProvider settings,
+    bool isMobile,
   ) {
     final winner = gameProvider.gameLogic.winner;
     if (winner == null) return const SizedBox.shrink();
@@ -702,7 +683,7 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     final winnerColor = settings.getPlayerColor(winner);
     final t = tProvider.tournament!;
     
-    // Determine players for next round based on current round and actual winner
+    // Determine players for next round
     final currentRound = t.currentRound;
     List<Player> nextRoundPlayers = [];
     if (currentRound == 1) {
@@ -716,7 +697,7 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     
     return Container(
       clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(20.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 20.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24.0),
         gradient: LinearGradient(
@@ -732,18 +713,22 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.emoji_events_rounded, color: winnerColor, size: 32),
-              const SizedBox(width: 12),
-              Text(
-                '$winnerName Wins!',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+              Icon(Icons.emoji_events_rounded, color: winnerColor, size: isMobile ? 28 : 32),
+              SizedBox(width: isMobile ? 8 : 12),
+              Flexible(
+                child: Text(
+                  '$winnerName Wins!',
+                  style: TextStyle(
+                    fontSize: isMobile ? 18 : 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: isMobile ? 16 : 20),
           ElevatedButton(
             onPressed: () {
               tProvider.recordWin(winnerName);
@@ -753,7 +738,7 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
               gameProvider.resetGame();
             },
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 32, vertical: isMobile ? 12 : 16),
               backgroundColor: winnerColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -761,18 +746,18 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
               ),
               elevation: 8,
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Next Round',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: isMobile ? 16 : 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(width: 8),
-                Icon(Icons.arrow_forward_rounded),
+                SizedBox(width: isMobile ? 6 : 8),
+                const Icon(Icons.arrow_forward_rounded),
               ],
             ),
           ),
@@ -786,6 +771,7 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     TournamentLogic t,
     TournamentProvider tProvider,
     SettingsProvider settings,
+    bool isMobile,
   ) {
     final winnerConfig = settings.playerConfigs.firstWhere(
       (c) => c.name == t.tournamentWinner,
@@ -795,7 +781,7 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     
     return Container(
       clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(32.0),
+      padding: EdgeInsets.all(isMobile ? 24.0 : 32.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28.0),
         gradient: LinearGradient(
@@ -816,7 +802,7 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(24.0),
+            padding: EdgeInsets.all(isMobile ? 20.0 : 24.0),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: winnerColor.withOpacity(0.3),
@@ -825,35 +811,39 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
             child: Text(
               winnerConfig.icon,
               style: TextStyle(
-                fontSize: 64,
+                fontSize: isMobile ? 48 : 64,
                 fontWeight: FontWeight.bold,
                 color: winnerColor,
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: isMobile ? 16 : 24),
           Text(
-            '${t.tournamentWinner}',
-            style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+            t.tournamentWinner ?? '',
+            style: TextStyle(
+              fontSize: isMobile ? 24 : 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: isMobile ? 6 : 8),
           Text(
             'Tournament Champion!',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white70,
-                ),
+            style: TextStyle(
+              fontSize: isMobile ? 16 : 20,
+              color: Colors.white70,
+            ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: isMobile ? 24 : 32),
           ElevatedButton(
             onPressed: () {
               tProvider.endTournament();
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 32 : 40, vertical: isMobile ? 14 : 18),
               backgroundColor: winnerColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -861,15 +851,15 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
               ),
               elevation: 8,
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.refresh_rounded),
-                SizedBox(width: 8),
+                const Icon(Icons.refresh_rounded),
+                SizedBox(width: isMobile ? 6 : 8),
                 Text(
                   'New Tournament',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: isMobile ? 16 : 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

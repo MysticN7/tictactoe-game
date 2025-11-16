@@ -153,54 +153,6 @@ class TournamentScreen extends StatelessWidget {
                 ],
               ),
             ),
-<<<<<<< HEAD
-            appBar: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back_rounded),
-                onPressed: () {
-                  if (t != null && !t.isOver) {
-                    // Show confirmation dialog if tournament is in progress
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Exit Tournament?'),
-                        content: const Text('Are you sure you want to exit? Your progress will be lost.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context); // Close dialog
-                              Navigator.pop(context); // Exit tournament
-                            },
-                            child: const Text('Exit'),
-                          ),
-                        ],
-                      ),
-                    );
-                  } else {
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.emoji_events_rounded, color: Colors.amber),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Tournament',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-=======
->>>>>>> 96be0be (chore: push latest changes to trigger GitHub Actions APK build)
           );
         },
       ),
@@ -438,26 +390,6 @@ class _TournamentGameScreenState extends State<_TournamentGameScreen> {
     final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
     
-<<<<<<< HEAD
-    // Ensure correct players are active for current round
-    final currentPlayers = t.playersForCurrentGame;
-    if (currentPlayers.isNotEmpty) {
-      final currentPlayerEnums = currentPlayers.map((name) {
-        return settings.playerConfigs.firstWhere(
-          (c) => c.name == name,
-          orElse: () => settings.playerConfigs.first,
-        ).player;
-      }).toList();
-      
-      if (settings.activePlayers.length != currentPlayerEnums.length ||
-          !settings.activePlayers.every((p) => currentPlayerEnums.contains(p))) {
-        settings.setActivePlayers(currentPlayerEnums);
-        gameProvider.resetGame();
-      }
-    }
-    
-=======
->>>>>>> 96be0be (chore: push latest changes to trigger GitHub Actions APK build)
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(

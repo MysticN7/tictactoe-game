@@ -170,10 +170,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         final themeType = settings.currentTheme.toAppThemeType();
         final glassColor = theme.AppTheme.getGlassColor(themeType);
         final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+        final width = MediaQuery.of(context).size.width;
+        final isTablet = width >= 600;
+        final nameStyle = TextStyle(
+          color: Colors.white,
+          fontSize: isTablet ? 12 : 11,
+          fontWeight: FontWeight.w600,
+        );
+        final countStyleBaseSize = isTablet ? 16.0 : 14.0;
         
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16.0),
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28.0),
             gradient: LinearGradient(
@@ -197,69 +205,65 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             borderRadius: BorderRadius.circular(28.0),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                runAlignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
                 children: activePlayers.map((p) {
                   final color = settings.getPlayerColor(p);
                   final name = settings.getPlayerName(p);
                   final icon = settings.getPlayerIcon(p);
                   final count = wins[p] ?? 0;
-                  return Expanded(
-                    child: Column(
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: glassColor.withOpacity(0.4),
+                      border: Border.all(color: color.withOpacity(0.5), width: 1.5),
+                    ),
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8.0),
+                          width: 28,
+                          height: 28,
                           decoration: BoxDecoration(
-                            color: color.withOpacity(0.2),
                             shape: BoxShape.circle,
-                            border: Border.all(color: color.withOpacity(0.6), width: 2),
+                            color: color.withOpacity(0.2),
+                            border: Border.all(color: color.withOpacity(0.6), width: 1.5),
                           ),
-                          child: Text(
-                            icon,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: color,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        TweenAnimationBuilder<int>(
-                          tween: IntTween(begin: 0, end: count),
-                          duration: const Duration(milliseconds: 600),
-                          curve: Curves.easeOut,
-                          builder: (context, value, _) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: color.withOpacity(0.5), width: 1.5),
-                            ),
+                          child: Center(
                             child: Text(
-                              '$value',
+                              icon,
                               style: TextStyle(
-                                color: color,
-                                fontSize: 22,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(
-                                    color: color.withOpacity(0.8),
-                                    blurRadius: 12,
-                                  ),
-                                ],
+                                color: color,
                               ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 100),
+                          child: Text(
+                            name,
+                            style: nameStyle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          child: Text(
+                            '$count',
+                            key: ValueKey('count-$p-$count'),
+                            style: TextStyle(
+                              color: color,
+                              fontSize: countStyleBaseSize,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -301,16 +305,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
             child: AppBar(
-              title: const Text(
-                'Tic Tac Toe',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22.0,
-                ),
-              ),
               backgroundColor: Colors.transparent,
               elevation: 0,
-              centerTitle: true,
+              centerTitle: false,
               actions: [
                 IconButton(
                   icon: const Icon(Icons.settings_rounded),

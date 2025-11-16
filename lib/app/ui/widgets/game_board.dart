@@ -135,12 +135,7 @@ class _GameTileState extends State<_GameTile>
     final winningColor = theme.AppTheme.getWinningLineColor(widget.themeType);
 
     return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) {
-        _controller.reverse();
-        widget.onTap();
-      },
-      onTapCancel: () => _controller.reverse(),
+      onTap: () => widget.onTap(),
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {

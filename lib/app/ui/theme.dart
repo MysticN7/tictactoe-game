@@ -110,9 +110,9 @@ class AppTheme {
       case AppThemeType.light:
         return Colors.white.withOpacity(0.25);
       case AppThemeType.dark:
-        return Colors.white.withOpacity(0.1);
+        return Colors.white.withOpacity(0.08);
       case AppThemeType.liquidGlow:
-        return Colors.white.withOpacity(0.15);
+        return Colors.white.withOpacity(0.12);
     }
   }
 
@@ -121,7 +121,7 @@ class AppTheme {
       case AppThemeType.light:
         return Colors.white.withOpacity(0.4);
       case AppThemeType.dark:
-        return Colors.white.withOpacity(0.2);
+        return const Color(0xFF64B5F6).withOpacity(0.35);
       case AppThemeType.liquidGlow:
         return const Color(0xFF00FFFF).withOpacity(0.5);
     }
@@ -137,16 +137,16 @@ class AppTheme {
         ];
       case AppThemeType.dark:
         return [
-          const Color(0xFF1A1A1A),
-          const Color(0xFF2D2D2D),
-          const Color(0xFF1A1A1A),
+          const Color(0xFF0F0F12),
+          const Color(0xFF191A20),
+          const Color(0xFF0F0F12),
         ];
       case AppThemeType.liquidGlow:
         return [
           const Color(0xFF0D0D2B),
-          const Color(0xFF1A1A3E),
-          const Color(0xFF2D1B4E),
-          const Color(0xFF4A148C),
+          const Color(0xFF13233F),
+          const Color(0xFF251C4A),
+          const Color(0xFF3A1470),
         ];
     }
   }

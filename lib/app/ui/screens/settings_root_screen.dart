@@ -68,20 +68,20 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
           ),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  theme.AppTheme.getGlassColor(themeType),
-                  theme.AppTheme.getGlassColor(themeType).withOpacity(0.8),
-                ],
-              ),
+              color: theme.AppTheme.getGlassColor(themeType),
               border: Border(
                 top: BorderSide(
                   color: theme.AppTheme.getGlassBorderColor(themeType),
                   width: 1.5,
                 ),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.18),
+                  blurRadius: 12.0,
+                  spreadRadius: 1.0,
+                ),
+              ],
             ),
             child: ClipRRect(
               child: BackdropFilter(
@@ -91,7 +91,9 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
                   onDestinationSelected: (i) => setState(() => _index = i),
                   backgroundColor: Colors.transparent,
                   elevation: 0,
-                  indicatorColor: theme.AppTheme.getGlassBorderColor(themeType).withOpacity(0.3),
+                  indicatorColor: theme.AppTheme.getNeonGlowColor(themeType).withOpacity(
+                    themeType == theme.AppThemeType.liquidGlow ? 0.22 : 0.16,
+                  ),
                   labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                   destinations: const [
                     NavigationDestination(icon: Icon(Icons.grid_on), label: 'Game'),

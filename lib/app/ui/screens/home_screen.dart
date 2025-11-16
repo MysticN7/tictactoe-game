@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:confetti/confetti.dart';
+import 'package:tic_tac_toe_3_player/app/ui/widgets/particles_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
@@ -11,7 +12,6 @@ import 'package:tic_tac_toe_3_player/app/logic/settings_provider.dart';
 import 'package:tic_tac_toe_3_player/app/ui/widgets/game_board.dart';
 import 'package:tic_tac_toe_3_player/app/ui/screens/tournament_screen.dart';
 import 'package:tic_tac_toe_3_player/app/utils/admob_service.dart';
-import 'package:tic_tac_toe_3_player/app/ui/screens/settings_screen.dart';
 import 'package:tic_tac_toe_3_player/app/ui/screens/settings_root_screen.dart';
 import 'package:tic_tac_toe_3_player/app/ui/theme.dart' as theme;
 
@@ -26,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   BannerAd? _bannerAd;
   late AnimationController _turnAnimationController;
   late ConfettiController _confettiController;
+  late ParticlesController _particlesController;
   bool _showHistory = false;
   Player? _lastWinner;
 
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       duration: const Duration(milliseconds: 400),
     );
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _particlesController = ParticlesController();
   }
 
   void _createBannerAd() {
@@ -60,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _bannerAd?.dispose();
     _turnAnimationController.dispose();
     _confettiController.dispose();
+    _particlesController.dispose();
     super.dispose();
   }
 
@@ -72,14 +75,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         final gradientColors = theme.AppTheme.getGradientColors(themeType);
         final neonGlow = theme.AppTheme.getNeonGlowColor(themeType);
 
-        // Handle confetti on win
+        // Handle confetti on win (only for VS matches, not tournaments)
         if (game.isGameOver && game.winner != null && game.winner != _lastWinner) {
           _lastWinner = game.winner;
           if (settingsProvider.isConfettiEnabled) {
-            _confettiController.play();
+            _particlesController.play();
           }
+          // Only increment scores for VS matches (not tournament matches)
+          // Tournament matches are handled separately in tournament_screen.dart
           try {
-            // Update persistent scoreboard
             Provider.of<ScoresProvider>(context, listen: false).increment(game.winner!);
           } catch (_) {}
         } else if (!game.isGameOver) {
@@ -118,6 +122,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               child: Column(
                                 children: [
                                   const SizedBox(height: 10),
+                                  _buildScoreboardBanner(context),
+                                  const SizedBox(height: 10),
                                   _buildTurnIndicator(context, gameProvider, settingsProvider, neonGlow),
                                   const SizedBox(height: 16),
                                   _buildGameStatus(context, gameProvider, settingsProvider),
@@ -141,27 +147,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               ),
               // Confetti overlay
-              Align(
-                alignment: Alignment.topCenter,
-                child: ConfettiWidget(
-                  confettiController: _confettiController,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  maxBlastForce: 12,
-                  minBlastForce: 6,
-                  emissionFrequency: 0.025,
-                  numberOfParticles: 35,
-                  gravity: 0.75,
-                  shouldLoop: false,
-                  colors: const [
-                    Colors.red,
-                    Colors.blue,
-                    Colors.yellow,
-                    Colors.green,
-                    Colors.purple,
-                    Colors.orange,
-                  ],
-                ),
-              ),
+              Positioned.fill(child: ParticlesOverlay(controller: _particlesController, enabled: settingsProvider.isConfettiEnabled)),
             ],
           ),
           bottomNavigationBar: _bannerAd == null
@@ -170,6 +156,119 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   height: 50,
                   child: AdWidget(ad: _bannerAd!),
                 ),
+        );
+      },
+    );
+  }
+
+  Widget _buildScoreboardBanner(BuildContext context) {
+    return Consumer2<ScoresProvider, SettingsProvider>(
+      builder: (context, scores, settings, _) {
+        final wins = scores.wins;
+        final activePlayers = settings.activePlayers;
+        final themeType = settings.currentTheme.toAppThemeType();
+        final glassColor = theme.AppTheme.getGlassColor(themeType);
+        final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+        
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28.0),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                glassColor,
+                glassColor.withOpacity(0.7),
+              ],
+            ),
+            border: Border.all(color: glassBorderColor, width: 2.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20.0,
+                spreadRadius: 2.0,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28.0),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: activePlayers.map((p) {
+                  final color = settings.getPlayerColor(p);
+                  final name = settings.getPlayerName(p);
+                  final icon = settings.getPlayerIcon(p);
+                  final count = wins[p] ?? 0;
+                  return Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: color.withOpacity(0.6), width: 2),
+                          ),
+                          child: Text(
+                            icon,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: color,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        TweenAnimationBuilder<int>(
+                          tween: IntTween(begin: 0, end: count),
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.easeOut,
+                          builder: (context, value, _) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: color.withOpacity(0.5), width: 1.5),
+                            ),
+                            child: Text(
+                              '$value',
+                              style: TextStyle(
+                                color: color,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: color.withOpacity(0.8),
+                                    blurRadius: 12,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
         );
       },
     );
@@ -415,6 +514,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Consumer2<ScoresProvider, SettingsProvider>(
       builder: (context, scores, settings, _) {
         final wins = scores.wins;
+        final activePlayers = settings.activePlayers;
+        if (activePlayers.isEmpty) return const SizedBox.shrink();
+        
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16.0),
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
@@ -424,7 +526,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: Player.values.map((p) {
+            children: activePlayers.map((p) {
               final name = settings.getPlayerName(p);
               final color = settings.getPlayerColor(p);
               return Column(
@@ -476,8 +578,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 context,
                 'Tournament',
                 Icons.emoji_events_rounded,
-                true,
+                settingsProvider.activePlayers.length == 3,
                 () {
+                  if (settingsProvider.activePlayers.length != 3) {
+                    settingsProvider.setActivePlayers([Player.x, Player.o, Player.triangle]);
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const TournamentScreen()),

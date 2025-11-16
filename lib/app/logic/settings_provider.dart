@@ -29,6 +29,20 @@ class SettingsProvider extends ChangeNotifier {
   ];
   List<Player> _activePlayers = [Player.x, Player.o];
 
+  Future<void> loadPersistence() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isSoundEnabled = prefs.getBool('isSoundEnabled') ?? _isSoundEnabled;
+    _isVibrationEnabled = prefs.getBool('isVibrationEnabled') ?? _isVibrationEnabled;
+    _isConfettiEnabled = prefs.getBool('isConfettiEnabled') ?? _isConfettiEnabled;
+    for (final config in _playerConfigs) {
+      final name = prefs.getString('player_${config.player.name}_name');
+      final icon = prefs.getString('player_${config.player.name}_icon');
+      if (name != null) config.name = name;
+      if (icon != null) config.icon = icon;
+    }
+    notifyListeners();
+  }
+
   bool get isSoundEnabled => _isSoundEnabled;
   bool get isVibrationEnabled => _isVibrationEnabled;
   bool get isConfettiEnabled => _isConfettiEnabled;
@@ -40,16 +54,19 @@ class SettingsProvider extends ChangeNotifier {
 
   void toggleSound() {
     _isSoundEnabled = !_isSoundEnabled;
+    SharedPreferences.getInstance().then((p) => p.setBool('isSoundEnabled', _isSoundEnabled));
     notifyListeners();
   }
 
   void toggleVibration() {
     _isVibrationEnabled = !_isVibrationEnabled;
+    SharedPreferences.getInstance().then((p) => p.setBool('isVibrationEnabled', _isVibrationEnabled));
     notifyListeners();
   }
 
   void toggleConfetti() {
     _isConfettiEnabled = !_isConfettiEnabled;
+    SharedPreferences.getInstance().then((p) => p.setBool('isConfettiEnabled', _isConfettiEnabled));
     notifyListeners();
   }
 
@@ -73,25 +90,29 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   void updatePlayerName(Player player, String name) {
+    final sanitized = _sanitizeName(name);
     final index = _playerConfigs.indexWhere((config) => config.player == player);
     if (index != -1) {
       _playerConfigs[index] = PlayerConfig(
         player: player,
-        name: name,
+        name: sanitized,
         icon: _playerConfigs[index].icon,
       );
+      SharedPreferences.getInstance().then((p) => p.setString('player_${player.name}_name', sanitized));
       notifyListeners();
     }
   }
 
   void updatePlayerIcon(Player player, String icon) {
+    final sanitized = _sanitizeIcon(icon);
     final index = _playerConfigs.indexWhere((config) => config.player == player);
     if (index != -1) {
       _playerConfigs[index] = PlayerConfig(
         player: player,
         name: _playerConfigs[index].name,
-        icon: icon,
+        icon: sanitized,
       );
+      SharedPreferences.getInstance().then((p) => p.setString('player_${player.name}_icon', sanitized));
       notifyListeners();
     }
   }
@@ -128,5 +149,19 @@ class SettingsProvider extends ChangeNotifier {
       case Player.triangle:
         return const Color(0xFFFFEB3B); // Yellow
     }
+  }
+
+  String _sanitizeName(String name) {
+    final trimmed = name.trim();
+    final restricted = trimmed.replaceAll(RegExp(r'[^A-Za-z0-9 _-]'), '');
+    if (restricted.isEmpty) return 'Player';
+    return restricted.length > 12 ? restricted.substring(0, 12) : restricted;
+  }
+
+  String _sanitizeIcon(String icon) {
+    final trimmed = icon.trim();
+    if (trimmed.isEmpty) return '?';
+    final restricted = trimmed.replaceAll(RegExp(r'[^A-Za-z0-9△XO]'), '');
+    return restricted.length > 2 ? restricted.substring(0, 2) : restricted;
   }
 }

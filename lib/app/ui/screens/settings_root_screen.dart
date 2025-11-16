@@ -53,16 +53,43 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
               ],
             ),
           ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: _index,
-            onDestinationSelected: (i) => setState(() => _index = i),
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.grid_on), label: 'Game'),
-              NavigationDestination(icon: Icon(Icons.person), label: 'Players'),
-              NavigationDestination(icon: Icon(Icons.volume_up), label: 'Audio'),
-              NavigationDestination(icon: Icon(Icons.palette), label: 'Theme'),
-              NavigationDestination(icon: Icon(Icons.info), label: 'About'),
-            ],
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.AppTheme.getGlassColor(themeType),
+                  theme.AppTheme.getGlassColor(themeType).withOpacity(0.8),
+                ],
+              ),
+              border: Border(
+                top: BorderSide(
+                  color: theme.AppTheme.getGlassBorderColor(themeType),
+                  width: 1.5,
+                ),
+              ),
+            ),
+            child: ClipRRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                child: NavigationBar(
+                  selectedIndex: _index,
+                  onDestinationSelected: (i) => setState(() => _index = i),
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  indicatorColor: theme.AppTheme.getGlassBorderColor(themeType).withOpacity(0.3),
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                  destinations: const [
+                    NavigationDestination(icon: Icon(Icons.grid_on), label: 'Game'),
+                    NavigationDestination(icon: Icon(Icons.person), label: 'Players'),
+                    NavigationDestination(icon: Icon(Icons.volume_up), label: 'Audio'),
+                    NavigationDestination(icon: Icon(Icons.palette), label: 'Theme'),
+                    NavigationDestination(icon: Icon(Icons.info), label: 'About'),
+                  ],
+                ),
+              ),
+            ),
           ),
         );
       },
@@ -226,8 +253,55 @@ class _ModeButton extends StatelessWidget {
   }
 }
 
-class _PlayersPage extends StatelessWidget {
+class _PlayersPage extends StatefulWidget {
   const _PlayersPage();
+  @override
+  State<_PlayersPage> createState() => _PlayersPageState();
+}
+
+class _PlayersPageState extends State<_PlayersPage> {
+  final Map<Player, TextEditingController> _nameControllers = {};
+  final Map<Player, TextEditingController> _iconControllers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    final settings = context.read<SettingsProvider>();
+    for (final config in settings.playerConfigs) {
+      _nameControllers[config.player] = TextEditingController(text: config.name);
+      _iconControllers[config.player] = TextEditingController(text: config.icon);
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final settings = context.watch<SettingsProvider>();
+    for (final config in settings.playerConfigs) {
+      if (!_nameControllers.containsKey(config.player)) {
+        _nameControllers[config.player] = TextEditingController(text: config.name);
+      } else if (_nameControllers[config.player]!.text != config.name) {
+        _nameControllers[config.player]!.text = config.name;
+      }
+      if (!_iconControllers.containsKey(config.player)) {
+        _iconControllers[config.player] = TextEditingController(text: config.icon);
+      } else if (_iconControllers[config.player]!.text != config.icon) {
+        _iconControllers[config.player]!.text = config.icon;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _nameControllers.values) {
+      controller.dispose();
+    }
+    for (final controller in _iconControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
@@ -239,6 +313,8 @@ class _PlayersPage extends StatelessWidget {
         ),
         ...settings.playerConfigs.map((config) {
           final color = settings.getPlayerColor(config.player);
+          final nameController = _nameControllers[config.player] ?? TextEditingController(text: config.name);
+          final iconController = _iconControllers[config.player] ?? TextEditingController(text: config.icon);
           return _GlassCard(
             child: Column(
               children: [
@@ -256,8 +332,12 @@ class _PlayersPage extends StatelessWidget {
                   child: TextField(
                     decoration: InputDecoration(labelText: 'Player Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withOpacity(0.1)),
                     style: const TextStyle(color: Colors.white),
-                    controller: TextEditingController(text: config.name),
-                    onChanged: (v) => settings.updatePlayerName(config.player, v),
+                    controller: nameController,
+                    onChanged: (v) {
+                      if (v.isNotEmpty) {
+                        settings.updatePlayerName(config.player, v);
+                      }
+                    },
                   ),
                 ),
                 Padding(
@@ -265,10 +345,14 @@ class _PlayersPage extends StatelessWidget {
                   child: TextField(
                     decoration: InputDecoration(labelText: 'Player Icon', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withOpacity(0.1)),
                     style: const TextStyle(color: Colors.white, fontSize: 18),
-                    controller: TextEditingController(text: config.icon),
+                    controller: iconController,
                     maxLength: 2,
                     textAlign: TextAlign.center,
-                    onChanged: (v) => settings.updatePlayerIcon(config.player, v),
+                    onChanged: (v) {
+                      if (v.isNotEmpty) {
+                        settings.updatePlayerIcon(config.player, v);
+                      }
+                    },
                   ),
                 ),
               ],

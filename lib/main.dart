@@ -14,7 +14,7 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()..loadPersistence()),
         ChangeNotifierProvider(create: (_) => ScoresProvider()..load()),
         ChangeNotifierProxyProvider<SettingsProvider, GameProvider>(
           create: (_) => GameProvider(),

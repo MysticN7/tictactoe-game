@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../logic/settings_provider.dart';
 import '../../logic/game_provider.dart';
 import '../theme.dart' as theme;
@@ -688,32 +689,233 @@ class _ThemeOption extends StatelessWidget {
 
 class _AboutPage extends StatelessWidget {
   const _AboutPage();
+  
+  Future<void> _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final settings = Provider.of<SettingsProvider>(context);
+    final themeType = settings.currentTheme.toAppThemeType();
+    final glassColor = theme.AppTheme.getGlassColor(themeType);
+    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    
     return ListView(
       physics: const ClampingScrollPhysics(),
       children: [
-      const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text('About', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-      ),
-      _GlassCard(
-        child: Column(
-          children: [
-            const ListTile(
-              leading: Icon(Icons.grid_on_rounded, color: Colors.blue),
-              title: Text('Customizable Board', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('3x3, 4x4, or 5x5 board sizes'),
-            ),
-            const Divider(),
-            const ListTile(
-              leading: Icon(Icons.palette_rounded, color: Colors.purple),
-              title: Text('Multiple Themes', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('Light, Dark, and Liquid Glow'),
-            ),
-          ],
+        const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('About', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
         ),
-      ),
-    ]);
+        _GlassCard(
+          child: Column(
+            children: [
+              const ListTile(
+                leading: Icon(Icons.grid_on_rounded, color: Colors.blue),
+                title: Text('Customizable Board', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                subtitle: Text('3x3, 4x4, or 5x5 board sizes', style: TextStyle(color: Colors.white70)),
+              ),
+              const Divider(),
+              const ListTile(
+                leading: Icon(Icons.palette_rounded, color: Colors.purple),
+                title: Text('Multiple Themes', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                subtitle: Text('Light, Dark, and Liquid Glow', style: TextStyle(color: Colors.white70)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        _GlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: glassColor.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(color: glassBorderColor.withOpacity(0.5), width: 1.5),
+                      ),
+                      child: const Icon(Icons.privacy_tip_rounded, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Privacy Policy',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'We respect your privacy. This app does not collect personal information.',
+                      style: TextStyle(color: Colors.white, fontSize: 14, height: 1.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.ads_click_rounded, color: Colors.orange, size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Ads:',
+                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 28.0),
+                      child: Text(
+                        'We use Google AdMob to show ads.',
+                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 28.0),
+                      child: Wrap(
+                        children: [
+                          const Text(
+                            'Google may collect anonymous data to serve relevant ads. For details, see ',
+                            style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                          ),
+                          GestureDetector(
+                            onTap: () => _launchURL('https://policies.google.com/privacy'),
+                            child: const Text(
+                              'Google Privacy Policy',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontSize: 14,
+                                decoration: TextDecoration.underline,
+                                decorationColor: Colors.blue,
+                              ),
+                            ),
+                          ),
+                          const Text(
+                            '.',
+                            style: TextStyle(color: Colors.white70, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.data_usage_rounded, color: Colors.green, size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Data:',
+                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 28.0),
+                      child: Text(
+                        'No personal data is shared or sold.\nOnly anonymized info is used to improve the app.',
+                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.security_rounded, color: Colors.blue, size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Security:',
+                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 28.0),
+                      child: Text(
+                        'We take reasonable steps to protect your data.',
+                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.child_care_rounded, color: Colors.pink, size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Children:',
+                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 28.0),
+                      child: Text(
+                        'The app is not intended for children under 13.',
+                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.email_rounded, color: Colors.cyan, size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Contact:',
+                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 28.0),
+                      child: GestureDetector(
+                        onTap: () => _launchURL('mailto:liquidarc.studio@gmail.com'),
+                        child: const Text(
+                          'Email: liquidarc.studio@gmail.com',
+                          style: TextStyle(
+                            color: Colors.cyan,
+                            fontSize: 14,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Colors.cyan,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

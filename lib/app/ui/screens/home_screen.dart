@@ -130,8 +130,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                     const SizedBox(height: 16),
                                     const GameBoard(),
                                     const SizedBox(height: 16),
-                                    _buildScoreboard(context),
-                                    const SizedBox(height: 16),
                                     if (_showHistory) _buildMatchHistory(context, gameProvider, settingsProvider),
                                     const SizedBox(height: 20),
                                   ],
@@ -206,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20.0),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: activePlayers.map((p) {
@@ -329,12 +327,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(size / 2),
-            clipBehavior: Clip.antiAlias,
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-              child: Icon(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(size / 2),
+              clipBehavior: Clip.antiAlias,
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                child: Icon(
                 Icons.settings_rounded,
                 color: Colors.white,
                 size: isMobile ? 22 : 24,
@@ -413,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             child: ClipRRect(
               borderRadius: BorderRadius.circular(28.0),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -508,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28.0),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -552,45 +550,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildScoreboard(BuildContext context) {
-    return RepaintBoundary(
-      child: _buildScoreboardContent(context),
-    );
-  }
-
-  Widget _buildScoreboardContent(BuildContext context) {
-    return Consumer2<ScoresProvider, SettingsProvider>(
-      builder: (context, scores, settings, _) {
-        final wins = scores.wins;
-        final activePlayers = settings.activePlayers;
-        if (activePlayers.isEmpty) return const SizedBox.shrink();
-        
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16.0),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24.0),
-            color: Colors.black.withOpacity(0.15),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: activePlayers.map((p) {
-              final name = settings.getPlayerName(p);
-              final color = settings.getPlayerColor(p);
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
-                  const SizedBox(height: 4),
-                  Text('${wins[p] ?? 0}', style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.bold)),
-                ],
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildActionButtons(BuildContext context, GameProvider gameProvider) {
     return RepaintBoundary(
@@ -672,7 +631,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20.0),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -726,7 +685,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24.0),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
             child: const Text(
               'No match history yet',
               textAlign: TextAlign.center,
@@ -751,7 +710,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24.0),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: Column(
             children: [
               Padding(

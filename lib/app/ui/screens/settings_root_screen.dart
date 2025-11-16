@@ -52,15 +52,17 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
                   child: Container(color: Colors.black.withOpacity(0.2)),
                 ),
                 SafeArea(
-                  child: IndexedStack(
-                    index: _index,
-                    children: const [
-                      _GameSettingsPage(),
-                      _PlayersPage(),
-                      _AudioHapticsPage(),
-                      _AppearancePage(),
-                      _AboutPage(),
-                    ],
+                  child: RepaintBoundary(
+                    child: IndexedStack(
+                      index: _index,
+                      children: const [
+                        _GameSettingsPage(),
+                        _PlayersPage(),
+                        _AudioHapticsPage(),
+                        _AppearancePage(),
+                        _AboutPage(),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -122,16 +124,34 @@ class _GlassCard extends StatelessWidget {
     final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20.0),
-        color: glassColor,
-        border: Border.all(color: glassBorderColor, width: 1.5),
+        borderRadius: BorderRadius.circular(24.0),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            glassColor,
+            glassColor.withOpacity(0.7),
+          ],
+        ),
+        border: Border.all(
+          color: glassBorderColor,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20.0,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20.0),
+        borderRadius: BorderRadius.circular(24.0),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: child,
         ),
       ),
@@ -144,32 +164,22 @@ class _GameSettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final themeType = settings.currentTheme.toAppThemeType();
+    final glassColor = theme.AppTheme.getGlassColor(themeType);
+    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    
     return ListView(
+      physics: const ClampingScrollPhysics(),
       children: [
         const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text('Game Settings', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        ),
-        _GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text('Board Size: ${settings.boardSize}x${settings.boardSize}'),
-              ),
-              Slider(
-                value: settings.boardSize.toDouble(),
-                min: 3,
-                max: 5,
-                divisions: 2,
-                label: '${settings.boardSize}x${settings.boardSize}',
-                onChanged: (v) {
-                  settings.setBoardSize(v.toInt());
-                  context.read<GameProvider>().resetGame();
-                },
-              ),
-            ],
+          padding: EdgeInsets.all(20.0),
+          child: Text(
+            'Game Settings',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
         _GlassCard(
@@ -177,24 +187,221 @@ class _GameSettingsPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text('Win Condition: ${settings.winCondition} in a row'),
+                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: glassColor.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(color: glassBorderColor.withOpacity(0.5), width: 1.5),
+                      ),
+                      child: const Icon(Icons.grid_on_rounded, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Board Size',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              Row(
-                children: [3,4,5].map((value) => Expanded(
-                  child: RadioListTile<int>(
-                    title: Text('$value'),
-                    value: value,
-                    groupValue: settings.winCondition,
-                    onChanged: (nv) {
-                      if (nv != null) {
-                        settings.setWinCondition(nv);
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [3, 4, 5].map((size) {
+                    final isSelected = settings.boardSize == size;
+                    return GestureDetector(
+                      onTap: () {
+                        settings.setBoardSize(size);
                         context.read<GameProvider>().resetGame();
-                      }
-                    },
-                  ),
-                )).toList(),
+                      },
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20.0),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: isSelected
+                                ? [
+                                    glassBorderColor.withOpacity(0.4),
+                                    glassBorderColor.withOpacity(0.2),
+                                  ]
+                                : [
+                                    glassColor.withOpacity(0.3),
+                                    glassColor.withOpacity(0.1),
+                                  ],
+                          ),
+                          border: Border.all(
+                            color: isSelected
+                                ? glassBorderColor
+                                : glassBorderColor.withOpacity(0.3),
+                            width: isSelected ? 2.5 : 1.5,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: glassBorderColor.withOpacity(0.4),
+                                    blurRadius: 12.0,
+                                    spreadRadius: 2.0,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20.0),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '$size',
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected ? Colors.white : Colors.white70,
+                                    ),
+                                  ),
+                                  Text(
+                                    '×$size',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: isSelected ? Colors.white70 : Colors.white54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _GlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: glassColor.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(color: glassBorderColor.withOpacity(0.5), width: 1.5),
+                      ),
+                      child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Win Condition',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [3, 4, 5].map((value) {
+                    final isSelected = settings.winCondition == value;
+                    return GestureDetector(
+                      onTap: () {
+                        settings.setWinCondition(value);
+                        context.read<GameProvider>().resetGame();
+                      },
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18.0),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: isSelected
+                                ? [
+                                    glassBorderColor.withOpacity(0.4),
+                                    glassBorderColor.withOpacity(0.2),
+                                  ]
+                                : [
+                                    glassColor.withOpacity(0.3),
+                                    glassColor.withOpacity(0.1),
+                                  ],
+                          ),
+                          border: Border.all(
+                            color: isSelected
+                                ? glassBorderColor
+                                : glassBorderColor.withOpacity(0.3),
+                            width: isSelected ? 2.5 : 1.5,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: glassBorderColor.withOpacity(0.4),
+                                    blurRadius: 12.0,
+                                    spreadRadius: 2.0,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(18.0),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '$value',
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected ? Colors.white : Colors.white70,
+                                    ),
+                                  ),
+                                  Text(
+                                    'in a row',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: isSelected ? Colors.white70 : Colors.white54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -250,18 +457,63 @@ class _ModeButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+        padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16.0),
-          color: selected ? glassBorderColor.withOpacity(0.3) : glassColor,
-          border: Border.all(color: selected ? glassBorderColor : glassBorderColor.withOpacity(0.5), width: selected ? 2.5 : 1.5),
+          borderRadius: BorderRadius.circular(20.0),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: selected
+                ? [
+                    glassBorderColor.withOpacity(0.4),
+                    glassBorderColor.withOpacity(0.2),
+                  ]
+                : [
+                    glassColor.withOpacity(0.3),
+                    glassColor.withOpacity(0.1),
+                  ],
+          ),
+          border: Border.all(
+            color: selected ? glassBorderColor : glassBorderColor.withOpacity(0.3),
+            width: selected ? 2.5 : 1.5,
+          ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: glassBorderColor.withOpacity(0.4),
+                    blurRadius: 12.0,
+                    spreadRadius: 2.0,
+                  ),
+                ]
+              : null,
         ),
-        child: Column(
-          children: [
-            Text(icons, style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold, color: selected ? Colors.white : Colors.white70)),
-            const SizedBox(height: 8),
-            Text(title, style: TextStyle(fontSize: 14.0, fontWeight: selected ? FontWeight.bold : FontWeight.normal, color: selected ? Colors.white : Colors.white70)),
-          ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20.0),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  icons,
+                  style: TextStyle(
+                    fontSize: 28.0,
+                    fontWeight: FontWeight.bold,
+                    color: selected ? Colors.white : Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15.0,
+                    fontWeight: selected ? FontWeight.bold : FontWeight.w600,
+                    color: selected ? Colors.white : Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -321,6 +573,7 @@ class _PlayersPageState extends State<_PlayersPage> {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     return ListView(
+      physics: const ClampingScrollPhysics(),
       children: [
         const Padding(
           padding: EdgeInsets.all(16.0),
@@ -384,7 +637,9 @@ class _AudioHapticsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
-    return ListView(children: [
+    return ListView(
+      physics: const ClampingScrollPhysics(),
+      children: [
       const Padding(
         padding: EdgeInsets.all(16.0),
         child: Text('Audio & Haptics', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
@@ -401,7 +656,9 @@ class _AppearancePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
-    return ListView(children: [
+    return ListView(
+      physics: const ClampingScrollPhysics(),
+      children: [
       const Padding(
         padding: EdgeInsets.all(16.0),
         child: Text('Appearance', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
@@ -433,7 +690,9 @@ class _AboutPage extends StatelessWidget {
   const _AboutPage();
   @override
   Widget build(BuildContext context) {
-    return ListView(children: [
+    return ListView(
+      physics: const ClampingScrollPhysics(),
+      children: [
       const Padding(
         padding: EdgeInsets.all(16.0),
         child: Text('About', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),

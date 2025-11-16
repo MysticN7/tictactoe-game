@@ -104,26 +104,26 @@ class AppTheme {
     ),
   );
 
-  // Glass morphism colors for different themes
+  // Glass morphism colors for different themes (iOS 16 style)
   static Color getGlassColor(AppThemeType themeType) {
     switch (themeType) {
       case AppThemeType.light:
-        return Colors.white.withOpacity(0.25);
+        return Colors.white.withOpacity(0.3);
       case AppThemeType.dark:
-        return Colors.white.withOpacity(0.1);
+        return Colors.white.withOpacity(0.12);
       case AppThemeType.liquidGlow:
-        return Colors.white.withOpacity(0.15);
+        return Colors.white.withOpacity(0.18);
     }
   }
 
   static Color getGlassBorderColor(AppThemeType themeType) {
     switch (themeType) {
       case AppThemeType.light:
-        return Colors.white.withOpacity(0.4);
+        return Colors.white.withOpacity(0.5);
       case AppThemeType.dark:
-        return const Color(0xFF64B5F6).withOpacity(0.4);
+        return const Color(0xFF64B5F6).withOpacity(0.5);
       case AppThemeType.liquidGlow:
-        return const Color(0xFF00FFFF).withOpacity(0.6);
+        return const Color(0xFF00FFFF).withOpacity(0.7);
     }
   }
 

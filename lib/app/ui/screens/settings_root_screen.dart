@@ -433,12 +433,34 @@ class _AboutPage extends StatelessWidget {
   const _AboutPage();
   @override
   Widget build(BuildContext context) {
-    return ListView(children: const [
-      Padding(
+    return ListView(children: [
+      const Padding(
         padding: EdgeInsets.all(16.0),
-        child: Text('About', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        child: Text('About', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
       ),
-      ListTile(leading: Icon(Icons.info), title: Text('Tic Tac Toe'), subtitle: Text('3-player tournament mode enabled')),
+      _GlassCard(
+        child: Column(
+          children: [
+            const ListTile(
+              leading: Icon(Icons.emoji_events_rounded, color: Colors.amber),
+              title: Text('Tournament Mode', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('3-player competitive mode'),
+            ),
+            const Divider(),
+            const ListTile(
+              leading: Icon(Icons.grid_on_rounded, color: Colors.blue),
+              title: Text('Customizable Board', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('3x3, 4x4, or 5x5 board sizes'),
+            ),
+            const Divider(),
+            const ListTile(
+              leading: Icon(Icons.palette_rounded, color: Colors.purple),
+              title: Text('Multiple Themes', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('Light, Dark, and Liquid Glow'),
+            ),
+          ],
+        ),
+      ),
     ]);
   }
 }

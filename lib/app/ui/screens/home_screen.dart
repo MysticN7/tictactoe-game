@@ -171,19 +171,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         final glassColor = theme.AppTheme.getGlassColor(themeType);
         final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
         final width = MediaQuery.of(context).size.width;
-        final isTablet = width >= 600;
-        final nameStyle = TextStyle(
-          color: Colors.white,
-          fontSize: isTablet ? 12 : 11,
-          fontWeight: FontWeight.w600,
-        );
-        final countStyleBaseSize = isTablet ? 16.0 : 14.0;
+        final isMobile = width < 600;
         
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16.0),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          margin: EdgeInsets.symmetric(horizontal: isMobile ? 12.0 : 16.0),
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 10.0 : 14.0, vertical: isMobile ? 8.0 : 10.0),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28.0),
+            borderRadius: BorderRadius.circular(20.0),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -192,82 +186,89 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 glassColor.withOpacity(0.7),
               ],
             ),
-            border: Border.all(color: glassBorderColor, width: 2.0),
+            border: Border.all(color: glassBorderColor, width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 20.0,
-                spreadRadius: 2.0,
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 12.0,
+                spreadRadius: 1.0,
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28.0),
+            borderRadius: BorderRadius.circular(20.0),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                runAlignment: WrapAlignment.center,
-                spacing: 12,
-                runSpacing: 8,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: activePlayers.map((p) {
                   final color = settings.getPlayerColor(p);
                   final name = settings.getPlayerName(p);
                   final icon = settings.getPlayerIcon(p);
                   final count = wins[p] ?? 0;
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: glassColor.withOpacity(0.4),
-                      border: Border.all(color: color.withOpacity(0.5), width: 1.5),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: color.withOpacity(0.2),
-                            border: Border.all(color: color.withOpacity(0.6), width: 1.5),
+                  return Expanded(
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: isMobile ? 3.0 : 4.0),
+                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 6.0 : 8.0, vertical: isMobile ? 6.0 : 8.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: glassColor.withOpacity(0.3),
+                        border: Border.all(color: color.withOpacity(0.4), width: 1),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                icon,
+                                style: TextStyle(
+                                  fontSize: isMobile ? 14 : 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: color,
+                                ),
+                              ),
+                              SizedBox(width: isMobile ? 4 : 6),
+                              Flexible(
+                                child: Text(
+                                  name,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: isMobile ? 9 : 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Center(
-                            child: Text(
-                              icon,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: color,
+                          SizedBox(height: isMobile ? 3 : 4),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            child: Container(
+                              key: ValueKey('count-$p-$count'),
+                              padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2 : 3),
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: color.withOpacity(0.5), width: 1),
+                              ),
+                              child: Text(
+                                '$count',
+                                style: TextStyle(
+                                  color: color,
+                                  fontSize: isMobile ? 12 : 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 100),
-                          child: Text(
-                            name,
-                            style: nameStyle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 250),
-                          child: Text(
-                            '$count',
-                            key: ValueKey('count-$p-$count'),
-                            style: TextStyle(
-                              color: color,
-                              fontSize: countStyleBaseSize,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 }).toList(),
@@ -290,7 +291,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24.0),
-          color: glassColor,
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [
+              glassColor,
+              glassColor.withOpacity(0.95),
+              glassColor.withOpacity(0.9),
+            ],
+            stops: const [0.0, 0.7, 1.0],
+          ),
           border: Border.all(color: glassBorderColor, width: 2.0),
           boxShadow: [
             BoxShadow(
@@ -302,12 +312,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24.0),
+          clipBehavior: Clip.antiAlias,
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
             child: AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
               centerTitle: false,
+              title: const SizedBox.shrink(), // Explicitly remove any title
+              automaticallyImplyLeading: false, // Remove default back button
               actions: [
                 IconButton(
                   icon: const Icon(Icons.settings_rounded),

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdMobService {
@@ -9,6 +10,7 @@ class AdMobService {
   static int _winsSinceLastAd = 0;
   static int _winsUntilNextAd = 0;
   static final Random _random = Random();
+  static bool _isLoadingInterstitial = false;
 
   static void _resetAdCounter() {
     // Randomly decide to show ad after 1, 2, or 3 wins
@@ -17,12 +19,34 @@ class AdMobService {
   }
 
   static void createInterstitialAd() {
+    if (_isLoadingInterstitial) return; // Prevent multiple simultaneous loads
+    
+    _isLoadingInterstitial = true;
     InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) => _interstitialAd = ad,
-        onAdFailedToLoad: (error) => _interstitialAd = null,
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+          _isLoadingInterstitial = false;
+          if (kDebugMode) {
+            print('AdMob: Interstitial ad loaded successfully');
+          }
+        },
+        onAdFailedToLoad: (error) {
+          _interstitialAd = null;
+          _isLoadingInterstitial = false;
+          if (kDebugMode) {
+            print('AdMob: Interstitial ad failed to load: ${error.code} - ${error.message}');
+            print('AdMob: Domain: ${error.domain}, ResponseInfo: ${error.responseInfo}');
+          }
+          // Retry after a delay (exponential backoff)
+          Future.delayed(const Duration(seconds: 30), () {
+            if (_interstitialAd == null) {
+              createInterstitialAd();
+            }
+          });
+        },
       ),
     );
     // Initialize ad counter on first load
@@ -36,21 +60,35 @@ class AdMobService {
     
     // Only show ad if we've reached the target number of wins
     if (_winsSinceLastAd >= _winsUntilNextAd && _interstitialAd != null) {
+      if (kDebugMode) {
+        print('AdMob: Showing interstitial ad');
+      }
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
         onAdDismissedFullScreenContent: (ad) {
+          if (kDebugMode) {
+            print('AdMob: Interstitial ad dismissed');
+          }
           ad.dispose();
           _resetAdCounter(); // Reset counter after showing ad
           createInterstitialAd();
         },
         onAdFailedToShowFullScreenContent: (ad, error) {
+          if (kDebugMode) {
+            print('AdMob: Interstitial ad failed to show: ${error.code} - ${error.message}');
+          }
           ad.dispose();
           _resetAdCounter();
           createInterstitialAd();
         },
+        onAdShowedFullScreenContent: (ad) {
+          if (kDebugMode) {
+            print('AdMob: Interstitial ad showed');
+          }
+        },
       );
       _interstitialAd!.show();
       _interstitialAd = null;
-    } else if (_interstitialAd == null) {
+    } else if (_interstitialAd == null && !_isLoadingInterstitial) {
       // Preload next ad if we don't have one
       createInterstitialAd();
     }

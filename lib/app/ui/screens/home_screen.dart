@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:confetti/confetti.dart';
 import 'package:tic_tac_toe_3_player/app/ui/widgets/particles_overlay.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
@@ -47,9 +48,40 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
-        onAdLoaded: (_) {},
+        onAdLoaded: (_) {
+          if (mounted) {
+            setState(() {});
+            if (kDebugMode) {
+              print('AdMob: Banner ad loaded successfully');
+            }
+          }
+        },
         onAdFailedToLoad: (ad, error) {
+          if (kDebugMode) {
+            print('AdMob: Banner ad failed to load: ${error.code} - ${error.message}');
+            print('AdMob: Domain: ${error.domain}, ResponseInfo: ${error.responseInfo}');
+          }
           ad.dispose();
+          _bannerAd = null;
+          if (mounted) {
+            setState(() {});
+          }
+          // Retry loading after a delay
+          Future.delayed(const Duration(seconds: 30), () {
+            if (mounted && _bannerAd == null) {
+              _createBannerAd();
+            }
+          });
+        },
+        onAdOpened: (ad) {
+          if (kDebugMode) {
+            print('AdMob: Banner ad opened');
+          }
+        },
+        onAdClosed: (ad) {
+          if (kDebugMode) {
+            print('AdMob: Banner ad closed');
+          }
         },
       ),
     );

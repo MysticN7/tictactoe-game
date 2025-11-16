@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
@@ -7,9 +8,17 @@ import 'package:tic_tac_toe_3_player/app/logic/scores_provider.dart';
 import 'package:tic_tac_toe_3_player/app/ui/screens/home_screen.dart';
 import 'package:tic_tac_toe_3_player/app/ui/theme.dart' as theme;
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MobileAds.instance.initialize();
+  
+  // Initialize AdMob
+  final initFuture = MobileAds.instance.initialize();
+  if (kDebugMode) {
+    print('AdMob: Initializing...');
+    initFuture.then((value) {
+      print('AdMob: Initialization complete');
+    });
+  }
 
   runApp(
     MultiProvider(

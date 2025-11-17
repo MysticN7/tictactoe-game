@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:confetti/confetti.dart';
 import 'package:tic_tac_toe_3_player/app/ui/widgets/particles_overlay.dart';
@@ -24,7 +25,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   BannerAd? _bannerAd;
+  Timer? _bannerRefreshTimer;
   late AnimationController _turnAnimationController;
+  late Animation<double> _turnScaleAnimation;
+  late Animation<double> _turnSwayAnimation;
+  late Animation<double> _turnGlowAnimation;
   late ConfettiController _confettiController;
   late ParticlesController _particlesController;
   bool _showHistory = false;
@@ -36,21 +41,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _createBannerAd();
     _turnAnimationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 600),
     );
+    final curvedAnimation = CurvedAnimation(parent: _turnAnimationController, curve: Curves.easeOutBack);
+    _turnScaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(weight: 55, tween: Tween(begin: 0.94, end: 1.08)),
+      TweenSequenceItem(weight: 45, tween: Tween(begin: 1.08, end: 1.0)),
+    ]).animate(curvedAnimation);
+    _turnSwayAnimation = TweenSequence<double>([
+      TweenSequenceItem(weight: 30, tween: Tween(begin: 0.0, end: 6.0)),
+      TweenSequenceItem(weight: 35, tween: Tween(begin: 6.0, end: -4.5)),
+      TweenSequenceItem(weight: 35, tween: Tween(begin: -4.5, end: 0.0)),
+    ]).animate(curvedAnimation);
+    _turnGlowAnimation = TweenSequence<double>([
+      TweenSequenceItem(weight: 40, tween: Tween(begin: 0.35, end: 0.8)),
+      TweenSequenceItem(weight: 60, tween: Tween(begin: 0.8, end: 0.45)),
+    ]).animate(curvedAnimation);
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
     _particlesController = ParticlesController();
   }
 
   void _createBannerAd() {
+    _bannerRefreshTimer?.cancel();
     _bannerAd = BannerAd(
       adUnitId: AdMobService.bannerAdUnitId,
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
-        onAdLoaded: (_) {
+        onAdLoaded: (ad) {
           if (mounted) {
             setState(() {});
+            _startBannerRefreshTimer();
             if (kDebugMode) {
               print('AdMob: Banner ad loaded successfully');
             }
@@ -82,15 +103,39 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           if (kDebugMode) {
             print('AdMob: Banner ad closed');
           }
+          // Dispose and request a fresh banner when the user returns from the promo page
+          _bannerRefreshTimer?.cancel();
+          ad.dispose();
+          _bannerAd = null;
+          if (mounted) {
+            setState(() {});
+            // Immediately try to load a new banner so the slot is not left empty
+            _createBannerAd();
+          }
         },
       ),
     );
     _bannerAd?.load();
   }
 
+  void _startBannerRefreshTimer() {
+    _bannerRefreshTimer?.cancel();
+    _bannerRefreshTimer = Timer(const Duration(minutes: 1), () {
+      if (!mounted) return;
+      if (kDebugMode) {
+        print('AdMob: Refreshing banner manually to keep slot filled');
+      }
+      _bannerAd?.dispose();
+      _bannerAd = null;
+      setState(() {});
+      _createBannerAd();
+    });
+  }
+
   @override
   void dispose() {
     _bannerAd?.dispose();
+    _bannerRefreshTimer?.cancel();
     _turnAnimationController.dispose();
     _confettiController.dispose();
     _particlesController.dispose();
@@ -211,106 +256,211 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
         final width = MediaQuery.of(context).size.width;
         final isMobile = width < 600;
-        
-        return Container(
+        // Find current leader to highlight their card
+        Player? leader;
+        int topScore = -1;
+        for (final p in activePlayers) {
+          final score = wins[p] ?? 0;
+          if (score > topScore) {
+            topScore = score;
+            leader = score > 0 ? p : null;
+          }
+        }
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
           margin: EdgeInsets.symmetric(horizontal: isMobile ? 12.0 : 16.0),
           padding: EdgeInsets.symmetric(horizontal: isMobile ? 10.0 : 14.0, vertical: isMobile ? 8.0 : 10.0),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20.0),
+            borderRadius: BorderRadius.circular(22.0),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                glassColor,
-                glassColor.withOpacity(0.7),
+                glassColor.withOpacity(0.9),
+                glassColor.withOpacity(0.6),
               ],
             ),
-            border: Border.all(color: glassBorderColor, width: 1.5),
+            border: Border.all(color: glassBorderColor.withOpacity(0.9), width: 1.8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 8.0,
-                spreadRadius: 0.5,
+                color: Colors.black.withOpacity(0.28),
+                blurRadius: 14.0,
+                spreadRadius: 1.0,
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20.0),
+            borderRadius: BorderRadius.circular(22.0),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: activePlayers.map((p) {
-                  final color = settings.getPlayerColor(p);
-                  final name = settings.getPlayerName(p);
-                  final icon = settings.getPlayerIcon(p);
-                  final count = wins[p] ?? 0;
-                  return Expanded(
-                    child: Container(
-                      margin: EdgeInsets.symmetric(horizontal: isMobile ? 3.0 : 4.0),
-                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 6.0 : 8.0, vertical: isMobile ? 6.0 : 8.0),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: glassColor.withOpacity(0.3),
-                        border: Border.all(color: color.withOpacity(0.4), width: 1),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+              filter: ImageFilter.blur(sigmaX: 14.0, sigmaY: 14.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(bottom: isMobile ? 6.0 : 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.emoji_events_rounded, color: Colors.amber.shade300, size: isMobile ? 18 : 20),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Battle Scoreboard',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: isMobile ? 11 : 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: activePlayers.map((p) {
+                      final color = settings.getPlayerColor(p);
+                      final name = settings.getPlayerName(p);
+                      final icon = settings.getPlayerIcon(p);
+                      final count = wins[p] ?? 0;
+                      final isLeader = leader == p;
+
+                      return Expanded(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutQuad,
+                          margin: EdgeInsets.symmetric(horizontal: isMobile ? 3.0 : 4.0),
+                          padding: EdgeInsets.symmetric(horizontal: isMobile ? 6.0 : 8.0, vertical: isMobile ? 7.0 : 9.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                color.withOpacity(isLeader ? 0.35 : 0.22),
+                                color.withOpacity(isLeader ? 0.18 : 0.10),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: isLeader
+                                  ? color.withOpacity(0.9)
+                                  : color.withOpacity(0.45),
+                              width: isLeader ? 1.6 : 1.1,
+                            ),
+                            boxShadow: isLeader
+                                ? [
+                                    BoxShadow(
+                                      color: color.withOpacity(0.55),
+                                      blurRadius: 14.0,
+                                      spreadRadius: 0.8,
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                icon,
-                                style: TextStyle(
-                                  fontSize: isMobile ? 14 : 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: color,
-                                ),
-                              ),
-                              SizedBox(width: isMobile ? 4 : 6),
-                              Flexible(
-                                child: Text(
-                                  name,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: isMobile ? 9 : 10,
-                                    fontWeight: FontWeight.w600,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  AnimatedScale(
+                                    duration: const Duration(milliseconds: 250),
+                                    scale: isLeader ? 1.1 : 1.0,
+                                    curve: Curves.easeOutBack,
+                                    child: Text(
+                                      icon,
+                                      style: TextStyle(
+                                        fontSize: isMobile ? 16 : 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: color,
+                                        shadows: [
+                                          Shadow(
+                                            color: color.withOpacity(0.85),
+                                            blurRadius: 10.0,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
+                                  SizedBox(width: isMobile ? 4 : 6),
+                                  Flexible(
+                                    child: Text(
+                                      name,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isMobile ? 9.5 : 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: isMobile ? 4 : 5),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                transitionBuilder: (child, animation) {
+                                  return SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0.0, 0.25),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: FadeTransition(
+                                      opacity: animation,
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  key: ValueKey('count-$p-$count'),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isMobile ? 7 : 9,
+                                    vertical: isMobile ? 3 : 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.20),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: color.withOpacity(0.8),
+                                      width: 1.1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '$count',
+                                        style: TextStyle(
+                                          color: color,
+                                          fontSize: isMobile ? 12.5 : 14.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(width: isMobile ? 4 : 6),
+                                      Text(
+                                        'wins',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: isMobile ? 9 : 10,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          SizedBox(height: isMobile ? 3 : 4),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 250),
-                            child: Container(
-                              key: ValueKey('count-$p-$count'),
-                              padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2 : 3),
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: color.withOpacity(0.5), width: 1),
-                              ),
-                              child: Text(
-                                '$count',
-                                style: TextStyle(
-                                  color: color,
-                                  fontSize: isMobile ? 12 : 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
               ),
             ),
           ),
@@ -414,8 +564,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return AnimatedBuilder(
       animation: _turnAnimationController,
       builder: (context, child) {
-        return Transform.scale(
-          scale: 1.0 + (_turnAnimationController.value * 0.08),
+        return Transform.translate(
+          offset: Offset(_turnSwayAnimation.value, 0),
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 16.0),
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 18.0),
@@ -445,35 +595,76 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               borderRadius: BorderRadius.circular(28.0),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (playerIcon.isNotEmpty) ...[
-                      Text(
-                        playerIcon,
-                        style: TextStyle(
-                          fontSize: 32.0,
-                          fontWeight: FontWeight.bold,
-                          color: playerColor,
-                          shadows: [
-                            Shadow(
-                              color: playerColor.withOpacity(0.8),
-                              blurRadius: 12.0,
+                child: AnimatedBuilder(
+                  animation: _turnAnimationController,
+                  builder: (context, _) {
+                    return Transform.scale(
+                      scale: _turnScaleAnimation.value,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(28.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: playerColor.withOpacity(_turnGlowAnimation.value),
+                              blurRadius: 18.0,
+                              spreadRadius: 1.2,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (playerIcon.isNotEmpty) ...[
+                              AnimatedRotation(
+                                turns: _turnAnimationController.value * 0.02,
+                                duration: const Duration(milliseconds: 0),
+                                child: AnimatedScale(
+                                  duration: const Duration(milliseconds: 300),
+                                  scale: 1.0 + (_turnAnimationController.value * 0.1),
+                                  child: Text(
+                                    playerIcon,
+                                    style: TextStyle(
+                                      fontSize: 34.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: playerColor,
+                                      shadows: [
+                                        Shadow(
+                                          color: playerColor.withOpacity(0.85),
+                                          blurRadius: 14.0,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                            ],
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  playerName,
+                                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                        fontSize: 18.0,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'is making a move…',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: Colors.white70,
+                                        letterSpacing: 0.5,
+                                      ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 14),
-                    ],
-                    Text(
-                      '$playerName\'s Turn',
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                            fontSize: 22.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),

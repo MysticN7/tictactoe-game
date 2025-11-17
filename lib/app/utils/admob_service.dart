@@ -7,15 +7,19 @@ class AdMobService {
   static String get interstitialAdUnitId => 'ca-app-pub-4384120827738431/4237560263';
 
   static InterstitialAd? _interstitialAd;
-  static int _winsSinceLastAd = 0;
-  static int _winsUntilNextAd = 0;
-  static final Random _random = Random();
   static bool _isLoadingInterstitial = false;
+  static int _gamesSinceLastAd = 0;
+  static int _gamesUntilNextAd = 0;
+  static bool _shouldShowWhenReady = false;
+  static final Random _random = Random();
 
-  static void _resetAdCounter() {
-    // Randomly decide to show ad after 1, 2, or 3 wins
-    _winsUntilNextAd = _random.nextInt(3) + 1; // 1, 2, or 3
-    _winsSinceLastAd = 0;
+  static void _scheduleNextInterstitial() {
+    _gamesSinceLastAd = 0;
+    // Alternate between showing after 1 or 2 games so it never feels too aggressive
+    _gamesUntilNextAd = _random.nextBool() ? 1 : 2;
+    if (kDebugMode) {
+      print('AdMob: Next interstitial scheduled after $_gamesUntilNextAd game(s)');
+    }
   }
 
   static void createInterstitialAd() {
@@ -31,6 +35,12 @@ class AdMobService {
           _isLoadingInterstitial = false;
           if (kDebugMode) {
             print('AdMob: Interstitial ad loaded successfully');
+          }
+          if (_gamesUntilNextAd == 0) {
+            _scheduleNextInterstitial();
+          }
+          if (_shouldShowWhenReady && _gamesSinceLastAd >= _gamesUntilNextAd) {
+            _showInterstitialAdInternal();
           }
         },
         onAdFailedToLoad: (error) {
@@ -49,48 +59,66 @@ class AdMobService {
         },
       ),
     );
-    // Initialize ad counter on first load
-    if (_winsUntilNextAd == 0) {
-      _resetAdCounter();
+    if (_gamesUntilNextAd == 0) {
+      _scheduleNextInterstitial();
     }
   }
 
   static void showInterstitialAd() {
-    _winsSinceLastAd++;
-    
-    // Only show ad if we've reached the target number of wins
-    if (_winsSinceLastAd >= _winsUntilNextAd && _interstitialAd != null) {
-      if (kDebugMode) {
-        print('AdMob: Showing interstitial ad');
+    _gamesSinceLastAd++;
+    if (kDebugMode) {
+      print('AdMob: Games since last interstitial: $_gamesSinceLastAd / $_gamesUntilNextAd');
+    }
+
+    if (_gamesSinceLastAd >= _gamesUntilNextAd) {
+      if (_interstitialAd != null) {
+        _showInterstitialAdInternal();
+      } else {
+        _shouldShowWhenReady = true;
+        if (!_isLoadingInterstitial) {
+          createInterstitialAd();
+        }
       }
-      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (ad) {
-          if (kDebugMode) {
-            print('AdMob: Interstitial ad dismissed');
-          }
-          ad.dispose();
-          _resetAdCounter(); // Reset counter after showing ad
-          createInterstitialAd();
-        },
-        onAdFailedToShowFullScreenContent: (ad, error) {
-          if (kDebugMode) {
-            print('AdMob: Interstitial ad failed to show: ${error.code} - ${error.message}');
-          }
-          ad.dispose();
-          _resetAdCounter();
-          createInterstitialAd();
-        },
-        onAdShowedFullScreenContent: (ad) {
-          if (kDebugMode) {
-            print('AdMob: Interstitial ad showed');
-          }
-        },
-      );
-      _interstitialAd!.show();
-      _interstitialAd = null;
     } else if (_interstitialAd == null && !_isLoadingInterstitial) {
-      // Preload next ad if we don't have one
+      // Warm up the next ad in the background even if we haven't reached the threshold yet.
       createInterstitialAd();
     }
+  }
+
+  static void _showInterstitialAdInternal() {
+    if (_interstitialAd == null) return;
+
+    _shouldShowWhenReady = false;
+
+    if (kDebugMode) {
+      print('AdMob: Showing interstitial ad');
+    }
+    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        if (kDebugMode) {
+          print('AdMob: Interstitial ad dismissed');
+        }
+        ad.dispose();
+        _interstitialAd = null;
+        _scheduleNextInterstitial();
+        createInterstitialAd();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        if (kDebugMode) {
+          print('AdMob: Interstitial ad failed to show: ${error.code} - ${error.message}');
+        }
+        ad.dispose();
+        _interstitialAd = null;
+        _scheduleNextInterstitial();
+        createInterstitialAd();
+      },
+      onAdShowedFullScreenContent: (ad) {
+        if (kDebugMode) {
+          print('AdMob: Interstitial ad showed');
+        }
+      },
+    );
+    _interstitialAd!.show();
+    _interstitialAd = null;
   }
 }

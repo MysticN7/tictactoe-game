@@ -182,9 +182,10 @@ class _GameTileState extends State<_GameTile>
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(18.0),
-                child: BackdropFilter(
-                  // Reduced blur radius to keep the glass effect while improving performance
-                  filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
+                // Removed per-tile BackdropFilter to avoid heavy re-blur on every tap,
+                // which was causing visible white flashes on some devices.
+                child: Container(
+                  color: Colors.black.withOpacity(0.03),
                   child: Center(
                     child: playerIcon.isNotEmpty
                         ? Text(

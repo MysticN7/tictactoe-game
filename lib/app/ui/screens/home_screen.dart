@@ -266,9 +266,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             border: Border.all(color: glassBorderColor.withOpacity(0.9), width: 1.8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.28),
-                blurRadius: 14.0,
-                spreadRadius: 1.0,
+                color: Colors.black.withOpacity(0.45),
+                blurRadius: 18.0,
+                spreadRadius: 2.0,
               ),
             ],
           ),
@@ -403,11 +403,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                     vertical: isMobile ? 3 : 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.20),
+                                    color: Colors.black.withOpacity(0.38),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
-                                      color: color.withOpacity(0.8),
-                                      width: 1.1,
+                                      color: Colors.white.withOpacity(0.95),
+                                      width: 1.2,
                                     ),
                                   ),
                                   child: Row(
@@ -417,18 +417,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                       Text(
                                         '$count',
                                         style: TextStyle(
-                                          color: color,
-                                          fontSize: isMobile ? 12.5 : 14.5,
-                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          fontSize: isMobile ? 14.5 : 17.0,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.6,
+                                          shadows: [
+                                            Shadow(
+                                              color: color.withOpacity(0.9),
+                                              blurRadius: 8.0,
+                                            ),
+                                          ],
                                         ),
                                       ),
                                       SizedBox(width: isMobile ? 4 : 6),
                                       Text(
                                         'wins',
                                         style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: isMobile ? 9 : 10,
-                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white.withOpacity(0.9),
+                                          fontSize: isMobile ? 10.5 : 12.0,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ],

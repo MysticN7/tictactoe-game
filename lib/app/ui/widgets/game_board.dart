@@ -91,7 +91,8 @@ class _GameTileState extends State<_GameTile>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+    _controller.value = 1.0;
+    _scaleAnimation = Tween<double>(begin: 0.88, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
     _glowAnimation = Tween<double>(begin: 0.3, end: 0.8).animate(
@@ -139,62 +140,60 @@ class _GameTileState extends State<_GameTile>
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18.0),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    glassColor,
-                    glassColor.withOpacity(0.6),
-                  ],
-                ),
-                border: Border.all(
-                  color: widget.isWinning
-                      ? winningColor.withOpacity(0.7 + _glowAnimation.value * 0.2)
-                      : widget.player != null
-                          ? playerColor.withOpacity(0.4)
-                          : glassBorderColor,
-                  width: widget.isWinning ? 2.5 : 2.0,
-                ),
-                boxShadow: [
-                  if (widget.isWinning)
-                    BoxShadow(
-                      color: winningColor.withOpacity(0.5 + _glowAnimation.value * 0.2),
-                      blurRadius: 12.0,
-                      spreadRadius: 1.0,
-                    )
-                  else if (widget.player != null)
-                    BoxShadow(
-                      color: playerColor.withOpacity(0.3),
-                      blurRadius: 8.0,
-                      spreadRadius: 0.5,
-                    ),
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 6.0,
-                    spreadRadius: 0.5,
-                  ),
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18.0),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  glassColor,
+                  glassColor.withOpacity(0.6),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18.0),
-                // Removed per-tile BackdropFilter to avoid heavy compositing on every tap,
-                // which can cause white flashes on some devices. The overall glass look
-                // still comes from the screen background and card styling.
-                child: Center(
-                  child: playerIcon.isNotEmpty
-                      ? Text(
+              border: Border.all(
+                color: widget.isWinning
+                    ? winningColor.withOpacity(0.7 + _glowAnimation.value * 0.2)
+                    : widget.player != null
+                        ? playerColor.withOpacity(0.4)
+                        : glassBorderColor,
+                width: widget.isWinning ? 2.5 : 2.0,
+              ),
+              boxShadow: [
+                if (widget.isWinning)
+                  BoxShadow(
+                    color: winningColor.withOpacity(0.5 + _glowAnimation.value * 0.2),
+                    blurRadius: 12.0,
+                    spreadRadius: 1.0,
+                  )
+                else if (widget.player != null)
+                  BoxShadow(
+                    color: playerColor.withOpacity(0.3),
+                    blurRadius: 8.0,
+                    spreadRadius: 0.5,
+                  ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 6.0,
+                  spreadRadius: 0.5,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18.0),
+              // Removed per-tile BackdropFilter to avoid heavy compositing on every tap,
+              // which can cause white flashes on some devices. The overall glass look
+              // still comes from the screen background and card styling.
+              child: Center(
+                child: playerIcon.isNotEmpty
+                    ? ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Text(
                           playerIcon,
                           style: TextStyle(
                             fontSize: _markerFontSize(widget.settingsProvider.boardSize, playerIcon),
                             fontWeight: FontWeight.bold,
-                            color: widget.isWinning
-                                ? winningColor
-                                : playerColor,
+                            color: widget.isWinning ? winningColor : playerColor,
                             shadows: [
                               Shadow(
                                 color: widget.isWinning
@@ -204,9 +203,9 @@ class _GameTileState extends State<_GameTile>
                               ),
                             ],
                           ),
-                        )
-                      : null,
-                ),
+                        ),
+                      )
+                    : null,
               ),
             ),
           );

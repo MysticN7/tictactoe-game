@@ -352,8 +352,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: ClipRRect(
           borderRadius: BorderRadius.circular(22.0),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14.0, sigmaY: 14.0),
-            child: Column(
+            filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+            child: Container(color: Colors.black.withOpacity(0.08), child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
@@ -578,13 +578,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               borderRadius: BorderRadius.circular(size / 2),
               clipBehavior: Clip.antiAlias,
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                child: Icon(
-                Icons.settings_rounded,
-                color: Colors.white,
-                size: isMobile ? 22 : 24,
+                filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                child: Container(color: Colors.black.withOpacity(0.08), alignment: Alignment.center, child: Icon(
+                  Icons.settings_rounded,
+                  color: Colors.white,
+                  size: isMobile ? 22 : 24,
+                )),
               ),
-            ),
           ),
         ),
       ),
@@ -637,8 +637,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28.0),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                    child: Transform.scale(
+                    filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                    child: Container(color: Colors.black.withOpacity(0.08), child: Transform.scale(
                       scale: _turnScaleAnimation.value,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
@@ -703,7 +703,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ],
                         ),
                       ),
-                    ),
+                    )),
                   ),
                 ),
               ),
@@ -758,8 +758,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: ClipRRect(
             borderRadius: BorderRadius.circular(28.0),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-              child: Row(
+              filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+              child: Container(color: Colors.black.withOpacity(0.08), child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (game.winner != null) ...[
@@ -796,7 +796,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ),
                     ),
                 ],
-              ),
+              )),
             ),
           ),
         );
@@ -882,8 +882,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20.0),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-              child: Material(
+              filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+              child: Container(color: Colors.black.withOpacity(0.06), child: Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: isEnabled ? onPressed : null,
@@ -911,7 +911,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                   ),
                 ),
-              ),
+              )),
             ),
           ),
         ),
@@ -939,12 +939,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24.0),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                child: const Text(
+                filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+                child: Container(color: Colors.black.withOpacity(0.06), child: const Text(
                   'No match history yet',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white70),
-                ),
+                )),
               ),
             ),
           );
@@ -961,8 +961,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24.0),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-              child: Column(
+              filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+              child: Container(color: Colors.black.withOpacity(0.06), child: Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -1015,7 +1015,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                   ),
                 ],
-              ),
+              )),
             ),
           ),
         );

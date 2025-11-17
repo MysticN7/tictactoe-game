@@ -25,7 +25,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   BannerAd? _bannerAd;
-  Timer? _bannerRefreshTimer;
   late AnimationController _turnAnimationController;
   late Animation<double> _turnScaleAnimation;
   late Animation<double> _turnSwayAnimation;
@@ -62,7 +61,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _createBannerAd() {
-    _bannerRefreshTimer?.cancel();
     _bannerAd = BannerAd(
       adUnitId: AdMobService.bannerAdUnitId,
       size: AdSize.banner,
@@ -71,7 +69,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         onAdLoaded: (ad) {
           if (mounted) {
             setState(() {});
-            _startBannerRefreshTimer();
             if (kDebugMode) {
               print('AdMob: Banner ad loaded successfully');
             }
@@ -104,7 +101,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             print('AdMob: Banner ad closed');
           }
           // Dispose and request a fresh banner when the user returns from the promo page
-          _bannerRefreshTimer?.cancel();
           ad.dispose();
           _bannerAd = null;
           if (mounted) {
@@ -118,24 +114,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _bannerAd?.load();
   }
 
-  void _startBannerRefreshTimer() {
-    _bannerRefreshTimer?.cancel();
-    _bannerRefreshTimer = Timer(const Duration(minutes: 1), () {
-      if (!mounted) return;
-      if (kDebugMode) {
-        print('AdMob: Refreshing banner manually to keep slot filled');
-      }
-      _bannerAd?.dispose();
-      _bannerAd = null;
-      setState(() {});
-      _createBannerAd();
-    });
-  }
-
   @override
   void dispose() {
     _bannerAd?.dispose();
-    _bannerRefreshTimer?.cancel();
     _turnAnimationController.dispose();
     _confettiController.dispose();
     _particlesController.dispose();

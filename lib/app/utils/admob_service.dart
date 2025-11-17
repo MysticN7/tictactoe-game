@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -8,22 +7,10 @@ class AdMobService {
 
   static InterstitialAd? _interstitialAd;
   static bool _isLoadingInterstitial = false;
-  static int _gamesSinceLastAd = 0;
-  static int _gamesUntilNextAd = 0;
-  static bool _shouldShowWhenReady = false;
-  static final Random _random = Random();
-
-  static void _scheduleNextInterstitial() {
-    _gamesSinceLastAd = 0;
-    // Alternate between showing after 1 or 2 games so it never feels too aggressive
-    _gamesUntilNextAd = _random.nextBool() ? 1 : 2;
-    if (kDebugMode) {
-      print('AdMob: Next interstitial scheduled after $_gamesUntilNextAd game(s)');
-    }
-  }
 
   static void createInterstitialAd() {
-    if (_isLoadingInterstitial) return; // Prevent multiple simultaneous loads
+    // Clean implementation based on Google Mobile Ads interstitial guide.
+    if (_isLoadingInterstitial || _interstitialAd != null) return;
     
     _isLoadingInterstitial = true;
     InterstitialAd.load(
@@ -36,12 +23,6 @@ class AdMobService {
           if (kDebugMode) {
             print('AdMob: Interstitial ad loaded successfully');
           }
-          if (_gamesUntilNextAd == 0) {
-            _scheduleNextInterstitial();
-          }
-          if (_shouldShowWhenReady && _gamesSinceLastAd >= _gamesUntilNextAd) {
-            _showInterstitialAdInternal();
-          }
         },
         onAdFailedToLoad: (error) {
           _interstitialAd = null;
@@ -52,43 +33,27 @@ class AdMobService {
           }
           // Retry after a delay (exponential backoff)
           Future.delayed(const Duration(seconds: 30), () {
-            if (_interstitialAd == null) {
+            if (_interstitialAd == null && !_isLoadingInterstitial) {
               createInterstitialAd();
             }
           });
         },
       ),
     );
-    if (_gamesUntilNextAd == 0) {
-      _scheduleNextInterstitial();
-    }
   }
 
+  /// Call this at the end of a match to show an interstitial if available.
   static void showInterstitialAd() {
-    _gamesSinceLastAd++;
-    if (kDebugMode) {
-      print('AdMob: Games since last interstitial: $_gamesSinceLastAd / $_gamesUntilNextAd');
-    }
-
-    if (_gamesSinceLastAd >= _gamesUntilNextAd) {
-      if (_interstitialAd != null) {
-        _showInterstitialAdInternal();
-      } else {
-        _shouldShowWhenReady = true;
-        if (!_isLoadingInterstitial) {
-          createInterstitialAd();
-        }
+    if (_interstitialAd == null) {
+      // No ad ready; start loading so a future match can show it.
+      if (!_isLoadingInterstitial) {
+        createInterstitialAd();
       }
-    } else if (_interstitialAd == null && !_isLoadingInterstitial) {
-      // Warm up the next ad in the background even if we haven't reached the threshold yet.
-      createInterstitialAd();
+      if (kDebugMode) {
+        print('AdMob: No interstitial ready at match end');
+      }
+      return;
     }
-  }
-
-  static void _showInterstitialAdInternal() {
-    if (_interstitialAd == null) return;
-
-    _shouldShowWhenReady = false;
 
     if (kDebugMode) {
       print('AdMob: Showing interstitial ad');
@@ -100,7 +65,6 @@ class AdMobService {
         }
         ad.dispose();
         _interstitialAd = null;
-        _scheduleNextInterstitial();
         createInterstitialAd();
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
@@ -109,7 +73,6 @@ class AdMobService {
         }
         ad.dispose();
         _interstitialAd = null;
-        _scheduleNextInterstitial();
         createInterstitialAd();
       },
       onAdShowedFullScreenContent: (ad) {

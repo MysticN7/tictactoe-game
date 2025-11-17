@@ -182,32 +182,30 @@ class _GameTileState extends State<_GameTile>
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(18.0),
-                // Removed per-tile BackdropFilter to avoid heavy re-blur on every tap,
-                // which was causing visible white flashes on some devices.
-                child: Container(
-                  color: Colors.black.withOpacity(0.03),
-                  child: Center(
-                    child: playerIcon.isNotEmpty
-                        ? Text(
-                            playerIcon,
-                            style: TextStyle(
-                              fontSize: _markerFontSize(widget.settingsProvider.boardSize, playerIcon),
-                              fontWeight: FontWeight.bold,
-                              color: widget.isWinning
-                                  ? winningColor
-                                  : playerColor,
-                              shadows: [
-                                Shadow(
-                                  color: widget.isWinning
-                                      ? winningColor.withOpacity(0.9)
-                                      : playerColor.withOpacity(0.6),
-                                  blurRadius: 8.0,
-                                ),
-                              ],
-                            ),
-                          )
-                        : null,
-                  ),
+                // Removed per-tile BackdropFilter to avoid heavy compositing on every tap,
+                // which can cause white flashes on some devices. The overall glass look
+                // still comes from the screen background and card styling.
+                child: Center(
+                  child: playerIcon.isNotEmpty
+                      ? Text(
+                          playerIcon,
+                          style: TextStyle(
+                            fontSize: _markerFontSize(widget.settingsProvider.boardSize, playerIcon),
+                            fontWeight: FontWeight.bold,
+                            color: widget.isWinning
+                                ? winningColor
+                                : playerColor,
+                            shadows: [
+                              Shadow(
+                                color: widget.isWinning
+                                    ? winningColor.withOpacity(0.9)
+                                    : playerColor.withOpacity(0.6),
+                                blurRadius: 8.0,
+                              ),
+                            ],
+                          ),
+                        )
+                      : null,
                 ),
               ),
             ),

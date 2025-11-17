@@ -2,27 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdMobService {
-  // Toggle this to switch between Google test ads and your real AdMob units.
-  // For development / debugging, this MUST remain true to comply with AdMob policy.
-  static const bool useTestAds = true;
-
-  static String get bannerAdUnitId {
-    if (useTestAds) {
-      // Google sample banner ad unit ID for Android.
-      return 'ca-app-pub-3940256099942544/6300978111';
-    }
-    // Your real banner ad unit ID (Main Menu / Gameplay Banner)
-    return 'ca-app-pub-4384120827738431/2390002413';
-  }
-
-  static String get interstitialAdUnitId {
-    if (useTestAds) {
-      // Google sample interstitial ad unit ID for Android.
-      return 'ca-app-pub-3940256099942544/1033173712';
-    }
-    // Your real after-match interstitial ad unit ID
-    return 'ca-app-pub-4384120827738431/4237560263';
-  }
+  // NOTE: Using Google test ad units for development to verify integration
+  // Banner (test): ca-app-pub-3940256099942544/6300978111
+  // Interstitial (test): ca-app-pub-3940256099942544/1033173712
+  //
+  // For release, swap these back to your real IDs:
+  //   Banner:       ca-app-pub-4384120827738431/2390002413
+  //   Interstitial: ca-app-pub-4384120827738431/4237560263
+  static String get bannerAdUnitId => 'ca-app-pub-3940256099942544/6300978111';
+  static String get interstitialAdUnitId => 'ca-app-pub-3940256099942544/1033173712';
 
   static InterstitialAd? _interstitialAd;
   static bool _isLoadingInterstitial = false;

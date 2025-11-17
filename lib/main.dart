@@ -8,16 +8,16 @@ import 'package:tic_tac_toe_3_player/app/logic/scores_provider.dart';
 import 'package:tic_tac_toe_3_player/app/ui/screens/home_screen.dart';
 import 'package:tic_tac_toe_3_player/app/ui/theme.dart' as theme;
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize AdMob
-  final initFuture = MobileAds.instance.initialize();
+
+  // Initialize AdMob before running the app to avoid any race conditions
   if (kDebugMode) {
     print('AdMob: Initializing...');
-    initFuture.then((value) {
-      print('AdMob: Initialization complete');
-    });
+  }
+  final initStatus = await MobileAds.instance.initialize();
+  if (kDebugMode) {
+    print('AdMob: Initialization complete: $initStatus');
   }
 
   runApp(

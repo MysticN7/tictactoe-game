@@ -140,9 +140,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 child: Stack(
                   children: [
+                    // Slightly lighter blur for better performance while keeping the liquid / glass look
                     BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                      child: Container(color: Colors.black.withOpacity(0.25)),
+                      filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
+                      child: Container(color: Colors.black.withOpacity(0.22)),
                     ),
                     SafeArea(
                       child: Column(

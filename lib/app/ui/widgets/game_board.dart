@@ -183,7 +183,8 @@ class _GameTileState extends State<_GameTile>
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(18.0),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                  // Reduced blur radius to keep the glass effect while improving performance
+                  filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
                   child: Center(
                     child: playerIcon.isNotEmpty
                         ? Text(

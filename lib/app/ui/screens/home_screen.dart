@@ -353,9 +353,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           borderRadius: BorderRadius.circular(22.0),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-            child: Container(color: Colors.black.withOpacity(0.08), child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            child: Container(
+              color: Colors.black.withOpacity(0.08),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 Padding(
                   padding: EdgeInsets.only(bottom: isMobile ? 6.0 : 8.0),
                   child: Row(
@@ -527,6 +529,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               ],
             ),
+          ),
           ),
         ),
       );

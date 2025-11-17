@@ -38,6 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final gradientColors = theme.AppTheme.getGradientColors(themeType);
 
     return Scaffold(
+          backgroundColor: Colors.black,
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(

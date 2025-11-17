@@ -26,6 +26,7 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
 
         return Scaffold(
           extendBodyBehindAppBar: true,
+          backgroundColor: Colors.black,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -49,21 +50,19 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
             child: Stack(
               children: [
                 BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+                  filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
                   child: Container(color: Colors.black.withOpacity(0.2)),
                 ),
                 SafeArea(
-                  child: RepaintBoundary(
-                    child: IndexedStack(
-                      index: _index,
-                      children: const [
-                        _GameSettingsPage(),
-                        _PlayersPage(),
-                        _AudioHapticsPage(),
-                        _AppearancePage(),
-                        _AboutPage(),
-                      ],
-                    ),
+                  child: IndexedStack(
+                    index: _index,
+                    children: const [
+                      _GameSettingsPage(),
+                      _PlayersPage(),
+                      _AudioHapticsPage(),
+                      _AppearancePage(),
+                      _AboutPage(),
+                    ],
                   ),
                 ),
               ],

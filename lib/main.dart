@@ -47,6 +47,7 @@ class MyApp extends StatelessWidget {
           theme: theme.AppTheme.getTheme(settingsProvider.currentTheme.toAppThemeType()),
           home: const HomeScreen(),
           debugShowCheckedModeBanner: false,
+          builder: (context, child) => ColoredBox(color: Colors.black, child: child!),
         );
       },
     );

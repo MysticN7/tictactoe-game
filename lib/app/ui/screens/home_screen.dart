@@ -154,10 +154,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
         return Scaffold(
           extendBodyBehindAppBar: false,
-          backgroundColor: Colors.black, // FIX: Prevents white flash
+          backgroundColor: Colors.black,
           body: Stack(
             children: [
-              Container(
+              // Solid gradient background with subtle overlay (no blur -> no white flash)
+              DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -165,43 +166,35 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     colors: gradientColors,
                   ),
                 ),
-                child: Stack(
+                child: ColoredBox(
+                  color: Colors.black.withOpacity(0.2),
+                ),
+              ),
+              SafeArea(
+                child: Column(
                   children: [
-                    // Slightly lighter blur for better performance while keeping the liquid / glass look
-                    BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
-                      child: Container(color: Colors.black.withOpacity(0.22)),
-                    ),
-                    SafeArea(
-                      child: Column(
-                        children: [
-                          Expanded(
-                            // FIX: Removed RepaintBoundary here
-                            child: SingleChildScrollView(
-                              physics: const ClampingScrollPhysics(),
-                              child: Column(
-                                children: [
-                                  const SizedBox(height: 10),
-                                  _buildScoreboardBanner(context),
-                                  const SizedBox(height: 10),
-                                  _buildTurnIndicator(context, gameProvider, settingsProvider, neonGlow),
-                                  const SizedBox(height: 16),
-                                  _buildGameStatus(context, gameProvider, settingsProvider),
-                                  const SizedBox(height: 16),
-                                  const GameBoard(),
-                                  const SizedBox(height: 16),
-                                  if (_showHistory) _buildMatchHistory(context, gameProvider, settingsProvider),
-                                  const SizedBox(height: 20),
-                                ],
-                              ),
-                            ),
-                          ),
-                          // Fixed action buttons at bottom
-                          _buildActionButtons(context, gameProvider),
-                          const SizedBox(height: 8),
-                        ],
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const ClampingScrollPhysics(),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 10),
+                            _buildScoreboardBanner(context),
+                            const SizedBox(height: 10),
+                            _buildTurnIndicator(context, gameProvider, settingsProvider, neonGlow),
+                            const SizedBox(height: 16),
+                            _buildGameStatus(context, gameProvider, settingsProvider),
+                            const SizedBox(height: 16),
+                            const GameBoard(),
+                            const SizedBox(height: 16),
+                            if (_showHistory) _buildMatchHistory(context, gameProvider, settingsProvider),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
                     ),
+                    _buildActionButtons(context, gameProvider),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),

@@ -125,98 +125,182 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<GameProvider, SettingsProvider>(
-      builder: (context, gameProvider, settingsProvider, child) {
-        final game = gameProvider.gameLogic;
-        final themeType = settingsProvider.currentTheme.toAppThemeType();
-        final gradientColors = theme.AppTheme.getGradientColors(themeType);
-        final neonGlow = theme.AppTheme.getNeonGlowColor(themeType);
+    final settingsProvider = context.watch<SettingsProvider>();
+    final themeType = settingsProvider.currentTheme.toAppThemeType();
+    final gradientColors = theme.AppTheme.getGradientColors(themeType);
+    final neonGlow = theme.AppTheme.getNeonGlowColor(themeType);
 
-        // Handle confetti on win
-        if (game.isGameOver && game.winner != null && game.winner != _lastWinner) {
-          _lastWinner = game.winner;
-          if (settingsProvider.isConfettiEnabled) {
-            _particlesController.play();
-          }
-          try {
-            Provider.of<ScoresProvider>(context, listen: false).increment(game.winner!);
-          } catch (_) {}
-        } else if (!game.isGameOver) {
-          _lastWinner = null;
-        }
-
-        // Animate turn change (only if game is not over)
-        if (game.currentPlayer != null && !game.isGameOver) {
-          _turnAnimationController.forward(from: 0.0);
-        } else if (game.isGameOver) {
-          _turnAnimationController.stop();
-        }
-
-        return Scaffold(
-          extendBodyBehindAppBar: false,
-          backgroundColor: Colors.black,
-          body: Stack(
-            children: [
-              // Solid gradient background with subtle overlay (no blur -> no white flash)
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: gradientColors,
-                  ),
-                ),
-                child: ColoredBox(
-                  color: Colors.black.withOpacity(0.2),
-                ),
+    return Scaffold(
+      extendBodyBehindAppBar: false,
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: gradientColors,
               ),
-              SafeArea(
-                child: Column(
+            ),
+            child: ColoredBox(color: Colors.black.withOpacity(0.18)),
+          ),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final maxWidth = constraints.maxWidth;
+                final isTablet = maxWidth >= 820;
+                final isDesktop = maxWidth >= 1180;
+                final historyVisible = isTablet || _showHistory;
+                final horizontalPadding = isDesktop
+                    ? 40.0
+                    : isTablet
+                        ? 28.0
+                        : 14.0;
+                final maxContentWidth = isDesktop
+                    ? 1300.0
+                    : isTablet
+                        ? 980.0
+                        : maxWidth;
+
+                return Column(
                   children: [
                     Expanded(
                       child: SingleChildScrollView(
                         physics: const ClampingScrollPhysics(),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 10),
-                            _buildScoreboardBanner(context),
-                            const SizedBox(height: 10),
-                            _buildTurnIndicator(context, gameProvider, settingsProvider, neonGlow),
-                            const SizedBox(height: 16),
-                            _buildGameStatus(context, gameProvider, settingsProvider),
-                            const SizedBox(height: 16),
-                            const GameBoard(),
-                            const SizedBox(height: 16),
-                            if (_showHistory) _buildMatchHistory(context, gameProvider, settingsProvider),
-                            const SizedBox(height: 20),
-                          ],
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: maxContentWidth),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const SizedBox(height: 14),
+                                  _buildScoreboardBanner(context),
+                                  const SizedBox(height: 18),
+                                  _buildResponsiveMainSection(
+                                    context: context,
+                                    neonGlow: neonGlow,
+                                    isTablet: isTablet,
+                                    historyVisible: historyVisible,
+                                  ),
+                                  const SizedBox(height: 24),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    _buildActionButtons(context, gameProvider),
-                    const SizedBox(height: 8),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        0,
+                        horizontalPadding,
+                        12,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxContentWidth),
+                        child: _buildActionButtons(isTablet: isTablet),
+                      ),
+                    ),
                   ],
-                ),
-              ),
-              // Liquidy settings button in top right
-              Positioned(
-                top: MediaQuery.of(context).padding.top + 8,
-                right: 12,
-                child: _buildLiquidSettingsButton(context, settingsProvider),
-              ),
-              // Confetti overlay
-              Positioned.fill(child: ParticlesOverlay(controller: _particlesController, enabled: settingsProvider.isConfettiEnabled)),
-            ],
+                );
+              },
+            ),
           ),
-          bottomNavigationBar: _bannerAd == null
-              ? null
-              : SizedBox(
-                  height: 50,
-                  child: AdWidget(ad: _bannerAd!),
-                ),
-        );
-      },
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 12,
+            child: _buildLiquidSettingsButton(context, settingsProvider),
+          ),
+          Positioned.fill(
+            child: ParticlesOverlay(
+              controller: _particlesController,
+              enabled: settingsProvider.isConfettiEnabled,
+            ),
+          ),
+          Consumer<GameProvider>(
+            builder: (context, gameProvider, _) {
+              _handleGameDrivenSideEffects(gameProvider, settingsProvider);
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      ),
+      bottomNavigationBar: _bannerAd == null
+          ? null
+          : SizedBox(
+              height: 50,
+              child: AdWidget(ad: _bannerAd!),
+            ),
     );
+  }
+
+  Widget _buildResponsiveMainSection({
+    required BuildContext context,
+    required Color neonGlow,
+    required bool isTablet,
+    required bool historyVisible,
+  }) {
+    final column = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildTurnIndicator(neonGlow),
+        const SizedBox(height: 20),
+        _buildGameStatus(context),
+        const SizedBox(height: 24),
+        Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: isTablet ? 540 : 420),
+            child: const GameBoard(),
+          ),
+        ),
+        const SizedBox(height: 24),
+        if (!isTablet && historyVisible) _buildMatchHistory(context),
+      ],
+    );
+
+    if (!isTablet) return column;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 3,
+          child: column,
+        ),
+        if (historyVisible) ...[
+          const SizedBox(width: 24),
+          Flexible(
+            flex: 2,
+            child: _buildMatchHistory(context),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _handleGameDrivenSideEffects(GameProvider gameProvider, SettingsProvider settingsProvider) {
+    final game = gameProvider.gameLogic;
+    if (game.isGameOver && game.winner != null && game.winner != _lastWinner) {
+      _lastWinner = game.winner;
+      if (settingsProvider.isConfettiEnabled) {
+        _particlesController.play();
+      }
+      try {
+        Provider.of<ScoresProvider>(context, listen: false).increment(game.winner!);
+      } catch (_) {}
+    } else if (!game.isGameOver) {
+      _lastWinner = null;
+    }
+
+    if (game.currentPlayer != null && !game.isGameOver) {
+      _turnAnimationController.forward(from: 0.0);
+    } else if (game.isGameOver) {
+      _turnAnimationController.stop();
+    }
   }
 
   Widget _buildScoreboardBanner(BuildContext context) {
@@ -507,77 +591,54 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildTurnIndicator(
-    BuildContext context,
-    GameProvider gameProvider,
-    SettingsProvider settingsProvider,
-    Color neonGlow,
-  ) {
-    // FIX: Removed RepaintBoundary here
-    return _buildTurnIndicatorContent(context, gameProvider, settingsProvider, neonGlow);
-  }
+  Widget _buildTurnIndicator(Color neonGlow) {
+    return Consumer2<GameProvider, SettingsProvider>(
+      builder: (context, gameProvider, settingsProvider, _) {
+        final game = gameProvider.gameLogic;
+        final currentPlayer = game.currentPlayer;
+        if (game.isGameOver || currentPlayer == null) {
+          return const SizedBox.shrink();
+        }
 
-  Widget _buildTurnIndicatorContent(
-    BuildContext context,
-    GameProvider gameProvider,
-    SettingsProvider settingsProvider,
-    Color neonGlow,
-  ) {
-    final game = gameProvider.gameLogic;
-    final currentPlayer = game.currentPlayer;
-    
-    if (game.isGameOver) {
-      return const SizedBox.shrink();
-    }
+        final playerName = settingsProvider.getPlayerName(currentPlayer);
+        final playerIcon = settingsProvider.getPlayerIcon(currentPlayer);
+        final playerColor = settingsProvider.getPlayerColor(currentPlayer);
 
-    final playerName = currentPlayer != null
-        ? settingsProvider.getPlayerName(currentPlayer)
-        : '';
-    final playerIcon = currentPlayer != null
-        ? settingsProvider.getPlayerIcon(currentPlayer)
-        : '';
-    final playerColor = currentPlayer != null
-        ? settingsProvider.getPlayerColor(currentPlayer)
-        : Colors.white;
-
-    return AnimatedBuilder(
-      animation: _turnAnimationController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(_turnSwayAnimation.value, 0),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16.0),
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 18.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28.0),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  playerColor.withOpacity(0.2),
-                  playerColor.withOpacity(0.1),
-                ],
-              ),
-              border: Border.all(
-                color: playerColor.withOpacity(0.6),
-                width: 2.5,
-              ),
-                boxShadow: [
-                  BoxShadow(
-                    color: playerColor.withOpacity(0.4),
-                    blurRadius: 12.0,
-                    spreadRadius: 1.0,
+        return AnimatedBuilder(
+          animation: _turnAnimationController,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(_turnSwayAnimation.value, 0),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 18.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28.0),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      playerColor.withOpacity(0.25),
+                      playerColor.withOpacity(0.1),
+                    ],
                   ),
-                ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28.0),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                child: AnimatedBuilder(
-                  animation: _turnAnimationController,
-                  builder: (context, _) {
-                    return Transform.scale(
+                  border: Border.all(
+                    color: playerColor.withOpacity(0.7),
+                    width: 2.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: playerColor.withOpacity(0.35),
+                      blurRadius: 14.0,
+                      spreadRadius: 1.0,
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28.0),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                    child: Transform.scale(
                       scale: _turnScaleAnimation.value,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
@@ -586,7 +647,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             BoxShadow(
                               color: playerColor.withOpacity(_turnGlowAnimation.value),
                               blurRadius: 18.0,
-                              spreadRadius: 1.2,
+                              spreadRadius: 1.4,
                             ),
                           ],
                         ),
@@ -598,8 +659,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                 turns: _turnAnimationController.value * 0.02,
                                 duration: const Duration(milliseconds: 0),
                                 child: AnimatedScale(
-                                  duration: const Duration(milliseconds: 300),
-                                  scale: 1.0 + (_turnAnimationController.value * 0.1),
+                                  duration: const Duration(milliseconds: 280),
+                                  scale: 1.0 + (_turnAnimationController.value * 0.12),
                                   child: Text(
                                     playerIcon,
                                     style: TextStyle(
@@ -608,7 +669,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                       color: playerColor,
                                       shadows: [
                                         Shadow(
-                                          color: playerColor.withOpacity(0.85),
+                                          color: playerColor.withOpacity(0.9),
                                           blurRadius: 14.0,
                                         ),
                                       ],
@@ -616,7 +677,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 14),
+                              const SizedBox(width: 16),
                             ],
                             Column(
                               mainAxisSize: MainAxisSize.min,
@@ -642,9 +703,99 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ],
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildGameStatus(BuildContext context) {
+    return Consumer2<GameProvider, SettingsProvider>(
+      builder: (context, gameProvider, settingsProvider, _) {
+        final game = gameProvider.gameLogic;
+        if (!game.isGameOver) return const SizedBox.shrink();
+
+        final winnerColor = game.winner != null
+            ? settingsProvider.getPlayerColor(game.winner!)
+            : Colors.grey;
+        final winnerName = game.winner != null
+            ? settingsProvider.getPlayerName(game.winner!)
+            : '';
+        final winnerIcon = game.winner != null
+            ? settingsProvider.getPlayerIcon(game.winner!)
+            : '';
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28.0),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                winnerColor.withOpacity(0.25),
+                winnerColor.withOpacity(0.15),
+              ],
+            ),
+            border: Border.all(
+              color: winnerColor.withOpacity(0.7),
+              width: 3.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: winnerColor.withOpacity(0.5),
+                blurRadius: 15.0,
+                spreadRadius: 2.0,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28.0),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (game.winner != null) ...[
+                    Text(
+                      winnerIcon,
+                      style: TextStyle(
+                        fontSize: 36.0,
+                        fontWeight: FontWeight.bold,
+                        color: winnerColor,
+                        shadows: [
+                          Shadow(
+                            color: winnerColor.withOpacity(0.9),
+                            blurRadius: 15.0,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '$winnerName Wins!',
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                    ),
+                  ] else
+                    Text(
+                      '🤝 It\'s a Draw!',
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -653,166 +804,65 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildGameStatus(
-    BuildContext context,
-    GameProvider gameProvider,
-    SettingsProvider settingsProvider,
-  ) {
-    // FIX: Removed RepaintBoundary here
-    return _buildGameStatusContent(context, gameProvider, settingsProvider);
-  }
 
-  Widget _buildGameStatusContent(
-    BuildContext context,
-    GameProvider gameProvider,
-    SettingsProvider settingsProvider,
-  ) {
-    final game = gameProvider.gameLogic;
-    if (!game.isGameOver) return const SizedBox.shrink();
-
-    final winnerColor = game.winner != null
-        ? settingsProvider.getPlayerColor(game.winner!)
-        : Colors.grey;
-    final winnerName = game.winner != null
-        ? settingsProvider.getPlayerName(game.winner!)
-        : '';
-    final winnerIcon = game.winner != null
-        ? settingsProvider.getPlayerIcon(game.winner!)
-        : '';
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0),
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28.0),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            winnerColor.withOpacity(0.25),
-            winnerColor.withOpacity(0.15),
-          ],
-        ),
-        border: Border.all(
-          color: winnerColor.withOpacity(0.7),
-          width: 3.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: winnerColor.withOpacity(0.5),
-            blurRadius: 15.0,
-            spreadRadius: 2.0,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28.0),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (game.winner != null) ...[
-                Text(
-                  winnerIcon,
-                  style: TextStyle(
-                    fontSize: 36.0,
-                    fontWeight: FontWeight.bold,
-                    color: winnerColor,
-                    shadows: [
-                      Shadow(
-                        color: winnerColor.withOpacity(0.9),
-                        blurRadius: 15.0,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '$winnerName Wins!',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontSize: 24.0,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                ),
-              ] else
-                Text(
-                  '🤝 It\'s a Draw!',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontSize: 24.0,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildActionButtons(BuildContext context, GameProvider gameProvider) {
-    // FIX: Removed RepaintBoundary here
-    return _buildActionButtonsContent(context, gameProvider);
-  }
-
-  Widget _buildActionButtonsContent(BuildContext context, GameProvider gameProvider) {
-    return Consumer<SettingsProvider>(
-      builder: (context, settingsProvider, child) {
+  Widget _buildActionButtons({required bool isTablet}) {
+    return Consumer2<GameProvider, SettingsProvider>(
+      builder: (context, gameProvider, settingsProvider, _) {
         final themeType = settingsProvider.currentTheme.toAppThemeType();
         final glassColor = theme.AppTheme.getGlassColor(themeType);
         final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+        final canUndo = gameProvider.gameLogic.moveHistory.isNotEmpty && !gameProvider.gameLogic.isGameOver;
+        final historyToggleEnabled = !isTablet;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildGlassButton(
-                context,
-                'Undo',
-                Icons.undo_rounded,
-                gameProvider.gameLogic.moveHistory.isNotEmpty && !gameProvider.gameLogic.isGameOver,
-                () => gameProvider.undoLastMove(),
-                glassColor,
-                glassBorderColor,
-              ),
-              _buildGlassButton(
-                context,
-                'Restart',
-                Icons.refresh_rounded,
-                true,
-                () => gameProvider.resetGame(),
-                glassColor,
-                glassBorderColor,
-              ),
-              _buildGlassButton(
-                context,
-                _showHistory ? 'Hide' : 'History',
-                _showHistory ? Icons.arrow_drop_up_rounded : Icons.history_rounded,
-                true,
-                () => setState(() => _showHistory = !_showHistory),
-                glassColor,
-                glassBorderColor,
-              ),
-            ],
-          ),
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildGlassButton(
+              context: context,
+              label: 'Undo',
+              icon: Icons.undo_rounded,
+              isEnabled: canUndo,
+              onPressed: () => gameProvider.undoLastMove(),
+              glassColor: glassColor,
+              glassBorderColor: glassBorderColor,
+              isTablet: isTablet,
+            ),
+            _buildGlassButton(
+              context: context,
+              label: 'Restart',
+              icon: Icons.refresh_rounded,
+              isEnabled: true,
+              onPressed: () => gameProvider.resetGame(),
+              glassColor: glassColor,
+              glassBorderColor: glassBorderColor,
+              isTablet: isTablet,
+            ),
+            _buildGlassButton(
+              context: context,
+              label: historyToggleEnabled && _showHistory ? 'Hide' : 'History',
+              icon: historyToggleEnabled && _showHistory ? Icons.arrow_drop_up_rounded : Icons.history_rounded,
+              isEnabled: historyToggleEnabled,
+              onPressed: historyToggleEnabled ? () => setState(() => _showHistory = !_showHistory) : null,
+              glassColor: glassColor,
+              glassBorderColor: glassBorderColor,
+              isTablet: isTablet,
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildGlassButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-    bool enabled,
-    VoidCallback onPressed,
-    Color glassColor,
-    Color glassBorderColor,
-  ) {
+  Widget _buildGlassButton({
+    required BuildContext context,
+    required String label,
+    required IconData icon,
+    required bool isEnabled,
+    required VoidCallback? onPressed,
+    required Color glassColor,
+    required Color glassBorderColor,
+    required bool isTablet,
+  }) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -836,20 +886,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: enabled ? onPressed : null,
+                  onTap: isEnabled ? onPressed : null,
                   borderRadius: BorderRadius.circular(20.0),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14.0),
+                    padding: EdgeInsets.symmetric(vertical: isTablet ? 18.0 : 14.0),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(icon, color: enabled ? Colors.white : Colors.grey.shade600, size: 24),
+                        Icon(
+                          icon,
+                          color: isEnabled ? Colors.white : Colors.grey.shade600,
+                          size: isTablet ? 26 : 24,
+                        ),
                         const SizedBox(height: 6),
                         Text(
                           label,
                           style: TextStyle(
-                            color: enabled ? Colors.white : Colors.grey.shade600,
-                            fontSize: 12.0,
+                            color: isEnabled ? Colors.white : Colors.grey.shade600,
+                            fontSize: isTablet ? 13.0 : 12.0,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -865,109 +919,107 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildMatchHistory(
-    BuildContext context,
-    GameProvider gameProvider,
-    SettingsProvider settingsProvider,
-  ) {
-    final history = gameProvider.matchHistory;
-    if (history.isEmpty) {
-      return Container(
-        margin: const EdgeInsets.all(16.0),
-        padding: const EdgeInsets.all(24.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24.0),
-          color: theme.AppTheme.getGlassColor(settingsProvider.currentTheme.toAppThemeType()),
-          border: Border.all(
-            color: theme.AppTheme.getGlassBorderColor(settingsProvider.currentTheme.toAppThemeType()),
-            width: 2.0,
+  Widget _buildMatchHistory(BuildContext context) {
+    return Consumer2<GameProvider, SettingsProvider>(
+      builder: (context, gameProvider, settingsProvider, _) {
+        final history = gameProvider.matchHistory;
+        final themeType = settingsProvider.currentTheme.toAppThemeType();
+        final glassColor = theme.AppTheme.getGlassColor(themeType);
+        final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+
+        if (history.isEmpty) {
+          return Container(
+            margin: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(24.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24.0),
+              color: glassColor,
+              border: Border.all(color: glassBorderColor, width: 2.0),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24.0),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                child: const Text(
+                  'No match history yet',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+            ),
+          );
+        }
+
+        return Container(
+          margin: const EdgeInsets.all(16.0),
+          constraints: const BoxConstraints(maxHeight: 320),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24.0),
+            color: glassColor,
+            border: Border.all(color: glassBorderColor, width: 2.0),
           ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24.0),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-            child: const Text(
-              'No match history yet',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24.0),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Match History',
+                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                fontSize: 20.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        TextButton(
+                          onPressed: () => gameProvider.clearMatchHistory(),
+                          child: const Text('Clear'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: history.length,
+                      itemBuilder: (context, index) {
+                        final match = history[index];
+                        final winnerColor = match.winner != null
+                            ? settingsProvider.getPlayerColor(match.winner!)
+                            : Colors.grey;
+                        return ListTile(
+                          leading: Icon(
+                            match.winner != null ? Icons.emoji_events_rounded : Icons.handshake_rounded,
+                            color: winnerColor,
+                          ),
+                          title: Text(
+                            match.winner != null
+                                ? '${settingsProvider.getPlayerName(match.winner!)} won'
+                                : 'Draw',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          subtitle: Text(
+                            '${match.boardSize}x${match.boardSize} • ${match.winCondition} in a row\n${DateFormat('MMM d, HH:mm').format(match.timestamp)}',
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          trailing: Text(
+                            '${match.moveCount} moves',
+                            style: const TextStyle(color: Colors.white60),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    }
-
-    return Container(
-      margin: const EdgeInsets.all(16.0),
-      constraints: const BoxConstraints(maxHeight: 300),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.0),
-        color: theme.AppTheme.getGlassColor(settingsProvider.currentTheme.toAppThemeType()),
-        border: Border.all(
-          color: theme.AppTheme.getGlassBorderColor(settingsProvider.currentTheme.toAppThemeType()),
-          width: 2.0,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24.0),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Match History',
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    TextButton(
-                      onPressed: () => gameProvider.clearMatchHistory(),
-                      child: const Text('Clear'),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: history.length,
-                  itemBuilder: (context, index) {
-                    final match = history[index];
-                    final winnerColor = match.winner != null
-                        ? settingsProvider.getPlayerColor(match.winner!)
-                        : Colors.grey;
-                    return ListTile(
-                      leading: Icon(
-                        match.winner != null ? Icons.emoji_events_rounded : Icons.handshake_rounded,
-                        color: winnerColor,
-                      ),
-                      title: Text(
-                        match.winner != null
-                            ? '${settingsProvider.getPlayerName(match.winner!)} won'
-                            : 'Draw',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                      subtitle: Text(
-                        '${match.boardSize}x${match.boardSize} • ${match.winCondition} in a row\n${DateFormat('MMM d, HH:mm').format(match.timestamp)}',
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                      trailing: Text(
-                        '${match.moveCount} moves',
-                        style: const TextStyle(color: Colors.white60),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

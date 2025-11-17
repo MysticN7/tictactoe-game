@@ -154,6 +154,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
         return Scaffold(
           extendBodyBehindAppBar: false,
+          backgroundColor: Colors.black, // FIX: Prevents white flash
           body: Stack(
             children: [
               Container(
@@ -175,24 +176,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       child: Column(
                         children: [
                           Expanded(
-                            child: RepaintBoundary(
-                              child: SingleChildScrollView(
-                                physics: const ClampingScrollPhysics(),
-                                child: Column(
-                                  children: [
-                                    const SizedBox(height: 10),
-                                    _buildScoreboardBanner(context),
-                                    const SizedBox(height: 10),
-                                    _buildTurnIndicator(context, gameProvider, settingsProvider, neonGlow),
-                                    const SizedBox(height: 16),
-                                    _buildGameStatus(context, gameProvider, settingsProvider),
-                                    const SizedBox(height: 16),
-                                    const GameBoard(),
-                                    const SizedBox(height: 16),
-                                    if (_showHistory) _buildMatchHistory(context, gameProvider, settingsProvider),
-                                    const SizedBox(height: 20),
-                                  ],
-                                ),
+                            // FIX: Removed RepaintBoundary here
+                            child: SingleChildScrollView(
+                              physics: const ClampingScrollPhysics(),
+                              child: Column(
+                                children: [
+                                  const SizedBox(height: 10),
+                                  _buildScoreboardBanner(context),
+                                  const SizedBox(height: 10),
+                                  _buildTurnIndicator(context, gameProvider, settingsProvider, neonGlow),
+                                  const SizedBox(height: 16),
+                                  _buildGameStatus(context, gameProvider, settingsProvider),
+                                  const SizedBox(height: 16),
+                                  const GameBoard(),
+                                  const SizedBox(height: 16),
+                                  if (_showHistory) _buildMatchHistory(context, gameProvider, settingsProvider),
+                                  const SizedBox(height: 20),
+                                ],
                               ),
                             ),
                           ),
@@ -227,234 +227,233 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildScoreboardBanner(BuildContext context) {
-    return RepaintBoundary(
-      child: Consumer2<ScoresProvider, SettingsProvider>(
-        builder: (context, scores, settings, _) {
-        final wins = scores.wins;
-        final activePlayers = settings.activePlayers;
-        final themeType = settings.currentTheme.toAppThemeType();
-        final glassColor = theme.AppTheme.getGlassColor(themeType);
-        final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-        final width = MediaQuery.of(context).size.width;
-        final isMobile = width < 600;
-        // Find current leader to highlight their card
-        Player? leader;
-        int topScore = -1;
-        for (final p in activePlayers) {
-          final score = wins[p] ?? 0;
-          if (score > topScore) {
-            topScore = score;
-            leader = score > 0 ? p : null;
-          }
+    // FIX: Removed RepaintBoundary here
+    return Consumer2<ScoresProvider, SettingsProvider>(
+      builder: (context, scores, settings, _) {
+      final wins = scores.wins;
+      final activePlayers = settings.activePlayers;
+      final themeType = settings.currentTheme.toAppThemeType();
+      final glassColor = theme.AppTheme.getGlassColor(themeType);
+      final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+      final width = MediaQuery.of(context).size.width;
+      final isMobile = width < 600;
+      // Find current leader to highlight their card
+      Player? leader;
+      int topScore = -1;
+      for (final p in activePlayers) {
+        final score = wins[p] ?? 0;
+        if (score > topScore) {
+          topScore = score;
+          leader = score > 0 ? p : null;
         }
+      }
 
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOutCubic,
-          margin: EdgeInsets.symmetric(horizontal: isMobile ? 12.0 : 16.0),
-          padding: EdgeInsets.symmetric(horizontal: isMobile ? 10.0 : 14.0, vertical: isMobile ? 8.0 : 10.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22.0),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                glassColor.withOpacity(0.9),
-                glassColor.withOpacity(0.6),
-              ],
-            ),
-            border: Border.all(color: glassBorderColor.withOpacity(0.9), width: 1.8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.45),
-                blurRadius: 18.0,
-                spreadRadius: 2.0,
-              ),
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+        margin: EdgeInsets.symmetric(horizontal: isMobile ? 12.0 : 16.0),
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 10.0 : 14.0, vertical: isMobile ? 8.0 : 10.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22.0),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              glassColor.withOpacity(0.9),
+              glassColor.withOpacity(0.6),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(22.0),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 14.0, sigmaY: 14.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(bottom: isMobile ? 6.0 : 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.emoji_events_rounded, color: Colors.amber.shade300, size: isMobile ? 18 : 20),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Battle Scoreboard',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.95),
-                            fontSize: isMobile ? 11 : 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.6,
-                          ),
+          border: Border.all(color: glassBorderColor.withOpacity(0.9), width: 1.8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.45),
+              blurRadius: 18.0,
+              spreadRadius: 2.0,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22.0),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 14.0, sigmaY: 14.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(bottom: isMobile ? 6.0 : 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.emoji_events_rounded, color: Colors.amber.shade300, size: isMobile ? 18 : 20),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Battle Scoreboard',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.95),
+                          fontSize: isMobile ? 11 : 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.6,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: activePlayers.map((p) {
-                      final color = settings.getPlayerColor(p);
-                      final name = settings.getPlayerName(p);
-                      final icon = settings.getPlayerIcon(p);
-                      final count = wins[p] ?? 0;
-                      final isLeader = leader == p;
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: activePlayers.map((p) {
+                    final color = settings.getPlayerColor(p);
+                    final name = settings.getPlayerName(p);
+                    final icon = settings.getPlayerIcon(p);
+                    final count = wins[p] ?? 0;
+                    final isLeader = leader == p;
 
-                      return Expanded(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOutQuad,
-                          margin: EdgeInsets.symmetric(horizontal: isMobile ? 3.0 : 4.0),
-                          padding: EdgeInsets.symmetric(horizontal: isMobile ? 6.0 : 8.0, vertical: isMobile ? 7.0 : 9.0),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                color.withOpacity(isLeader ? 0.35 : 0.22),
-                                color.withOpacity(isLeader ? 0.18 : 0.10),
+                    return Expanded(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutQuad,
+                        margin: EdgeInsets.symmetric(horizontal: isMobile ? 3.0 : 4.0),
+                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 6.0 : 8.0, vertical: isMobile ? 7.0 : 9.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              color.withOpacity(isLeader ? 0.35 : 0.22),
+                              color.withOpacity(isLeader ? 0.18 : 0.10),
+                            ],
+                          ),
+                          border: Border.all(
+                            color: isLeader
+                                ? color.withOpacity(0.9)
+                                : color.withOpacity(0.45),
+                            width: isLeader ? 1.6 : 1.1,
+                          ),
+                          boxShadow: isLeader
+                              ? [
+                                  BoxShadow(
+                                    color: color.withOpacity(0.55),
+                                    blurRadius: 14.0,
+                                    spreadRadius: 0.8,
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AnimatedScale(
+                                  duration: const Duration(milliseconds: 250),
+                                  scale: isLeader ? 1.1 : 1.0,
+                                  curve: Curves.easeOutBack,
+                                  child: Text(
+                                    icon,
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 16 : 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: color,
+                                      shadows: [
+                                        Shadow(
+                                          color: color.withOpacity(0.85),
+                                          blurRadius: 10.0,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: isMobile ? 4 : 6),
+                                Flexible(
+                                  child: Text(
+                                    name,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: isMobile ? 9.5 : 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
                               ],
                             ),
-                            border: Border.all(
-                              color: isLeader
-                                  ? color.withOpacity(0.9)
-                                  : color.withOpacity(0.45),
-                              width: isLeader ? 1.6 : 1.1,
-                            ),
-                            boxShadow: isLeader
-                                ? [
-                                    BoxShadow(
-                                      color: color.withOpacity(0.55),
-                                      blurRadius: 14.0,
-                                      spreadRadius: 0.8,
-                                    ),
-                                  ]
-                                : [],
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  AnimatedScale(
-                                    duration: const Duration(milliseconds: 250),
-                                    scale: isLeader ? 1.1 : 1.0,
-                                    curve: Curves.easeOutBack,
-                                    child: Text(
-                                      icon,
+                            SizedBox(height: isMobile ? 4 : 5),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 250),
+                              transitionBuilder: (child, animation) {
+                                return SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.0, 0.25),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                key: ValueKey('count-$p-$count'),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isMobile ? 7 : 9,
+                                  vertical: isMobile ? 3 : 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.38),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.95),
+                                    width: 1.2,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '$count',
                                       style: TextStyle(
-                                        fontSize: isMobile ? 16 : 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: color,
+                                        color: Colors.white,
+                                        fontSize: isMobile ? 14.5 : 17.0,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.6,
                                         shadows: [
                                           Shadow(
-                                            color: color.withOpacity(0.85),
-                                            blurRadius: 10.0,
+                                            color: color.withOpacity(0.9),
+                                            blurRadius: 8.0,
                                           ),
                                         ],
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(width: isMobile ? 4 : 6),
-                                  Flexible(
-                                    child: Text(
-                                      name,
+                                    SizedBox(width: isMobile ? 4 : 6),
+                                    Text(
+                                      'wins',
                                       style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: isMobile ? 9.5 : 11,
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: isMobile ? 10.5 : 12.0,
                                         fontWeight: FontWeight.w600,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
                                     ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: isMobile ? 4 : 5),
-                              AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 250),
-                                transitionBuilder: (child, animation) {
-                                  return SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: const Offset(0.0, 0.25),
-                                      end: Offset.zero,
-                                    ).animate(animation),
-                                    child: FadeTransition(
-                                      opacity: animation,
-                                      child: child,
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  key: ValueKey('count-$p-$count'),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: isMobile ? 7 : 9,
-                                    vertical: isMobile ? 3 : 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.38),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.95),
-                                      width: 1.2,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        '$count',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: isMobile ? 14.5 : 17.0,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 0.6,
-                                          shadows: [
-                                            Shadow(
-                                              color: color.withOpacity(0.9),
-                                              blurRadius: 8.0,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      SizedBox(width: isMobile ? 4 : 6),
-                                      Text(
-                                        'wins',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.9),
-                                          fontSize: isMobile ? 10.5 : 12.0,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
           ),
-        );
-      },
-      ),
+        ),
+      );
+    },
     );
   }
 
@@ -521,9 +520,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     SettingsProvider settingsProvider,
     Color neonGlow,
   ) {
-    return RepaintBoundary(
-      child: _buildTurnIndicatorContent(context, gameProvider, settingsProvider, neonGlow),
-    );
+    // FIX: Removed RepaintBoundary here
+    return _buildTurnIndicatorContent(context, gameProvider, settingsProvider, neonGlow);
   }
 
   Widget _buildTurnIndicatorContent(
@@ -667,9 +665,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     GameProvider gameProvider,
     SettingsProvider settingsProvider,
   ) {
-    return RepaintBoundary(
-      child: _buildGameStatusContent(context, gameProvider, settingsProvider),
-    );
+    // FIX: Removed RepaintBoundary here
+    return _buildGameStatusContent(context, gameProvider, settingsProvider);
   }
 
   Widget _buildGameStatusContent(
@@ -764,9 +761,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
 
   Widget _buildActionButtons(BuildContext context, GameProvider gameProvider) {
-    return RepaintBoundary(
-      child: _buildActionButtonsContent(context, gameProvider),
-    );
+    // FIX: Removed RepaintBoundary here
+    return _buildActionButtonsContent(context, gameProvider);
   }
 
   Widget _buildActionButtonsContent(BuildContext context, GameProvider gameProvider) {

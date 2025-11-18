@@ -41,8 +41,8 @@ class HomeScreen extends StatelessWidget {
             child: Stack(
               children: [
                 BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                  child: Container(color: Colors.black.withAlpha((0.15 * 255).round())),
+                  filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                  child: Container(color: theme.AppTheme.getBackgroundOverlayColor(themeType)),
                 ),
                 SafeArea(
                   child: Center(
@@ -157,13 +157,14 @@ class _GlassCard extends StatelessWidget {
   const _GlassCard({required this.glassColor, required this.glassBorderColor, required this.child});
   @override
   Widget build(BuildContext context) {
+    final themeType = context.read<SettingsProvider>().currentTheme.toAppThemeType();
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24.0),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [glassColor, glassColor.withAlpha((0.7 * 255).round())],
+          colors: theme.AppTheme.getGlassSurfaceColors(themeType),
         ),
         border: Border.all(color: glassBorderColor, width: 1.5),
         boxShadow: [
@@ -173,7 +174,7 @@ class _GlassCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24.0),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          filter: ImageFilter.blur(sigmaX: 18.0, sigmaY: 18.0),
           child: child,
         ),
       ),
@@ -263,8 +264,8 @@ class _PlayScreen extends StatelessWidget {
         child: Stack(
           children: [
             BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-              child: Container(color: Colors.black.withAlpha((0.12 * 255).round())),
+              filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+              child: Container(color: theme.AppTheme.getBackgroundOverlayColor(themeType)),
             ),
             SafeArea(
               child: Padding(

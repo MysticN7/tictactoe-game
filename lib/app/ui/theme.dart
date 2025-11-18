@@ -144,10 +144,10 @@ class AppTheme {
         ];
       case AppThemeType.liquidGlow:
         return [
-          const Color(0xFF0A0A1F),
-          const Color(0xFF1A0F3A),
-          const Color(0xFF2D1B4A),
-          const Color(0xFF3A1F5C),
+          const Color(0xFF050A24),
+          const Color(0xFF0F1A3D),
+          const Color(0xFF1A2558),
+          const Color(0xFF2A2E6B),
         ];
     }
   }
@@ -159,7 +159,7 @@ class AppTheme {
       case AppThemeType.dark:
         return const Color(0xFF64B5F6);
       case AppThemeType.liquidGlow:
-        return const Color(0xFF00FFFF);
+        return const Color(0xFF00E5FF);
     }
   }
 
@@ -170,7 +170,38 @@ class AppTheme {
       case AppThemeType.dark:
         return const Color(0xFF81C784);
       case AppThemeType.liquidGlow:
-        return const Color(0xFFFF00FF);
+        return const Color(0xFFFF4DFF);
+    }
+  }
+
+  static List<Color> getGlassSurfaceColors(AppThemeType themeType) {
+    switch (themeType) {
+      case AppThemeType.light:
+        return [
+          Colors.white.withAlpha((0.30 * 255).round()),
+          Colors.white.withAlpha((0.22 * 255).round()),
+        ];
+      case AppThemeType.dark:
+        return [
+          Colors.white.withAlpha((0.16 * 255).round()),
+          Colors.white.withAlpha((0.10 * 255).round()),
+        ];
+      case AppThemeType.liquidGlow:
+        return [
+          const Color(0x66FFFFFF),
+          const Color(0x33FFFFFF),
+        ];
+    }
+  }
+
+  static Color getBackgroundOverlayColor(AppThemeType themeType) {
+    switch (themeType) {
+      case AppThemeType.light:
+        return Colors.white.withAlpha((0.08 * 255).round());
+      case AppThemeType.dark:
+        return Colors.black.withAlpha((0.12 * 255).round());
+      case AppThemeType.liquidGlow:
+        return const Color(0x2200E5FF);
     }
   }
 }

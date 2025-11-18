@@ -125,7 +125,6 @@ class _GameTileState extends State<_GameTile>
 
   @override
   Widget build(BuildContext context) {
-    final glassColor = theme.AppTheme.getGlassColor(widget.themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(widget.themeType);
     final playerColor = widget.player != null
         ? widget.settingsProvider.getPlayerColor(widget.player!)
@@ -146,10 +145,7 @@ class _GameTileState extends State<_GameTile>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  glassColor,
-                  glassColor.withAlpha((0.6 * 255).round()),
-                ],
+                colors: theme.AppTheme.getGlassSurfaceColors(widget.themeType),
               ),
               border: Border.all(
                 color: widget.isWinning

@@ -17,37 +17,43 @@ class GameBoard extends StatelessWidget {
         final themeType = settingsProvider.currentTheme.toAppThemeType();
         final winningPositions = game.winningLine?.positions ?? <int>[];
 
-        return RepaintBoundary(
-          child: Container(
-          padding: const EdgeInsets.all(16.0),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: game.boardSize,
-              crossAxisSpacing: 10.0,
-              mainAxisSpacing: 10.0,
-            ),
-            itemCount: game.boardSize * game.boardSize,
-            itemBuilder: (context, index) {
-              final row = index ~/ game.boardSize;
-              final col = index % game.boardSize;
-              final player = game.board![row][col];
-              final isWinningTile = winningPositions.contains(index);
-
-              return _GameTile(
-                key: ValueKey('tile-$row-$col'),
-                row: row,
-                col: col,
-                player: player,
-                isWinning: isWinningTile,
-                settingsProvider: settingsProvider,
-                themeType: themeType,
-                onTap: () => gameProvider.makeMove(row, col),
-              );
-            },
-          ),
-        ),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final size = constraints.biggest;
+            final tileExtent = (size.shortestSide - 16.0 * 2 - 10.0 * (game.boardSize - 1)) / game.boardSize;
+            return RepaintBoundary(
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: game.boardSize,
+                    crossAxisSpacing: 10.0,
+                    mainAxisSpacing: 10.0,
+                  ),
+                  itemCount: game.boardSize * game.boardSize,
+                  itemBuilder: (context, index) {
+                    final row = index ~/ game.boardSize;
+                    final col = index % game.boardSize;
+                    final player = game.board![row][col];
+                    final isWinningTile = winningPositions.contains(index);
+                    return _GameTile(
+                      key: ValueKey('tile-$row-$col'),
+                      row: row,
+                      col: col,
+                      player: player,
+                      isWinning: isWinningTile,
+                      settingsProvider: settingsProvider,
+                      themeType: themeType,
+                      onTap: () => gameProvider.makeMove(row, col),
+                      tileExtent: tileExtent,
+                    );
+                  },
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -62,6 +68,7 @@ class _GameTile extends StatefulWidget {
   final SettingsProvider settingsProvider;
   final theme.AppThemeType themeType;
   final VoidCallback onTap;
+  final double tileExtent;
 
   const _GameTile({
     required super.key,
@@ -72,6 +79,7 @@ class _GameTile extends StatefulWidget {
     required this.settingsProvider,
     required this.themeType,
     required this.onTap,
+    required this.tileExtent,
   });
 
   @override
@@ -187,7 +195,7 @@ class _GameTileState extends State<_GameTile>
                         child: Text(
                           playerIcon,
                           style: TextStyle(
-                            fontSize: _markerFontSize(widget.settingsProvider.boardSize, playerIcon),
+                            fontSize: _markerFontSize(widget.tileExtent, playerIcon),
                             fontWeight: FontWeight.bold,
                             color: widget.isWinning ? winningColor : playerColor,
                             shadows: [
@@ -210,16 +218,8 @@ class _GameTileState extends State<_GameTile>
     );
   }
 
-  double _markerFontSize(int boardSize, String icon) {
+  double _markerFontSize(double tileExtent, String icon) {
     final isSingleChar = icon.length == 1;
-    switch (boardSize) {
-      case 3:
-        return isSingleChar ? 64.0 : 52.0;
-      case 4:
-        return isSingleChar ? 52.0 : 44.0;
-      case 5:
-      default:
-        return isSingleChar ? 44.0 : 36.0;
-    }
+    return tileExtent * (isSingleChar ? 0.6 : 0.5);
   }
 }

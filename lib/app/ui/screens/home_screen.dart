@@ -100,23 +100,38 @@ class _HomeScreenState extends State<HomeScreen> {
                             final player = game.gameLogic.currentPlayer;
                             final name = context.read<SettingsProvider>().getPlayerName(player!);
                             final color = context.read<SettingsProvider>().getPlayerColor(player);
-                            return Container(
-                              padding: const EdgeInsets.all(14.0),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16.0),
-                                color: glassColor,
-                                border: Border.all(color: glassBorderColor, width: 1.5),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    context.read<SettingsProvider>().getPlayerIcon(player),
-                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text("${name.toUpperCase()}'s Turn"),
-                                ],
+                            final isOver = game.gameLogic.isGameOver;
+                            final winner = game.gameLogic.winner;
+                            return AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 250),
+                              child: Container(
+                                key: ValueKey(isOver ? 'over' : 'turn'),
+                                padding: const EdgeInsets.all(14.0),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16.0),
+                                  gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: theme.AppTheme.getGlassSurfaceColors(themeType)),
+                                  border: Border.all(color: glassBorderColor, width: 1.6),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (!isOver) ...[
+                                      Text(context.read<SettingsProvider>().getPlayerIcon(player), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+                                      const SizedBox(width: 8),
+                                      Text("${name.toUpperCase()}'s Turn"),
+                                    ] else ...[
+                                      if (winner != null) ...[
+                                        Text(context.read<SettingsProvider>().getPlayerIcon(winner), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.read<SettingsProvider>().getPlayerColor(winner))),
+                                        const SizedBox(width: 8),
+                                        Text("${context.read<SettingsProvider>().getPlayerName(winner).toUpperCase()} WINS"),
+                                      ] else ...[
+                                        const Icon(Icons.handshake_rounded, color: Colors.white),
+                                        const SizedBox(width: 8),
+                                        const Text("DRAW"),
+                                      ]
+                                    ]
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -257,20 +272,33 @@ class _Scoreboard extends StatelessWidget {
         return Expanded(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 6.0),
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14.0),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16.0),
-              color: isActive ? glassColor : glassColor.withAlpha((0.12 * 255).round()),
-              border: Border.all(color: isActive ? glassBorderColor : glassBorderColor.withAlpha((0.4 * 255).round()), width: 1.5),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: theme.AppTheme.getGlassSurfaceColors(themeType),
+              ),
+              border: Border.all(color: isActive ? glassBorderColor : glassBorderColor.withAlpha((0.4 * 255).round()), width: 1.8),
+              boxShadow: [
+                BoxShadow(color: color.withAlpha((isActive ? 90 : 35)), blurRadius: isActive ? 14.0 : 8.0, spreadRadius: 0.8),
+              ],
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
                 const SizedBox(width: 8),
-                Text(name, style: const TextStyle(color: Colors.white)),
-                const Spacer(),
-                Text('$winCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                Expanded(child: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                  child: Text(
+                    '$winCount',
+                    key: ValueKey('wins-$p-$winCount'),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 18),
+                  ),
+                ),
               ],
             ),
           ),
@@ -288,39 +316,84 @@ class _BottomActions extends StatelessWidget {
   const _BottomActions({required this.themeType, required this.onUndo, required this.onRestart, required this.onHistory});
   @override
   Widget build(BuildContext context) {
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    final actionColors = theme.AppTheme.getGlassSurfaceColors(themeType);
     Widget buildButton(IconData icon, String label, VoidCallback onTap) {
       return Expanded(
-        child: GestureDetector(
+        child: _ActionButton(
+          gradientColors: actionColors,
+          borderColor: glassBorderColor,
+          icon: icon,
+          label: label,
           onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.0),
-              color: glassColor,
-              border: Border.all(color: glassBorderColor, width: 1.5),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white),
-                const SizedBox(width: 8),
-                Text(label),
-              ],
-            ),
-          ),
         ),
       );
     }
     return Row(
       children: [
         buildButton(Icons.undo_rounded, 'Undo', onUndo),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         buildButton(Icons.restart_alt_rounded, 'Restart', onRestart),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         buildButton(Icons.history_rounded, 'History', onHistory),
       ],
+    );
+  }
+}
+
+class _ActionButton extends StatefulWidget {
+  final List<Color> gradientColors;
+  final Color borderColor;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ActionButton({required this.gradientColors, required this.borderColor, required this.icon, required this.label, required this.onTap});
+  @override
+  State<_ActionButton> createState() => _ActionButtonState();
+}
+
+class _ActionButtonState extends State<_ActionButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 120));
+    _scale = Tween<double>(begin: 1.0, end: 0.96).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+  }
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+  void _press() {
+    _controller.forward().then((_) => _controller.reverse());
+    widget.onTap();
+  }
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scale,
+      child: GestureDetector(
+        onTap: _press,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.0),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: widget.gradientColors),
+            border: Border.all(color: widget.borderColor, width: 1.6),
+            boxShadow: [BoxShadow(color: widget.borderColor.withAlpha(90), blurRadius: 10.0, spreadRadius: 0.8)],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(widget.icon, color: Colors.white),
+              const SizedBox(width: 10),
+              Text(widget.label, style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

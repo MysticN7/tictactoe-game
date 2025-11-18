@@ -7,29 +7,45 @@ import '../../logic/settings_provider.dart';
 import '../../logic/game_provider.dart';
 import '../theme.dart' as theme;
 import '../widgets/game_board.dart';
+import '../widgets/particles_overlay.dart';
 import 'settings_root_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final ParticlesController _confetti = ParticlesController();
+  int _lastHistorySize = 0;
+
+  @override
+  void dispose() {
+    _confetti.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer2<SettingsProvider, GameProvider>(
-      builder: (context, settings, game, _) {
+    return Consumer3<SettingsProvider, ScoresProvider, GameProvider>(
+      builder: (context, settings, scores, game, _) {
         final themeType = settings.currentTheme.toAppThemeType();
         final gradientColors = theme.AppTheme.getGradientColors(themeType);
         final glassColor = theme.AppTheme.getGlassColor(themeType);
         final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
 
+        if (settings.isConfettiEnabled && game.matchHistory.length > _lastHistorySize) {
+          if (game.matchHistory.isNotEmpty && game.matchHistory.first.winner != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) => _confetti.play());
+          }
+          _lastHistorySize = game.matchHistory.length;
+        }
+
         return Scaffold(
           extendBodyBehindAppBar: true,
           backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: const Text('Tic Tac Toe 3 Player X O △'),
-            centerTitle: true,
-          ),
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -45,101 +61,92 @@ class HomeScreen extends StatelessWidget {
                   child: Container(color: theme.AppTheme.getBackgroundOverlayColor(themeType)),
                 ),
                 SafeArea(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 520),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
                           children: [
-                            Text(
-                              'Liquid Glow',
-                              style: Theme.of(context).textTheme.displayLarge,
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Play X O △ with glass morphism style',
-                              style: Theme.of(context).textTheme.bodyLarge,
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 24),
-                            _GlassCard(
-                              glassColor: glassColor,
-                              glassBorderColor: glassBorderColor,
-                              child: Padding(
-                                padding: const EdgeInsets.all(20.0),
-                                child: Column(
-                                  children: [
-                                    _MenuButton(
-                                      label: 'Play',
-                                      icon: Icons.play_arrow_rounded,
-                                      themeType: themeType,
-                                      onTap: () {
-                                        game.resetGame();
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => _PlayScreen(themeType: themeType),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 12),
-                                    _MenuButton(
-                                      label: 'Continue',
-                                      icon: Icons.refresh_rounded,
-                                      themeType: themeType,
-                                      enabled: game.matchHistory.isNotEmpty && !game.gameLogic.isGameOver,
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => _PlayScreen(themeType: themeType),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 12),
-                                    _MenuButton(
-                                      label: 'Settings',
-                                      icon: Icons.settings_rounded,
-                                      themeType: themeType,
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(builder: (_) => const SettingsRootScreen()),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
+                            Expanded(
+                              child: _Scoreboard(
+                                themeType: themeType,
+                                settings: settings,
+                                scores: scores,
+                                activePlayers: settings.activePlayers,
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            if (game.matchHistory.isNotEmpty)
-                              _GlassCard(
-                                glassColor: glassColor,
-                                glassBorderColor: glassBorderColor,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('Recent Match', style: TextStyle(fontWeight: FontWeight.bold)),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        game.matchHistory.first.winner != null
-                                            ? 'Winner: ${game.matchHistory.first.winner!.name.toUpperCase()}'
-                                            : 'Draw',
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const SettingsRootScreen()),
                               ),
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: glassColor,
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(color: glassBorderColor, width: 1.5),
+                                ),
+                                child: const Icon(Icons.settings_rounded, size: 20),
+                              ),
+                            ),
                           ],
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        Consumer<GameProvider>(
+                          builder: (context, game, _) {
+                            final player = game.gameLogic.currentPlayer;
+                            final name = context.read<SettingsProvider>().getPlayerName(player!);
+                            final color = context.read<SettingsProvider>().getPlayerColor(player);
+                            return Container(
+                              padding: const EdgeInsets.all(14.0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16.0),
+                                color: glassColor,
+                                border: Border.all(color: glassBorderColor, width: 1.5),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    context.read<SettingsProvider>().getPlayerIcon(player),
+                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text("${name.toUpperCase()}'s Turn"),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: _GlassCard(
+                            glassColor: glassColor,
+                            glassBorderColor: glassBorderColor,
+                            child: const Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: GameBoard(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _BottomActions(
+                          themeType: themeType,
+                          onUndo: () => context.read<GameProvider>().undoLastMove(),
+                          onRestart: () => context.read<GameProvider>().resetGame(),
+                          onHistory: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const HistoryScreen()),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                ),
+                Consumer<SettingsProvider>(
+                  builder: (context, s, _) => ParticlesOverlay(controller: _confetti, enabled: s.isConfettiEnabled),
                 ),
               ],
             ),
@@ -182,161 +189,9 @@ class _GlassCard extends StatelessWidget {
   }
 }
 
-class _MenuButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final theme.AppThemeType themeType;
-  final VoidCallback onTap;
-  final bool enabled;
-  const _MenuButton({required this.label, required this.icon, required this.themeType, required this.onTap, this.enabled = true});
-  @override
-  Widget build(BuildContext context) {
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    final color = theme.AppTheme.getNeonGlowColor(themeType);
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 200),
-        opacity: enabled ? 1.0 : 0.6,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18.0, horizontal: 16.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20.0),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [glassColor, glassColor.withAlpha((0.6 * 255).round())],
-            ),
-            border: Border.all(color: enabled ? glassBorderColor : glassBorderColor.withAlpha((0.4 * 255).round()), width: 2.0),
-            boxShadow: [
-              BoxShadow(color: color.withAlpha((0.25 * 255).round()), blurRadius: 12.0, spreadRadius: 1.5),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20.0),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, color: Colors.white),
-                  const SizedBox(width: 10),
-                  Text(label, style: const TextStyle(fontSize: 18.0, fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+// Removed main menu button UI per redesign
 
-class _PlayScreen extends StatelessWidget {
-  final theme.AppThemeType themeType;
-  const _PlayScreen({required this.themeType});
-  @override
-  Widget build(BuildContext context) {
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    final gradientColors = theme.AppTheme.getGradientColors(themeType);
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: const [],
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: gradientColors,
-          ),
-        ),
-        child: Stack(
-          children: [
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
-              child: Container(color: theme.AppTheme.getBackgroundOverlayColor(themeType)),
-            ),
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Consumer3<SettingsProvider, ScoresProvider, GameProvider>(
-                      builder: (context, settings, scores, game, _) {
-                        return _Scoreboard(
-                          themeType: themeType,
-                          settings: settings,
-                          scores: scores,
-                          activePlayers: settings.activePlayers,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: _GlassCard(
-                        glassColor: glassColor,
-                        glassBorderColor: glassBorderColor,
-                        child: const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: GameBoard(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Consumer<GameProvider>(
-                      builder: (context, game, _) {
-                        final player = game.gameLogic.currentPlayer;
-                        final name = context.read<SettingsProvider>().getPlayerName(player!);
-                        final color = context.read<SettingsProvider>().getPlayerColor(player);
-                        return Container(
-                          padding: const EdgeInsets.all(12.0),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16.0),
-                            color: glassColor,
-                            border: Border.all(color: glassBorderColor, width: 1.5),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                              const SizedBox(width: 8),
-                              Text('Turn: $name'),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _BottomActions(
-                      themeType: themeType,
-                      onUndo: () => context.read<GameProvider>().undoLastMove(),
-                      onRestart: () => context.read<GameProvider>().resetGame(),
-                      onHistory: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const HistoryScreen()),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// Play screen merged into HomeScreen
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});

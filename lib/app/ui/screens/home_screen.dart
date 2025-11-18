@@ -66,34 +66,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _Scoreboard(
-                                themeType: themeType,
-                                settings: settings,
-                                scores: scores,
-                                activePlayers: settings.activePlayers,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const SettingsRootScreen()),
-                              ),
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: glassColor,
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(color: glassBorderColor, width: 1.5),
-                                ),
-                                child: const Icon(Icons.settings_rounded, size: 20),
-                              ),
-                            ),
-                          ],
+                        _Scoreboard(
+                          themeType: themeType,
+                          settings: settings,
+                          scores: scores,
+                          activePlayers: settings.activePlayers,
                         ),
+                        const SizedBox(height: 10),
                         const SizedBox(height: 12),
                         Consumer<GameProvider>(
                           builder: (context, game, _) {
@@ -103,7 +82,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             final isOver = game.gameLogic.isGameOver;
                             final winner = game.gameLogic.winner;
                             return AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 250),
+                              duration: const Duration(milliseconds: 320),
+                              transitionBuilder: (child, anim) {
+                                final slide = Tween<Offset>(begin: const Offset(0, -0.06), end: Offset.zero).animate(anim);
+                                return FadeTransition(opacity: anim, child: SlideTransition(position: slide, child: child));
+                              },
                               child: Container(
                                 key: ValueKey(isOver ? 'over' : 'turn'),
                                 padding: const EdgeInsets.all(14.0),
@@ -157,6 +140,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SettingsRootScreen()),
+                    ),
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: theme.AppTheme.getGlassColor(themeType),
+                        borderRadius: BorderRadius.circular(19),
+                        border: Border.all(color: theme.AppTheme.getGlassBorderColor(themeType), width: 1.6),
+                      ),
+                      child: const Icon(Icons.settings_rounded, size: 20),
                     ),
                   ),
                 ),
@@ -261,7 +263,7 @@ class _Scoreboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    final players = Player.values;
+    final players = activePlayers;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: players.map((p) {
@@ -289,7 +291,7 @@ class _Scoreboard extends StatelessWidget {
               children: [
                 Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
                 const SizedBox(width: 8),
-                Expanded(child: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+                Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),

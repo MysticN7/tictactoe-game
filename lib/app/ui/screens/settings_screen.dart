@@ -51,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                  child: Container(color: Colors.black.withOpacity(0.2)),
+                  child: Container(color: Colors.black.withAlpha((0.2 * 255).round())),
                 ),
                 SafeArea(
                   child: Column(
@@ -350,12 +350,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16.0),
           color: isSelected
-              ? glassBorderColor.withOpacity(0.3)
+              ? glassBorderColor.withAlpha((0.3 * 255).round())
               : glassColor,
           border: Border.all(
             color: isSelected
                 ? glassBorderColor
-                : glassBorderColor.withOpacity(0.5),
+                : glassBorderColor.withAlpha((0.5 * 255).round()),
             width: isSelected ? 2.5 : 1.5,
           ),
         ),
@@ -401,7 +401,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: playerColor.withOpacity(0.2),
+                    color: playerColor.withAlpha((0.2 * 255).round()),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: playerColor, width: 2),
                   ),
@@ -503,7 +503,7 @@ class _PlayerNameFieldState extends State<_PlayerNameField> {
           borderRadius: BorderRadius.circular(12),
         ),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.1),
+        fillColor: Colors.white.withAlpha((0.1 * 255).round()),
       ),
       style: const TextStyle(color: Colors.white),
       onChanged: widget.onChanged,
@@ -561,7 +561,7 @@ class _PlayerIconFieldState extends State<_PlayerIconField> {
           borderRadius: BorderRadius.circular(12),
         ),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.1),
+        fillColor: Colors.white.withAlpha((0.1 * 255).round()),
       ),
       style: const TextStyle(color: Colors.white, fontSize: 18),
       maxLength: widget.maxLength,
@@ -621,7 +621,7 @@ extension SettingsScreenHelpers on _SettingsScreenState {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withAlpha((0.2 * 255).round()),
             blurRadius: 10.0,
             spreadRadius: 1.0,
           ),

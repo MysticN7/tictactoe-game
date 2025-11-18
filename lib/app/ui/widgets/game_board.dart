@@ -148,32 +148,32 @@ class _GameTileState extends State<_GameTile>
                 end: Alignment.bottomRight,
                 colors: [
                   glassColor,
-                  glassColor.withOpacity(0.6),
+                  glassColor.withAlpha((0.6 * 255).round()),
                 ],
               ),
               border: Border.all(
                 color: widget.isWinning
-                    ? winningColor.withOpacity(0.7 + _glowAnimation.value * 0.2)
+                    ? winningColor.withAlpha(((0.7 + _glowAnimation.value * 0.2) * 255).round())
                     : widget.player != null
-                        ? playerColor.withOpacity(0.4)
+                        ? playerColor.withAlpha((0.4 * 255).round())
                         : glassBorderColor,
                 width: widget.isWinning ? 2.5 : 2.0,
               ),
               boxShadow: [
                 if (widget.isWinning)
                   BoxShadow(
-                    color: winningColor.withOpacity(0.5 + _glowAnimation.value * 0.2),
+                    color: winningColor.withAlpha(((0.5 + _glowAnimation.value * 0.2) * 255).round()),
                     blurRadius: 12.0,
                     spreadRadius: 1.0,
                   )
                 else if (widget.player != null)
                   BoxShadow(
-                    color: playerColor.withOpacity(0.3),
+                    color: playerColor.withAlpha((0.3 * 255).round()),
                     blurRadius: 8.0,
                     spreadRadius: 0.5,
                   ),
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withAlpha((0.15 * 255).round()),
                   blurRadius: 6.0,
                   spreadRadius: 0.5,
                 ),
@@ -197,8 +197,8 @@ class _GameTileState extends State<_GameTile>
                             shadows: [
                               Shadow(
                                 color: widget.isWinning
-                                    ? winningColor.withOpacity(0.9)
-                                    : playerColor.withOpacity(0.6),
+                                    ? winningColor.withAlpha((0.9 * 255).round())
+                                    : playerColor.withAlpha((0.6 * 255).round()),
                                 blurRadius: 8.0,
                               ),
                             ],

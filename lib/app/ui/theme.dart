@@ -17,7 +17,7 @@ class AppTheme {
     brightness: Brightness.light,
     primaryColor: const Color(0xFF2196F3),
     scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-    cardColor: Colors.white.withOpacity(0.8),
+    cardColor: Colors.white.withAlpha((0.8 * 255).round()),
     textTheme: const TextTheme(
       displayLarge: TextStyle(
         fontFamily: 'Roboto',
@@ -108,22 +108,22 @@ class AppTheme {
   static Color getGlassColor(AppThemeType themeType) {
     switch (themeType) {
       case AppThemeType.light:
-        return Colors.white.withOpacity(0.3);
+        return Colors.white.withAlpha((0.3 * 255).round());
       case AppThemeType.dark:
-        return Colors.white.withOpacity(0.12);
+        return Colors.white.withAlpha((0.12 * 255).round());
       case AppThemeType.liquidGlow:
-        return Colors.white.withOpacity(0.18);
+        return Colors.white.withAlpha((0.18 * 255).round());
     }
   }
 
   static Color getGlassBorderColor(AppThemeType themeType) {
     switch (themeType) {
       case AppThemeType.light:
-        return Colors.white.withOpacity(0.5);
+        return Colors.white.withAlpha((0.5 * 255).round());
       case AppThemeType.dark:
-        return const Color(0xFF64B5F6).withOpacity(0.5);
+        return const Color(0xFF64B5F6).withAlpha((0.5 * 255).round());
       case AppThemeType.liquidGlow:
-        return const Color(0xFF00FFFF).withOpacity(0.7);
+        return const Color(0xFF00FFFF).withAlpha((0.7 * 255).round());
     }
   }
 

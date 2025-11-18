@@ -118,7 +118,7 @@ class _ParticlesPainter extends CustomPainter {
       
       // Fade out as they fall
       final opacity = (1 - (t * 1.2)).clamp(0.0, 1.0);
-      paint.color = p.color.withOpacity(opacity);
+      paint.color = p.color.withAlpha((opacity * 255).round());
       
       // Draw with rotation for more dynamic effect
       canvas.save();

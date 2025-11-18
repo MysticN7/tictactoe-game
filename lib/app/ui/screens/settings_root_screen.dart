@@ -51,7 +51,7 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
               children: [
                 BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
-                  child: Container(color: Colors.black.withOpacity(0.2)),
+                  child: Container(color: Colors.black.withAlpha((0.2 * 255).round())),
                 ),
                 SafeArea(
                   child: IndexedStack(
@@ -79,7 +79,7 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
+                  color: Colors.black.withAlpha((0.18 * 255).round()),
                   blurRadius: 12.0,
                   spreadRadius: 1.0,
                 ),
@@ -132,7 +132,7 @@ class _GlassCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             glassColor,
-            glassColor.withOpacity(0.7),
+            glassColor.withAlpha((0.7 * 255).round()),
           ],
         ),
         border: Border.all(
@@ -141,7 +141,7 @@ class _GlassCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha((0.1 * 255).round()),
             blurRadius: 20.0,
             spreadRadius: 0,
             offset: const Offset(0, 4),
@@ -193,9 +193,9 @@ class _GameSettingsPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(
-                        color: glassColor.withOpacity(0.3),
+                        color: glassColor.withAlpha((0.3 * 255).round()),
                         borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: glassBorderColor.withOpacity(0.5), width: 1.5),
+                        border: Border.all(color: glassBorderColor.withAlpha((0.5 * 255).round()), width: 1.5),
                       ),
                       child: const Icon(Icons.grid_on_rounded, color: Colors.white, size: 24),
                     ),
@@ -232,24 +232,24 @@ class _GameSettingsPage extends StatelessWidget {
                             end: Alignment.bottomRight,
                             colors: isSelected
                                 ? [
-                                    glassBorderColor.withOpacity(0.4),
-                                    glassBorderColor.withOpacity(0.2),
+                                    glassBorderColor.withAlpha((0.4 * 255).round()),
+                                    glassBorderColor.withAlpha((0.2 * 255).round()),
                                   ]
                                 : [
-                                    glassColor.withOpacity(0.3),
-                                    glassColor.withOpacity(0.1),
+                                    glassColor.withAlpha((0.3 * 255).round()),
+                                    glassColor.withAlpha((0.1 * 255).round()),
                                   ],
                           ),
                           border: Border.all(
                             color: isSelected
                                 ? glassBorderColor
-                                : glassBorderColor.withOpacity(0.3),
+                                : glassBorderColor.withAlpha((0.3 * 255).round()),
                             width: isSelected ? 2.5 : 1.5,
                           ),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: glassBorderColor.withOpacity(0.4),
+                                    color: glassBorderColor.withAlpha((0.4 * 255).round()),
                                     blurRadius: 12.0,
                                     spreadRadius: 2.0,
                                   ),
@@ -305,9 +305,9 @@ class _GameSettingsPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(
-                        color: glassColor.withOpacity(0.3),
+                        color: glassColor.withAlpha((0.3 * 255).round()),
                         borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: glassBorderColor.withOpacity(0.5), width: 1.5),
+                        border: Border.all(color: glassBorderColor.withAlpha((0.5 * 255).round()), width: 1.5),
                       ),
                       child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 24),
                     ),
@@ -344,24 +344,24 @@ class _GameSettingsPage extends StatelessWidget {
                             end: Alignment.bottomRight,
                             colors: isSelected
                                 ? [
-                                    glassBorderColor.withOpacity(0.4),
-                                    glassBorderColor.withOpacity(0.2),
+                                    glassBorderColor.withAlpha((0.4 * 255).round()),
+                                    glassBorderColor.withAlpha((0.2 * 255).round()),
                                   ]
                                 : [
-                                    glassColor.withOpacity(0.3),
-                                    glassColor.withOpacity(0.1),
+                                    glassColor.withAlpha((0.3 * 255).round()),
+                                    glassColor.withAlpha((0.1 * 255).round()),
                                   ],
                           ),
                           border: Border.all(
                             color: isSelected
                                 ? glassBorderColor
-                                : glassBorderColor.withOpacity(0.3),
+                                : glassBorderColor.withAlpha((0.3 * 255).round()),
                             width: isSelected ? 2.5 : 1.5,
                           ),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: glassBorderColor.withOpacity(0.4),
+                                    color: glassBorderColor.withAlpha((0.4 * 255).round()),
                                     blurRadius: 12.0,
                                     spreadRadius: 2.0,
                                   ),
@@ -465,22 +465,22 @@ class _ModeButton extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: selected
                 ? [
-                    glassBorderColor.withOpacity(0.4),
-                    glassBorderColor.withOpacity(0.2),
+                    glassBorderColor.withAlpha((0.4 * 255).round()),
+                    glassBorderColor.withAlpha((0.2 * 255).round()),
                   ]
                 : [
-                    glassColor.withOpacity(0.3),
-                    glassColor.withOpacity(0.1),
+                    glassColor.withAlpha((0.3 * 255).round()),
+                    glassColor.withAlpha((0.1 * 255).round()),
                   ],
           ),
           border: Border.all(
-            color: selected ? glassBorderColor : glassBorderColor.withOpacity(0.3),
+            color: selected ? glassBorderColor : glassBorderColor.withAlpha((0.3 * 255).round()),
             width: selected ? 2.5 : 1.5,
           ),
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: glassBorderColor.withOpacity(0.4),
+                    color: glassBorderColor.withAlpha((0.4 * 255).round()),
                     blurRadius: 12.0,
                     spreadRadius: 2.0,
                   ),
@@ -589,7 +589,7 @@ class _PlayersPageState extends State<_PlayersPage> {
                 ListTile(
                   leading: Container(
                     width: 40, height: 40,
-                    decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(10), border: Border.all(color: color, width: 2)),
+                    decoration: BoxDecoration(color: color.withAlpha((0.2 * 255).round()), borderRadius: BorderRadius.circular(10), border: Border.all(color: color, width: 2)),
                     child: Center(child: Text(config.icon, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color))),
                   ),
                   title: Text(config.name, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -598,7 +598,7 @@ class _PlayersPageState extends State<_PlayersPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: TextField(
-                    decoration: InputDecoration(labelText: 'Player Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withOpacity(0.1)),
+                    decoration: InputDecoration(labelText: 'Player Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withAlpha((0.1 * 255).round())),
                     style: const TextStyle(color: Colors.white),
                     controller: nameController,
                     onChanged: (v) {
@@ -611,7 +611,7 @@ class _PlayersPageState extends State<_PlayersPage> {
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: TextField(
-                    decoration: InputDecoration(labelText: 'Player Icon', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withOpacity(0.1)),
+                    decoration: InputDecoration(labelText: 'Player Icon', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withAlpha((0.1 * 255).round())),
                     style: const TextStyle(color: Colors.white, fontSize: 18),
                     controller: iconController,
                     maxLength: 2,
@@ -739,9 +739,9 @@ class _AboutPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(
-                        color: glassColor.withOpacity(0.3),
+                        color: glassColor.withAlpha((0.3 * 255).round()),
                         borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: glassBorderColor.withOpacity(0.5), width: 1.5),
+                        border: Border.all(color: glassBorderColor.withAlpha((0.5 * 255).round()), width: 1.5),
                       ),
                       child: const Icon(Icons.privacy_tip_rounded, color: Colors.white, size: 24),
                     ),

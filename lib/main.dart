@@ -25,9 +25,9 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()..loadPersistence()),
         ChangeNotifierProvider(create: (_) => ScoresProvider()..load()),
-        ChangeNotifierProxyProvider<SettingsProvider, GameProvider>(
+        ChangeNotifierProxyProvider2<SettingsProvider, ScoresProvider, GameProvider>(
           create: (_) => GameProvider(),
-          update: (_, settings, game) => game!..setSettingsProvider(settings),
+          update: (_, settings, scores, game) => game!..setSettingsProvider(settings)..setScoresProvider(scores),
         ),
       ],
       child: const MyApp(),

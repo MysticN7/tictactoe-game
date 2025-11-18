@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../logic/scores_provider.dart';
+import '../../logic/game_logic.dart';
 import '../../logic/settings_provider.dart';
 import '../../logic/game_provider.dart';
 import '../theme.dart' as theme;
@@ -248,16 +250,7 @@ class _PlayScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.restart_alt_rounded),
-            onPressed: () => context.read<GameProvider>().resetGame(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.undo_rounded),
-            onPressed: () => context.read<GameProvider>().undoLastMove(),
-          ),
-        ],
+        actions: const [],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -279,6 +272,17 @@ class _PlayScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Consumer3<SettingsProvider, ScoresProvider, GameProvider>(
+                      builder: (context, settings, scores, game, _) {
+                        return _Scoreboard(
+                          themeType: themeType,
+                          settings: settings,
+                          scores: scores,
+                          activePlayers: settings.activePlayers,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
                     Expanded(
                       child: _GlassCard(
                         glassColor: glassColor,
@@ -313,6 +317,15 @@ class _PlayScreen extends StatelessWidget {
                         );
                       },
                     ),
+                    const SizedBox(height: 12),
+                    _BottomActions(
+                      themeType: themeType,
+                      onUndo: () => context.read<GameProvider>().undoLastMove(),
+                      onRestart: () => context.read<GameProvider>().resetGame(),
+                      onHistory: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const HistoryScreen()),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -320,6 +333,138 @@ class _PlayScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class HistoryScreen extends StatelessWidget {
+  const HistoryScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final themeType = settings.currentTheme.toAppThemeType();
+    final glassColor = theme.AppTheme.getGlassColor(themeType);
+    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    final matches = context.watch<GameProvider>().matchHistory;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Match History')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView.separated(
+          itemCount: matches.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, i) {
+            final m = matches[i];
+            final winnerName = m.winner != null ? settings.getPlayerName(m.winner!) : 'Draw';
+            final winnerColor = m.winner != null ? settings.getPlayerColor(m.winner!) : Colors.white70;
+            return Container(
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16.0),
+                color: glassColor,
+                border: Border.all(color: glassBorderColor, width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.emoji_events_rounded, color: winnerColor),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('${m.boardSize}x${m.boardSize}, win ${m.winCondition} • $winnerName')),
+                  Text('${m.moveCount} moves'),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _Scoreboard extends StatelessWidget {
+  final theme.AppThemeType themeType;
+  final SettingsProvider settings;
+  final ScoresProvider scores;
+  final List<Player> activePlayers;
+  const _Scoreboard({required this.themeType, required this.settings, required this.scores, required this.activePlayers});
+  @override
+  Widget build(BuildContext context) {
+    final glassColor = theme.AppTheme.getGlassColor(themeType);
+    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    final players = Player.values;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: players.map((p) {
+        final name = settings.getPlayerName(p);
+        final color = settings.getPlayerColor(p);
+        final winCount = scores.wins[p] ?? 0;
+        final isActive = activePlayers.contains(p);
+        return Expanded(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 6.0),
+            padding: const EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16.0),
+              color: isActive ? glassColor : glassColor.withAlpha((0.12 * 255).round()),
+              border: Border.all(color: isActive ? glassBorderColor : glassBorderColor.withAlpha((0.4 * 255).round()), width: 1.5),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                const SizedBox(width: 8),
+                Text(name, style: const TextStyle(color: Colors.white)),
+                const Spacer(),
+                Text('$winCount', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _BottomActions extends StatelessWidget {
+  final theme.AppThemeType themeType;
+  final VoidCallback onUndo;
+  final VoidCallback onRestart;
+  final VoidCallback onHistory;
+  const _BottomActions({required this.themeType, required this.onUndo, required this.onRestart, required this.onHistory});
+  @override
+  Widget build(BuildContext context) {
+    final glassColor = theme.AppTheme.getGlassColor(themeType);
+    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    Widget buildButton(IconData icon, String label, VoidCallback onTap) {
+      return Expanded(
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16.0),
+              color: glassColor,
+              border: Border.all(color: glassBorderColor, width: 1.5),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(label),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return Row(
+      children: [
+        buildButton(Icons.undo_rounded, 'Undo', onUndo),
+        const SizedBox(width: 10),
+        buildButton(Icons.restart_alt_rounded, 'Restart', onRestart),
+        const SizedBox(width: 10),
+        buildButton(Icons.history_rounded, 'History', onHistory),
+      ],
     );
   }
 }

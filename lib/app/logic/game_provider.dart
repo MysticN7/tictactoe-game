@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tic_tac_toe_3_player/app/logic/game_logic.dart';
 import 'package:tic_tac_toe_3_player/app/logic/settings_provider.dart';
+import 'package:tic_tac_toe_3_player/app/logic/scores_provider.dart';
 import 'package:tic_tac_toe_3_player/app/utils/admob_service.dart';
 import 'package:tic_tac_toe_3_player/app/utils/sound_service.dart';
 import 'package:tic_tac_toe_3_player/app/utils/vibration_service.dart';
@@ -24,6 +25,7 @@ class GameMatch {
 class GameProvider extends ChangeNotifier {
   GameLogic _gameLogic;
   SettingsProvider? _settingsProvider;
+  ScoresProvider? _scoresProvider;
   List<GameMatch> _matchHistory = [];
 
   GameProvider() : _gameLogic = GameLogic() {
@@ -34,6 +36,10 @@ class GameProvider extends ChangeNotifier {
     _settingsProvider = settingsProvider;
     _settingsProvider?.addListener(_onSettingsChanged);
     _updateGameFromSettings();
+  }
+
+  void setScoresProvider(ScoresProvider scoresProvider) {
+    _scoresProvider = scoresProvider;
   }
 
   void _onSettingsChanged() {
@@ -70,6 +76,7 @@ class GameProvider extends ChangeNotifier {
 
       if (_gameLogic.isGameOver) {
         if (_gameLogic.winner != null) {
+          _scoresProvider?.increment(_gameLogic.winner!);
           if (_settingsProvider?.isSoundEnabled ?? false) {
             SoundService.playWinSound();
           }

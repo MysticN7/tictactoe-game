@@ -1,0 +1,221 @@
+2025-11-18 00:17:07.093  3175-4110  InputDispatcher         pid-3175                             W  channel d2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)~ dropping inconsistent event: DispatchEntry{resolvedFlags=0, targetFlags=0x0, transform=transform (ROT_0) (IDENTITY)
+                                                                                                    } original: MotionEvent(action=HOVER_EXIT)
+2025-11-18 00:17:07.108  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x0, deviceId=-1, 879706, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:07.109  3175-6003  RTMode                  pid-3175                             E  pkgName: com.liquidarc.tictactoe has no permission
+2025-11-18 00:17:07.113 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=879706, downTime=879706, phoneEventTime=00:17:07.097 } moveCount:0
+2025-11-18 00:17:07.216  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x1, deviceId=-1, 879824, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:07.222 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=879824, downTime=879706, phoneEventTime=00:17:07.215 } moveCount:0
+2025-11-18 00:17:08.972  3175-4110  InputDispatcher         pid-3175                             W  channel d2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)~ dropping inconsistent event: DispatchEntry{resolvedFlags=0, targetFlags=0x0, transform=transform (ROT_0) (IDENTITY)
+                                                                                                    } original: MotionEvent(action=HOVER_EXIT)
+2025-11-18 00:17:08.989  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x0, deviceId=-1, 881588, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:08.991  3175-6003  RTMode                  pid-3175                             E  pkgName: com.liquidarc.tictactoe has no permission
+2025-11-18 00:17:08.995 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=881588, downTime=881588, phoneEventTime=00:17:08.978 } moveCount:0
+2025-11-18 00:17:08.996  3175-6003  RTMode                  pid-3175                             E  pkgName: com.liquidarc.tictactoe has no permission
+2025-11-18 00:17:09.104  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x1, deviceId=-1, 881712, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:09.109 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=881712, downTime=881588, phoneEventTime=00:17:09.103 } moveCount:1
+2025-11-18 00:17:09.118  3175-7078  ClipboardServiceI       pid-3175                             I  checkProviderWakePathForClipboard: com.liquidarc.tictactoeis not a activePermissionOwner
+2025-11-18 00:17:10.317  3175-4110  InputDispatcher         pid-3175                             W  channel d2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)~ dropping inconsistent event: DispatchEntry{resolvedFlags=0, targetFlags=0x0, transform=transform (ROT_0) (IDENTITY)
+                                                                                                    } original: MotionEvent(action=HOVER_EXIT)
+2025-11-18 00:17:10.328  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x0, deviceId=-1, 882930, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:10.329 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=882930, downTime=882930, phoneEventTime=00:17:10.320 } moveCount:0
+2025-11-18 00:17:10.331  3175-6003  RTMode                  pid-3175                             E  pkgName: com.liquidarc.tictactoe has no permission
+2025-11-18 00:17:10.393  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x1, deviceId=-1, 883001, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:10.397 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=883001, downTime=882930, phoneEventTime=00:17:10.392 } moveCount:0
+2025-11-18 00:17:10.407  3175-7077  ClipboardServiceI       pid-3175                             I  checkProviderWakePathForClipboard: com.liquidarc.tictactoeis not a activePermissionOwner
+2025-11-18 00:17:14.233  3175-4110  InputDispatcher         pid-3175                             W  channel d2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)~ dropping inconsistent event: DispatchEntry{resolvedFlags=0, targetFlags=0x0, transform=transform (ROT_0) (IDENTITY)
+                                                                                                    } original: MotionEvent(action=HOVER_EXIT)
+2025-11-18 00:17:14.249  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x0, deviceId=-1, 886842, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:14.252  3175-6003  RTMode                  pid-3175                             E  pkgName: com.liquidarc.tictactoe has no permission
+2025-11-18 00:17:14.255 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=886842, downTime=886842, phoneEventTime=00:17:14.233 } moveCount:0
+2025-11-18 00:17:14.310  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x1, deviceId=-1, 886917, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:14.313 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=886917, downTime=886842, phoneEventTime=00:17:14.308 } moveCount:0
+2025-11-18 00:17:14.325  3175-7721  ClipboardServiceI       pid-3175                             I  checkProviderWakePathForClipboard: com.liquidarc.tictactoeis not a activePermissionOwner
+2025-11-18 00:17:14.860  3175-8582  ActivityManager         pid-3175                             E  ANR in com.qti.qcc
+                                                                                                    PID: 8497
+                                                                                                    Reason: Process ProcessRecord{d2bd00 8497:com.qti.qcc/u0a216} failed to complete startup
+                                                                                                    ErrorId: 4d2826de-aa32-4349-8ce8-709b8cce4276
+                                                                                                    Frozen: false
+                                                                                                    Board Sensor Temperature: 41432
+                                                                                                    Current cpu freq: [cpu0: 1804800, cpu1: 1804800, cpu2: 1804800, cpu3: 1804800, cpu4: 1804800, cpu5: 1804800, cpu6: 1555200, cpu7: 1555200]
+                                                                                                    Load: 0.0 / 0.0 / 0.0
+                                                                                                    CPU usage from 15631ms to -1ms ago (2025-11-18 00:16:58.636 to 2025-11-18 00:17:14.269):
+                                                                                                      74% 3175/system_server: 45% user + 28% kernel / faults: 16520 minor 8 major
+                                                                                                        8.5% 4139/NetworkPolicy: 7% user + 1.5% kernel
+                                                                                                        6.3% 7077/binder:3175_A: 3% user + 3.3% kernel
+                                                                                                        5.2% 4042/binder:3175_6: 2.5% user + 2.7% kernel
+                                                                                                        5.2% 7715/binder:3175_12: 2.7% user + 2.4% kernel
+                                                                                                        5.1% 7805/binder:3175_1B: 2.6% user + 2.5% kernel
+                                                                                                        4.8% 3874/ActivityManager: 3.7% user + 1.1% kernel
+                                                                                                        4.6% 7721/binder:3175_15: 2.2% user + 2.4% kernel
+                                                                                                        4.4% 4138/NetworkStats: 3.4% user + 1% kernel
+                                                                                                        4.3% 7080/binder:3175_D: 2% user + 2.3% kernel
+                                                                                                        3.8% 4110/InputDispatcher: 3% user + 0.7% kernel
+                                                                                                        2.8% 3175/system_server: 1.6% user + 1.1% kernel
+                                                                                                        2.6% 4061/SensorService: 1.7% user + 0.8% kernel
+                                                                                                        2.5% 7078/binder:3175_B: 1.2% user + 1.2% kernel
+                                                                                                        1.9% 7809/binder:3175_1E: 0.9% user + 0.9% kernel
+                                                                                                        1.2% 3674/HeapTaskDaemon: 1% user + 0.1% kernel
+                                                                                                        1.2% 7765/binder:3175_18: 0.5% user + 0.7% kernel
+                                                                                                        1.1% 3884/batterystats-ha: 0.9% user + 0.1% kernel
+                                                                                                        1% 4090/miui-gesture: 0.6% user + 0.3% kernel
+                                                                                                        0.7% 6878/NetworkStatsObs: 0.4% user + 0.2% kernel
+                                                                                                        0.7% 3854/android.ui: 0.5% user + 0.1% kernel
+                                                                                                        0.6% 3899/PowerManagerSer: 0.4% user + 0.2% kernel
+                                                                                                        0.5% 3720/system_server: 0% user + 0.5% kernel
+                                                                                                        0.5% 6421/SmartPowerServi: 0.2% user + 0.3% kernel
+                                                                                                        0.3% 3887/bgres-controlle: 0.2% user + 0.1% kernel
+                                                                                                        0.2% 6003/SchedBoostServi: 0.2% user + 0% kernel
+                                                                                                        0.2% 4142/WifiHandlerThre: 0.2% user + 0% kernel
+                                                                                                        0.1% 3856/android.display: 0.1% user + 0% kernel
+                                                                                                        0.1% 4120/android.imms: 0.1% user + 0% kernel
+                                                                                                        0.1% 6437/SmartPowerDispl: 0.1% user + 0% kernel
+                                                                                                        0.1% 3697/android.fg: 0% user + 0% kernel
+                                                                                                        0.1% 3673/Jit thread pool: 0% user + 0% kernel
+                                                                                                        0.1% 4163/ranker: 0.1% user + 0% kernel
+                                                                                                        0% 4084/Thread-9: 0% user + 0% kernel
+                                                                                                        0% 4155/ConnectivitySer: 0% user + 0% kernel
+                                                                                                        0% 3855/android.io: 0% user + 0% kernel
+                                                                                                        0% 4140/tworkPolicy.uid: 0% user + 0% kernel
+                                                                                                        0% 4148/NetworkDetectIn: 0% user + 0% kernel
+                                                                                                        0% 7171/NetworkAccelera: 0% user + 0% kernel
+                                                                                                        0% 3675/ReferenceQueueD: 0% user + 0% kernel
+                                                                                                        0% 3676/FinalizerDaemon: 0% user + 0% kernel
+                                                                                                        0% 3861/ScoutSystemServ: 0% user + 0% kernel
+                                                                                                        0% 3862/UiThread-ScoutS: 0% user + 0% kernel
+                                                                                                        0% 3863/watchdog: 0% user + 0% kernel
+                                                                                                        0% 3870/android.bg: 0% user + 0% kernel
+                                                                                                        0% 3875/ActivityManager: 0% user + 0% kernel
+                                                                                                        0% 3880/ActivityManager: 0% user + 0% kernel
+                                                                                                        0% 3893/CriticalEventLo: 0% user + 0% kernel
+                                                                                                        0% 3912/PackageManager: 0% user + 0% kernel
+                                                                                                        0% 3978/PackageInstalle: 0% user + 0% kernel
+                                                                                                        0% 4048/eduling.default: 0% user + 0% kernel
+                                                                                                        0% 4087/AlarmManager: 0% user + 0% kernel
+                                                                                                        0% 4089/miui_input_thre: 0% user + 0% kernel
+                                                                                                        0% 4106/UEventObserver: 0% user + 0% kernel
+                                                                                                        0% 4141/MiuiNetworkPoli: 0% user + 0% kernel
+                                                                                                        0% 5765/Greezer: 0% user + 0% kernel
+                                                                                                        0% 6898/Thread-154: 0% user + 0% kernel
+                                                                                                        0% 6965/HwBinder:3175_5: 0% user + 0% kernel
+                                                                                                        0% 7074/NetworkInterfac: 0% user + 0% kernel
+                                                                                                        0% 7083/SLAServiceHandl: 0% user + 0% kernel
+                                                                                                        0% 30112/pool-96-thread-: 0% user + 0% kernel
+                                                                                                       +0% 8580/AnrMainProcessD: 0% user + 0% kernel
+                                                                                                       +0% 8581/AnrMainProcessD: 0% user + 0% kernel
+                                                                                                       +0% 8582/AnrConsumer: 0% user + 0% kernel
+                                                                                                       +0% 8583/AnrAuxiliaryTas: 0% user + 0% kernel
+                                                                                                      21% 27886/com.liquidarc.tictactoe: 17% user + 4.3% kernel / faults: 8911 minor 3 major
+                                                                                                        12% 27886/usap64: 10% user + 1.4% kernel
+                                                                                                        5.5% 5693/1.raster: 4% user + 1.4% kernel
+                                                                                                        1.7% 5710/IplrVkFenceWait: 1% user + 0.6% kernel
+2025-11-18 00:17:15.378  3175-4110  InputDispatcher         pid-3175                             W  channel d2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)~ dropping inconsistent event: DispatchEntry{resolvedFlags=0, targetFlags=0x0, transform=transform (ROT_0) (IDENTITY)
+                                                                                                    } original: MotionEvent(action=HOVER_EXIT)
+2025-11-18 00:17:15.386  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x0, deviceId=-1, 887988, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:15.388  3175-6003  RTMode                  pid-3175                             E  pkgName: com.liquidarc.tictactoe has no permission
+2025-11-18 00:17:15.390 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=887988, downTime=887988, phoneEventTime=00:17:15.378 } moveCount:0
+2025-11-18 00:17:15.481  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x1, deviceId=-1, 888088, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:15.484 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=888088, downTime=887988, phoneEventTime=00:17:15.478 } moveCount:0
+2025-11-18 00:17:16.491  3175-4110  InputDispatcher         pid-3175                             W  channel d2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)~ dropping inconsistent event: DispatchEntry{resolvedFlags=0, targetFlags=0x0, transform=transform (ROT_0) (IDENTITY)
+                                                                                                    } original: MotionEvent(action=HOVER_EXIT)
+2025-11-18 00:17:16.498  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x0, deviceId=-1, 889099, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:16.500  3175-6003  RTMode                  pid-3175                             E  pkgName: com.liquidarc.tictactoe has no permission
+2025-11-18 00:17:16.502 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=889099, downTime=889099, phoneEventTime=00:17:16.490 } moveCount:0
+2025-11-18 00:17:16.589  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x1, deviceId=-1, 889197, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:16.595 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=889197, downTime=889099, phoneEventTime=00:17:16.587 } moveCount:0
+2025-11-18 00:17:17.533  3175-4110  InputDispatcher         pid-3175                             W  channel d2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)~ dropping inconsistent event: DispatchEntry{resolvedFlags=0, targetFlags=0x0, transform=transform (ROT_0) (IDENTITY)
+                                                                                                    } original: MotionEvent(action=HOVER_EXIT)
+2025-11-18 00:17:17.555  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x0, deviceId=-1, 890154, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:17.556  3175-6003  RTMode                  pid-3175                             E  pkgName: com.liquidarc.tictactoe has no permission
+2025-11-18 00:17:17.560 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=890154, downTime=890154, phoneEventTime=00:17:17.545 } moveCount:0
+2025-11-18 00:17:17.585  3175-6003  RTMode                  pid-3175                             E  pkgName: com.liquidarc.tictactoe has no permission
+2025-11-18 00:17:17.625  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x1, deviceId=-1, 890233, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:17.631 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=890233, downTime=890154, phoneEventTime=00:17:17.624 } moveCount:1
+2025-11-18 00:17:17.645  3175-7721  ClipboardServiceI       pid-3175                             I  checkProviderWakePathForClipboard: com.liquidarc.tictactoeis not a activePermissionOwner
+2025-11-18 00:17:18.562  3175-4110  InputDispatcher         pid-3175                             W  channel d2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)~ dropping inconsistent event: DispatchEntry{resolvedFlags=0, targetFlags=0x0, transform=transform (ROT_0) (IDENTITY)
+                                                                                                    } original: MotionEvent(action=HOVER_EXIT)
+2025-11-18 00:17:18.600  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x0, deviceId=-1, 891190, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:18.602  3175-6003  RTMode                  pid-3175                             E  pkgName: com.liquidarc.tictactoe has no permission
+2025-11-18 00:17:18.603 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_DOWN, id[0]=0, pointerCount=1, eventTime=891190, downTime=891190, phoneEventTime=00:17:18.581 } moveCount:0
+2025-11-18 00:17:18.673  3175-4110  MIUIInput               pid-3175                             I  [MotionEvent] publisher action=0x1, deviceId=-1, 891281, channel 'd2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)'
+2025-11-18 00:17:18.678 27886-27886 MIUIInput               pid-27886                            I  [MotionEvent] ViewRootImpl windowName 'com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity', { action=ACTION_UP, id[0]=0, pointerCount=1, eventTime=891281, downTime=891190, phoneEventTime=00:17:18.672 } moveCount:0
+2025-11-18 00:17:18.701  3175-7078  ClipboardServiceI       pid-3175                             I  checkProviderWakePathForClipboard: com.liquidarc.tictactoeis not a activePermissionOwner
+2025-11-18 00:17:19.980  3175-4110  InputDispatcher         pid-3175                             W  channel d2da6e0 com.liquidarc.tictactoe/com.liquidarc.tictactoe.MainActivity (server)~ dropping inconsistent event: DispatchEntry{resolvedFlags=0, targetFlags=0x0, transform=transform (ROT_0) (IDENTITY)
+                                                                                                    } original: MotionEvent(action=HOVER_EXIT)
+2025-11-18 00:17:30.468  3175-8695  ActivityManager         pid-3175                             E  ANR in com.qti.qcc
+                                                                                                    PID: 8604
+                                                                                                    Reason: Process ProcessRecord{d2bd00 8604:com.qti.qcc/u0a216} failed to complete startup
+                                                                                                    ErrorId: 6d1f2f4f-6d4d-472f-9dd1-ba0a57fa33ca
+                                                                                                    Frozen: false
+                                                                                                    Board Sensor Temperature: 41617
+                                                                                                    Current cpu freq: [cpu0: 1804800, cpu1: 1804800, cpu2: 1804800, cpu3: 1804800, cpu4: 1804800, cpu5: 1804800, cpu6: 1555200, cpu7: 1555200]
+                                                                                                    Load: 0.0 / 0.0 / 0.0
+                                                                                                    CPU usage from 15830ms to -2ms ago (2025-11-18 00:17:14.269 to 2025-11-18 00:17:30.100):
+                                                                                                      73% 3175/system_server: 44% user + 29% kernel / faults: 17425 minor 11 major
+                                                                                                        8.6% 4139/NetworkPolicy: 6.9% user + 1.7% kernel
+                                                                                                        5.4% 7805/binder:3175_1B: 2.5% user + 2.9% kernel
+                                                                                                        4.5% 4138/NetworkStats: 3.5% user + 0.9% kernel
+                                                                                                        4.4% 4042/binder:3175_6: 2.3% user + 2.1% kernel
+                                                                                                        4.3% 3874/ActivityManager: 3.3% user + 1% kernel
+                                                                                                        3.9% 7077/binder:3175_A: 1.9% user + 1.9% kernel
+                                                                                                        3.9% 7081/binder:3175_E: 1.6% user + 2.3% kernel
+                                                                                                        3.5% 7080/binder:3175_D: 1.5% user + 2% kernel
+                                                                                                        3.5% 7806/binder:3175_1C: 1.5% user + 1.9% kernel
+                                                                                                        3.3% 7765/binder:3175_18: 1.5% user + 1.7% kernel
+                                                                                                        2.8% 7721/binder:3175_15: 1.5% user + 1.3% kernel
+                                                                                                        2.8% 4110/InputDispatcher: 2.4% user + 0.4% kernel
+                                                                                                        2.7% 4061/SensorService: 1.8% user + 0.9% kernel
+                                                                                                        2.7% 3175/system_server: 1.7% user + 0.9% kernel
+                                                                                                        2.4% 7715/binder:3175_12: 1.2% user + 1.1% kernel
+                                                                                                        2.1% 7078/binder:3175_B: 1.2% user + 0.9% kernel
+                                                                                                        1.4% 6983/binder:3175_8: 0.6% user + 0.7% kernel
+                                                                                                        1.2% 3674/HeapTaskDaemon: 1.1% user + 0.1% kernel
+                                                                                                        1.1% 3884/batterystats-ha: 0.6% user + 0.4% kernel
+                                                                                                        0.9% 4090/miui-gesture: 0.6% user + 0.2% kernel
+                                                                                                        0.6% 3899/PowerManagerSer: 0.3% user + 0.3% kernel
+                                                                                                        0.6% 6878/NetworkStatsObs: 0.4% user + 0.2% kernel
+                                                                                                        0.6% 3854/android.ui: 0.5% user + 0.1% kernel
+                                                                                                        0.5% 3720/system_server: 0% user + 0.5% kernel
+                                                                                                        0.4% 6421/SmartPowerServi: 0.2% user + 0.2% kernel
+                                                                                                        0.3% 3887/bgres-controlle: 0.2% user + 0.1% kernel
+                                                                                                        0.2% 7182/ProcessMemoryCl: 0% user + 0.2% kernel
+                                                                                                        0.2% 6003/SchedBoostServi: 0.2% user + 0% kernel
+                                                                                                        0.2% 4142/WifiHandlerThre: 0.1% user + 0% kernel
+                                                                                                        0.1% 3673/Jit thread pool: 0.1% user + 0% kernel
+                                                                                                        0.1% 3856/android.display: 0.1% user + 0% kernel
+                                                                                                        0.1% 4120/android.imms: 0.1% user + 0% kernel
+                                                                                                        0.1% 6437/SmartPowerDispl: 0.1% user + 0% kernel
+                                                                                                        0.1% 3697/android.fg: 0% user + 0% kernel
+                                                                                                        0.1% 4148/NetworkDetectIn: 0% user + 0% kernel
+                                                                                                        0.1% 4163/ranker: 0.1% user + 0% kernel
+                                                                                                        0% 4084/Thread-9: 0% user + 0% kernel
+                                                                                                        0% 4141/MiuiNetworkPoli: 0% user + 0% kernel
+                                                                                                        0% 7171/NetworkAccelera: 0% user + 0% kernel
+                                                                                                        0% 3676/FinalizerDaemon: 0% user + 0% kernel
+                                                                                                        0% 3855/android.io: 0% user + 0% kernel
+                                                                                                        0% 3675/ReferenceQueueD: 0% user + 0% kernel
+                                                                                                        0% 3863/watchdog: 0% user + 0% kernel
+                                                                                                        0% 3875/ActivityManager: 0% user + 0% kernel
+                                                                                                        0% 3877/ActivityManager: 0% user + 0% kernel
+                                                                                                        0% 3880/ActivityManager: 0% user + 0% kernel
+                                                                                                        0% 3882/OomAdjuster: 0% user + 0% kernel
+                                                                                                        0% 4089/miui_input_thre: 0% user + 0% kernel
+                                                                                                        0% 4106/UEventObserver: 0% user + 0% kernel
+                                                                                                        0% 4140/tworkPolicy.uid: 0% user + 0% kernel
+                                                                                                        0% 4155/ConnectivitySer: 0% user + 0% kernel
+                                                                                                        0% 5765/Greezer: 0% user + 0% kernel
+                                                                                                        0% 6898/Thread-154: 0% user + 0% kernel
+                                                                                                        0% 6965/HwBinder:3175_5: 0% user + 0% kernel
+                                                                                                        0% 7083/SLAServiceHandl: 0% user + 0% kernel
+                                                                                                        0% 7429/MobileDataStats: 0% user + 0% kernel
+                                                                                                       +0% 8693/AnrMainProcessD: 0% user + 0% kernel
+                                                                                                       +0% 8694/AnrMainProcessD: 0% user + 0% kernel
+                                                                                                       +0% 8695/AnrConsumer: 0% user + 0% kernel
+                                                                                                       +0% 8696/AnrAuxiliaryTas: 0% user + 0% kernel
+                                                                                                      24% 27886/com.liquidarc.tictactoe: 19% user + 4.9% kernel / faults: 9198 minor
+                                                                                                        11% 27886/usap64: 9.7% user + 1.3% kernel
+                                                                                                        7.9% 5693/1.raster: 6% user + 1.8% kernel
+                                                                                                        2.5% 5710/IplrVkFenceWait: 1.6% user + 0.8% kernel
+                                                                                                        1.4% 5711/IplrVkResMgr: 0.9% user + 0.5% kernel
+                                                                                                        0.2% 5645/binder:27886_2: 0% user + 0.1% kernel
+                                                                                                        0.2% 5660/Profile Saver: 0.1% user + 0% kernel
+                                                                                                        0.1% 5638/Jit thread pool: 0.1% user + 0% kernel

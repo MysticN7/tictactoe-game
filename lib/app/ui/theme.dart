@@ -112,7 +112,7 @@ class AppTheme {
       case AppThemeType.dark:
         return Colors.white.withAlpha((0.12 * 255).round());
       case AppThemeType.liquidGlow:
-        return Colors.white.withAlpha((0.18 * 255).round());
+        return Colors.white.withAlpha((0.22 * 255).round());
     }
   }
 
@@ -123,7 +123,7 @@ class AppTheme {
       case AppThemeType.dark:
         return const Color(0xFF64B5F6).withAlpha((0.5 * 255).round());
       case AppThemeType.liquidGlow:
-        return const Color(0xFF00FFFF).withAlpha((0.7 * 255).round());
+        return const Color(0xFF00FFFF).withAlpha((0.75 * 255).round());
     }
   }
 

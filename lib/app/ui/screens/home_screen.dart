@@ -261,7 +261,6 @@ class _Scoreboard extends StatelessWidget {
   const _Scoreboard({required this.themeType, required this.settings, required this.scores, required this.activePlayers});
   @override
   Widget build(BuildContext context) {
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
     final players = activePlayers;
     return Row(
@@ -272,7 +271,7 @@ class _Scoreboard extends StatelessWidget {
         final winCount = scores.wins[p] ?? 0;
         final isActive = activePlayers.contains(p);
         return Expanded(
-          child: Container(
+          child: AnimatedContainer(
             margin: const EdgeInsets.symmetric(horizontal: 6.0),
             padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14.0),
             decoration: BoxDecoration(
@@ -287,6 +286,7 @@ class _Scoreboard extends StatelessWidget {
                 BoxShadow(color: color.withAlpha((isActive ? 90 : 35)), blurRadius: isActive ? 14.0 : 8.0, spreadRadius: 0.8),
               ],
             ),
+            duration: const Duration(milliseconds: 240),
             child: Row(
               children: [
                 Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),

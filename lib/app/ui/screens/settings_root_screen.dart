@@ -68,48 +68,157 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
               ],
             ),
           ),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: theme.AppTheme.getGlassColor(themeType),
-              border: Border(
-                top: BorderSide(
-                  color: theme.AppTheme.getGlassBorderColor(themeType),
-                  width: 1.5,
-                ),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha((0.18 * 255).round()),
-                  blurRadius: 12.0,
-                  spreadRadius: 1.0,
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-                child: NavigationBar(
-                  selectedIndex: _index,
-                  onDestinationSelected: (i) => setState(() => _index = i),
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  indicatorColor: theme.AppTheme.getNeonGlowColor(themeType).withOpacity(
-                    themeType == theme.AppThemeType.liquidGlow ? 0.22 : 0.16,
-                  ),
-                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                  destinations: const [
-                    NavigationDestination(icon: Icon(Icons.grid_on), label: 'Game'),
-                    NavigationDestination(icon: Icon(Icons.person), label: 'Players'),
-                    NavigationDestination(icon: Icon(Icons.volume_up), label: 'Audio'),
-                    NavigationDestination(icon: Icon(Icons.palette), label: 'Theme'),
-                    NavigationDestination(icon: Icon(Icons.info), label: 'About'),
-                  ],
-                ),
-              ),
-            ),
+          bottomNavigationBar: _LiquidNavigationBar(
+            themeType: themeType,
+            selectedIndex: _index,
+            onChanged: (i) => setState(() => _index = i),
+            destinations: const [
+              _NavItem(icon: Icons.grid_on, label: 'Game'),
+              _NavItem(icon: Icons.person, label: 'Players'),
+              _NavItem(icon: Icons.volume_up, label: 'Audio'),
+              _NavItem(icon: Icons.palette, label: 'Theme'),
+              _NavItem(icon: Icons.info, label: 'About'),
+            ],
           ),
         );
       },
+    );
+  }
+}
+
+class _NavItem {
+  final IconData icon;
+  final String label;
+  const _NavItem({required this.icon, required this.label});
+}
+
+class _LiquidNavigationBar extends StatefulWidget {
+  final theme.AppThemeType themeType;
+  final int selectedIndex;
+  final ValueChanged<int> onChanged;
+  final List<_NavItem> destinations;
+  const _LiquidNavigationBar({
+    required this.themeType,
+    required this.selectedIndex,
+    required this.onChanged,
+    required this.destinations,
+  });
+  @override
+  State<_LiquidNavigationBar> createState() => _LiquidNavigationBarState();
+}
+
+class _LiquidNavigationBarState extends State<_LiquidNavigationBar> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _blobScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 240));
+    _blobScale = Tween<double>(begin: 0.9, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+  }
+
+  @override
+  void didUpdateWidget(covariant _LiquidNavigationBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final glassColor = theme.AppTheme.getGlassColor(widget.themeType);
+    final borderColor = theme.AppTheme.getGlassBorderColor(widget.themeType);
+    final neon = theme.AppTheme.getNeonGlowColor(widget.themeType);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: glassColor,
+        border: Border(
+          top: BorderSide(color: borderColor, width: 1.5),
+        ),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withAlpha((0.18 * 255).round()), blurRadius: 12.0, spreadRadius: 1.0),
+        ],
+      ),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final itemCount = widget.destinations.length;
+              final itemWidth = width / itemCount;
+              return SizedBox(
+                height: 68,
+                child: Stack(
+                  children: [
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 240),
+                      curve: Curves.easeOut,
+                      left: widget.selectedIndex * itemWidth + itemWidth * 0.15,
+                      top: 8,
+                      child: ScaleTransition(
+                        scale: _blobScale,
+                        child: Container(
+                          width: itemWidth * 0.7,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: neon.withOpacity(widget.themeType == theme.AppThemeType.liquidGlow ? 0.25 : 0.18),
+                            borderRadius: BorderRadius.circular(26),
+                            boxShadow: [
+                              BoxShadow(color: neon.withOpacity(0.35), blurRadius: 12.0, spreadRadius: 2.0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: List.generate(itemCount, (i) {
+                        final item = widget.destinations[i];
+                        final selected = i == widget.selectedIndex;
+                        return Expanded(
+                          child: InkWell(
+                            onTap: () => widget.onChanged(i),
+                            borderRadius: BorderRadius.circular(20),
+                            splashColor: neon.withOpacity(0.2),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(item.icon, color: selected ? Colors.white : Colors.white70),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    item.label,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: selected ? FontWeight.bold : FontWeight.w600,
+                                      color: selected ? Colors.white : Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
 }

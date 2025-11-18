@@ -143,22 +143,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SettingsRootScreen()),
-                    ),
-                    child: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: theme.AppTheme.getGlassColor(themeType),
-                        borderRadius: BorderRadius.circular(19),
-                        border: Border.all(color: theme.AppTheme.getGlassBorderColor(themeType), width: 1.6),
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: _SettingsButton(
+                        themeType: themeType,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SettingsRootScreen()),
+                        ),
                       ),
-                      child: const Icon(Icons.settings_rounded, size: 20),
                     ),
                   ),
                 ),
@@ -209,6 +204,75 @@ class _GlassCard extends StatelessWidget {
 // Removed main menu button UI per redesign
 
 // Play screen merged into HomeScreen
+
+class _SettingsButton extends StatefulWidget {
+  final theme.AppThemeType themeType;
+  final VoidCallback onTap;
+  const _SettingsButton({required this.themeType, required this.onTap});
+  @override
+  State<_SettingsButton> createState() => _SettingsButtonState();
+}
+
+class _SettingsButtonState extends State<_SettingsButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+  late Animation<double> _rotation;
+  bool _hover = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
+    _scale = Tween<double>(begin: 1.0, end: 0.92).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _rotation = Tween<double>(begin: 0.0, end: 0.15).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _press() {
+    _controller.forward().then((_) => _controller.reverse());
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final glassColor = theme.AppTheme.getGlassColor(widget.themeType);
+    final borderColor = theme.AppTheme.getGlassBorderColor(widget.themeType);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: ScaleTransition(
+        scale: _scale,
+        child: RotationTransition(
+          turns: _rotation,
+          child: InkWell(
+            onTap: _press,
+            borderRadius: BorderRadius.circular(20),
+            splashColor: borderColor.withAlpha((0.25 * 255).round()),
+            highlightColor: Colors.transparent,
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: glassColor,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: borderColor, width: 1.6),
+                boxShadow: [
+                  BoxShadow(color: borderColor.withAlpha(_hover ? 120 : 70), blurRadius: _hover ? 14.0 : 10.0, spreadRadius: 0.8),
+                ],
+              ),
+              child: const Icon(Icons.settings_rounded, size: 22),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
@@ -263,49 +327,80 @@ class _Scoreboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
     final players = activePlayers;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: players.map((p) {
-        final name = settings.getPlayerName(p);
-        final color = settings.getPlayerColor(p);
-        final winCount = scores.wins[p] ?? 0;
-        final isActive = activePlayers.contains(p);
-        return Expanded(
-          child: AnimatedContainer(
-            margin: const EdgeInsets.symmetric(horizontal: 6.0),
-            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 14.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.0),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: theme.AppTheme.getGlassSurfaceColors(themeType),
-              ),
-              border: Border.all(color: isActive ? glassBorderColor : glassBorderColor.withAlpha((0.4 * 255).round()), width: 1.8),
-              boxShadow: [
-                BoxShadow(color: color.withAlpha((isActive ? 90 : 35)), blurRadius: isActive ? 14.0 : 8.0, spreadRadius: 0.8),
-              ],
-            ),
-            duration: const Duration(milliseconds: 240),
-            child: Row(
-              children: [
-                Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                const SizedBox(width: 8),
-                Expanded(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-                  child: Text(
-                    '$winCount',
-                    key: ValueKey('wins-$p-$winCount'),
-                    style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 18),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final perItem = width / (players.isNotEmpty ? players.length : 1);
+        final scale = (perItem / 160.0).clamp(0.9, 1.8);
+        final marginH = 6.0 * scale;
+        final padV = 12.0 * scale;
+        final padH = 14.0 * scale;
+        final radius = 16.0 * scale;
+        final circle = 12.0 * scale;
+        final gap = 8.0 * scale;
+        final symbolFont = 18.0 * scale;
+        final countFont = 22.0 * scale;
+        final blurActive = (12.0 * scale).clamp(8.0, 16.0);
+        final blurInactive = (8.0 * scale).clamp(6.0, 12.0);
+        final borderWidth = (1.8 * scale).clamp(1.6, 2.4);
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: players.map((p) {
+            final color = settings.getPlayerColor(p);
+            final winCount = scores.wins[p] ?? 0;
+            final isActive = activePlayers.contains(p);
+            return Expanded(
+              child: AnimatedContainer(
+                margin: EdgeInsets.symmetric(horizontal: marginH),
+                padding: EdgeInsets.symmetric(vertical: padV, horizontal: padH),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(radius),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: theme.AppTheme.getGlassSurfaceColors(themeType),
                   ),
+                  border: Border.all(
+                    color: isActive ? glassBorderColor : glassBorderColor.withAlpha((0.4 * 255).round()),
+                    width: borderWidth,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withAlpha((isActive ? 90 : 35)),
+                      blurRadius: isActive ? blurActive : blurInactive,
+                      spreadRadius: 0.8,
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+                duration: const Duration(milliseconds: 240),
+                child: Row(
+                  children: [
+                    Container(width: circle, height: circle, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                    SizedBox(width: gap),
+                    Expanded(
+                      child: Text(
+                        settings.getPlayerIcon(p),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: symbolFont),
+                      ),
+                    ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                      child: Text(
+                        '$winCount',
+                        key: ValueKey('wins-$p-$winCount'),
+                        style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: countFont),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 }
@@ -357,6 +452,7 @@ class _ActionButton extends StatefulWidget {
 class _ActionButtonState extends State<_ActionButton> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scale;
+  bool _hover = false;
   @override
   void initState() {
     super.initState();
@@ -374,25 +470,32 @@ class _ActionButtonState extends State<_ActionButton> with SingleTickerProviderS
   }
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scale,
-      child: GestureDetector(
-        onTap: _press,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18.0),
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: widget.gradientColors),
-            border: Border.all(color: widget.borderColor, width: 1.6),
-            boxShadow: [BoxShadow(color: widget.borderColor.withAlpha(90), blurRadius: 10.0, spreadRadius: 0.8)],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(widget.icon, color: Colors.white),
-              const SizedBox(width: 10),
-              Text(widget.label, style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
-            ],
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: ScaleTransition(
+        scale: _scale,
+        child: GestureDetector(
+          onTap: _press,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18.0),
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: widget.gradientColors),
+              border: Border.all(color: widget.borderColor, width: _hover ? 2.0 : 1.6),
+              boxShadow: [
+                BoxShadow(color: widget.borderColor.withAlpha(_hover ? 130 : 90), blurRadius: _hover ? 14.0 : 10.0, spreadRadius: 0.9),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(widget.icon, color: Colors.white),
+                const SizedBox(width: 10),
+                Text(widget.label, style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
+              ],
+            ),
           ),
         ),
       ),

@@ -10,11 +10,11 @@ enum AppThemeType {
 extension ThemeModeExtension on GameThemeMode {
   AppThemeType toAppThemeType() {
     switch (this) {
-      case GameThemeMode.light:
+      case GameThemeMode.glassmorphism:
         return AppThemeType.glassmorphism;
-      case GameThemeMode.dark:
+      case GameThemeMode.neonGlass:
         return AppThemeType.neonGlass;
-      case GameThemeMode.liquidGlow:
+      case GameThemeMode.liquidGlass:
         return AppThemeType.liquidGlass;
     }
   }

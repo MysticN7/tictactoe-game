@@ -247,13 +247,8 @@ class _GameTileState extends State<_GameTile>
       ),
     );
   }
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+
+
 
   double _markerFontSize(double tileExtent, String icon) {
     final isSingleChar = icon.length == 1;

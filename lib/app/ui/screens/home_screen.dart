@@ -192,6 +192,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                         child: _BottomActions(
+                          themeType: themeType,
+                          onUndo: () => game.undo(),
+                          onRestart: () => game.resetGame(),
+                          onHistory: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HistoryScreen())),
+                          onTournament: () {
+                             if (game.tournamentRound != TournamentRound.none) {
+                               game.stopTournament();
+                             } else {
+                               // Auto-switch to 3 players if needed
+                               if (settings.activePlayers.length != 3) {
+                                 settings.setActivePlayers(3);
+                                 ScaffoldMessenger.of(context).showSnackBar(
+                                   const SnackBar(content: Text("Switched to 3-Player Mode for Tournament")),
+                                 );
+                               }
+                               game.startTournament();
+                             }
+                          },
+                          isTournamentActive: game.tournamentRound != TournamentRound.none,
+                          canStartTournament: true,
+                        ),
+                      ),
                       if (_isBannerAdReady)
                         SizedBox(
                           height: _bannerAd!.size.height.toDouble(),
@@ -342,201 +364,6 @@ class _SettingsButtonState extends State<_SettingsButton> with SingleTickerProvi
             decoration: BoxDecoration(
               color: glassColor,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: borderColor, width: 1.5),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10.0, spreadRadius: 1),
-              ],
-            ),
-            child: const Icon(Icons.settings_rounded, size: 24, color: Colors.white),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class HistoryScreen extends StatelessWidget {
-  const HistoryScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    final settings = context.watch<SettingsProvider>();
-    final themeType = settings.currentTheme.toAppThemeType();
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    final gradientColors = theme.AppTheme.getGradientColors(themeType);
-    final matches = context.watch<GameProvider>().matchHistory;
-    
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Match History', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-             begin: Alignment.topLeft,
-             end: Alignment.bottomRight,
-             colors: gradientColors,
-          ),
-        ),
-        child: Stack(
-          children: [
-             BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
-                child: Container(color: theme.AppTheme.getBackgroundOverlayColor(themeType)),
-             ),
-             SafeArea(
-               child: matches.isEmpty 
-               ? const Center(child: Text("No matches yet", style: TextStyle(color: Colors.white70, fontSize: 18)))
-               : ListView.separated(
-                 padding: const EdgeInsets.all(16.0),
-                 itemCount: matches.length,
-                 separatorBuilder: (_, __) => const SizedBox(height: 10),
-                 itemBuilder: (context, i) {
-                   final m = matches[i];
-                   final winnerName = m.winner != null ? settings.getPlayerName(m.winner!) : 'Draw';
-                   final winnerColor = m.winner != null ? settings.getPlayerColor(m.winner!) : Colors.white70;
-                   return Container(
-                     padding: const EdgeInsets.all(16.0),
-                     decoration: BoxDecoration(
-                       borderRadius: BorderRadius.circular(20.0),
-                       color: glassColor,
-                       border: Border.all(color: glassBorderColor, width: 1.5),
-                     ),
-                     child: Row(
-                       children: [
-                         Container(
-                           padding: const EdgeInsets.all(8),
-                           decoration: BoxDecoration(
-                             color: winnerColor.withOpacity(0.2),
-                             shape: BoxShape.circle,
-                           ),
-                           child: Icon(Icons.emoji_events_rounded, color: winnerColor, size: 20),
-                         ),
-                         const SizedBox(width: 12),
-                         Expanded(
-                           child: Column(
-                             crossAxisAlignment: CrossAxisAlignment.start,
-                             children: [
-                               Text(winnerName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                               Text('${m.boardSize}x${m.boardSize} • Win ${m.winCondition}', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
-                             ],
-                           ),
-                         ),
-                         Text('${m.moveCount} moves', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
-                       ],
-                     ),
-                   );
-                 },
-               ),
-             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Scoreboard extends StatelessWidget {
-  final theme.AppThemeType themeType;
-  final SettingsProvider settings;
-  final ScoresProvider scores;
-  final List<Player> activePlayers;
-  const _Scoreboard({required this.themeType, required this.settings, required this.scores, required this.activePlayers});
-  @override
-  Widget build(BuildContext context) {
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    final players = activePlayers;
-    return Expanded(
-      child: Row(
-        children: players.map((p) {
-          final color = settings.getPlayerColor(p);
-          final winCount = scores.wins[p] ?? 0;
-          return Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(right: 8.0),
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16.0),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: theme.AppTheme.getGlassSurfaceColors(themeType),
-                ),
-                border: Border.all(
-                  color: glassBorderColor.withOpacity(0.5),
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      settings.getPlayerName(p),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontWeight: FontWeight.w600, fontSize: 12),
-                    ),
-                  ),
-                  Text(
-                    '$winCount',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 16),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-class _BottomActions extends StatelessWidget {
-  final theme.AppThemeType themeType;
-  final VoidCallback onUndo;
-  final VoidCallback onRestart;
-  final VoidCallback onHistory;
-  final VoidCallback onTournament;
-  final bool isTournamentActive;
-  final bool canStartTournament;
-
-  const _BottomActions({
-    required this.themeType,
-    required this.onUndo,
-    required this.onRestart,
-    required this.onHistory,
-    required this.onTournament,
-    required this.isTournamentActive,
-    required this.canStartTournament,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    final actionColors = theme.AppTheme.getGlassSurfaceColors(themeType);
-    
-    Widget buildButton(IconData icon, String label, VoidCallback onTap, {bool isActive = false, bool isDisabled = false}) {
-      final opacity = isDisabled ? 0.5 : 1.0;
-      return Expanded(
-        child: Opacity(
-          opacity: opacity,
-          child: _ActionButton(
-            gradientColors: isActive 
-                ? [theme.AppTheme.getNeonGlowColor(themeType).withOpacity(0.4), theme.AppTheme.getNeonGlowColor(themeType).withOpacity(0.1)] 
-                : actionColors,
-            borderColor: isActive ? theme.AppTheme.getNeonGlowColor(themeType) : glassBorderColor,
-            icon: icon,
-            label: label,
               border: Border.all(color: borderColor, width: 1.5),
               boxShadow: [
                 BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10.0, spreadRadius: 1),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../logic/settings_provider.dart';
 
 enum AppThemeType { liquidGlass, nebula, crystal }
 
@@ -9,6 +10,16 @@ extension AppThemeTypeExtension on AppThemeType {
       case AppThemeType.liquidGlass: return 'Liquid Glass';
       case AppThemeType.nebula: return 'Nebula';
       case AppThemeType.crystal: return 'Crystal';
+    }
+  }
+}
+
+extension GameThemeModeExtension on GameThemeMode {
+  AppThemeType toAppThemeType() {
+    switch (this) {
+      case GameThemeMode.light: return AppThemeType.crystal;
+      case GameThemeMode.dark: return AppThemeType.nebula;
+      case GameThemeMode.liquidGlow: return AppThemeType.liquidGlass;
     }
   }
 }

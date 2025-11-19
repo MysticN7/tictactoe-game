@@ -193,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                         child: _BottomActions(
                           themeType: themeType,
-                          onUndo: () => game.undo(),
+                          onUndo: () => game.undoLastMove(),
                           onRestart: () => game.resetGame(),
                           onHistory: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HistoryScreen())),
                           onTournament: () {
@@ -202,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                              } else {
                                // Auto-switch to 3 players if needed
                                if (settings.activePlayers.length != 3) {
-                                 settings.setActivePlayers(3);
+                                 settings.setActivePlayers([Player.x, Player.o, Player.triangle]);
                                  ScaffoldMessenger.of(context).showSnackBar(
                                    const SnackBar(content: Text("Switched to 3-Player Mode for Tournament")),
                                  );

@@ -128,6 +128,7 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
+  void setActivePlayers(List<Player> players) {
     if (players.length >= 2 && players.length <= 3) {
       _activePlayers = players;
       notifyListeners();

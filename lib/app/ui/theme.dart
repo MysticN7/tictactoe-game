@@ -75,15 +75,18 @@ class AppTheme {
 
   static final ThemeData liquidGlowTheme = ThemeData(
     brightness: Brightness.dark,
-    primaryColor: const Color(0xFF00FFFF),
-    scaffoldBackgroundColor: const Color(0xFF0D0D2B),
+    primaryColor: const Color(0xFF00FF9D), // Neon Green
+    scaffoldBackgroundColor: const Color(0xFF050505), // Almost Black
     cardColor: const Color(0x1AFFFFFF),
     textTheme: const TextTheme(
       displayLarge: TextStyle(
         fontFamily: 'Roboto',
-        color: Color(0xFF00FFFF),
+        color: Color(0xFF00FF9D),
         fontSize: 32.0,
         fontWeight: FontWeight.bold,
+        shadows: [
+          Shadow(color: Color(0xFF00FF9D), blurRadius: 12.0),
+        ],
       ),
       bodyLarge: TextStyle(
         fontFamily: 'Roboto',
@@ -93,13 +96,14 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: const Color(0xFFF50057),
+        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFF00FF9D),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30.0),
-          side: const BorderSide(color: Color(0xFF00FFFF), width: 2.0),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        elevation: 8.0,
+        shadowColor: const Color(0xFF00FF9D),
       ),
     ),
   );
@@ -112,7 +116,7 @@ class AppTheme {
       case AppThemeType.dark:
         return Colors.white.withAlpha((0.12 * 255).round());
       case AppThemeType.liquidGlow:
-        return Colors.white.withAlpha((0.22 * 255).round());
+        return const Color(0xFF1A1A1A).withAlpha((0.4 * 255).round());
     }
   }
 
@@ -123,7 +127,7 @@ class AppTheme {
       case AppThemeType.dark:
         return const Color(0xFF64B5F6).withAlpha((0.5 * 255).round());
       case AppThemeType.liquidGlow:
-        return const Color(0xFF00FFFF).withAlpha((0.75 * 255).round());
+        return const Color(0xFF00FF9D).withAlpha((0.3 * 255).round());
     }
   }
 
@@ -144,10 +148,9 @@ class AppTheme {
         ];
       case AppThemeType.liquidGlow:
         return [
-          const Color(0xFF050A24),
-          const Color(0xFF0F1A3D),
-          const Color(0xFF1A2558),
-          const Color(0xFF2A2E6B),
+          const Color(0xFF000000),
+          const Color(0xFF0A0A0A),
+          const Color(0xFF111111),
         ];
     }
   }
@@ -159,7 +162,7 @@ class AppTheme {
       case AppThemeType.dark:
         return const Color(0xFF64B5F6);
       case AppThemeType.liquidGlow:
-        return const Color(0xFF00E5FF);
+        return const Color(0xFF00FF9D);
     }
   }
 
@@ -170,7 +173,7 @@ class AppTheme {
       case AppThemeType.dark:
         return const Color(0xFF81C784);
       case AppThemeType.liquidGlow:
-        return const Color(0xFFFF4DFF);
+        return const Color(0xFFFF00FF); // Neon Magenta
     }
   }
 
@@ -188,8 +191,8 @@ class AppTheme {
         ];
       case AppThemeType.liquidGlow:
         return [
-          const Color(0x66FFFFFF),
-          const Color(0x33FFFFFF),
+          const Color(0xFF2A2A2A).withAlpha((0.5 * 255).round()),
+          const Color(0xFF1A1A1A).withAlpha((0.5 * 255).round()),
         ];
     }
   }
@@ -201,7 +204,7 @@ class AppTheme {
       case AppThemeType.dark:
         return Colors.black.withAlpha((0.12 * 255).round());
       case AppThemeType.liquidGlow:
-        return const Color(0x2200E5FF);
+        return const Color(0xFF00FF9D).withAlpha((0.05 * 255).round());
     }
   }
 }

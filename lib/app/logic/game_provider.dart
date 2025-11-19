@@ -99,12 +99,35 @@ class GameProvider extends ChangeNotifier {
         ));
 
         AdMobService.showInterstitialAd();
+      } else {
+        // Check if it's AI's turn
+        if (_settingsProvider?.gameMode == GameMode.pve && !_gameLogic.isGameOver) {
+           // Assuming AI is always the second player (O) for now, or we can randomize
+           // For simplicity, let's say AI is always Player.o
+           if (_gameLogic.currentPlayer == Player.o) {
+             _makeAiMove();
+           }
+        }
       }
       notifyListeners();
     } else {
       if (_settingsProvider?.isSoundEnabled ?? false) {
         SoundService.playErrorSound();
       }
+    }
+  }
+
+  Future<void> _makeAiMove() async {
+    // Small delay for natural feel
+    await Future.delayed(const Duration(milliseconds: 600));
+    
+    if (_gameLogic.isGameOver) return;
+
+    final difficulty = _settingsProvider?.aiDifficulty.index ?? 1;
+    final move = _gameLogic.getBestMove(Player.o, difficulty);
+    
+    if (move != null) {
+      makeMove(move.row, move.col);
     }
   }
 

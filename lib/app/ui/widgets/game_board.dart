@@ -149,7 +149,7 @@ class _GameTileState extends State<_GameTile>
         builder: (context, child) {
           return Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18.0),
+              borderRadius: BorderRadius.circular(24.0), // More rounded
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -157,37 +157,29 @@ class _GameTileState extends State<_GameTile>
               ),
               border: Border.all(
                 color: widget.isWinning
-                    ? winningColor.withAlpha(((0.7 + _glowAnimation.value * 0.2) * 255).round())
+                    ? winningColor.withAlpha(((0.8 + _glowAnimation.value * 0.2) * 255).round())
                     : widget.player != null
-                        ? playerColor.withAlpha((0.4 * 255).round())
-                        : glassBorderColor,
-                width: widget.isWinning ? 2.5 : 2.0,
+                        ? playerColor.withAlpha((0.5 * 255).round())
+                        : glassBorderColor.withAlpha(50),
+                width: widget.isWinning ? 3.0 : 1.5,
               ),
               boxShadow: [
                 if (widget.isWinning)
                   BoxShadow(
-                    color: winningColor.withAlpha(((0.5 + _glowAnimation.value * 0.2) * 255).round()),
-                    blurRadius: 12.0,
-                    spreadRadius: 1.0,
+                    color: winningColor.withAlpha(((0.6 + _glowAnimation.value * 0.4) * 255).round()),
+                    blurRadius: 20.0,
+                    spreadRadius: 2.0,
                   )
                 else if (widget.player != null)
                   BoxShadow(
-                    color: playerColor.withAlpha((0.3 * 255).round()),
-                    blurRadius: 8.0,
-                    spreadRadius: 0.5,
+                    color: playerColor.withAlpha((0.4 * 255).round()),
+                    blurRadius: 15.0,
+                    spreadRadius: 1.0,
                   ),
-                BoxShadow(
-                  color: Colors.black.withAlpha((0.15 * 255).round()),
-                  blurRadius: 6.0,
-                  spreadRadius: 0.5,
-                ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(18.0),
-              // Removed per-tile BackdropFilter to avoid heavy compositing on every tap,
-              // which can cause white flashes on some devices. The overall glass look
-              // still comes from the screen background and card styling.
+              borderRadius: BorderRadius.circular(24.0),
               child: Center(
                 child: playerIcon.isNotEmpty
                     ? ScaleTransition(
@@ -201,9 +193,15 @@ class _GameTileState extends State<_GameTile>
                             shadows: [
                               Shadow(
                                 color: widget.isWinning
-                                    ? winningColor.withAlpha((0.9 * 255).round())
-                                    : playerColor.withAlpha((0.6 * 255).round()),
-                                blurRadius: 8.0,
+                                    ? winningColor
+                                    : playerColor,
+                                blurRadius: 20.0,
+                              ),
+                              Shadow(
+                                color: widget.isWinning
+                                    ? winningColor.withAlpha(200)
+                                    : playerColor.withAlpha(200),
+                                blurRadius: 40.0,
                               ),
                             ],
                           ),
@@ -220,6 +218,6 @@ class _GameTileState extends State<_GameTile>
 
   double _markerFontSize(double tileExtent, String icon) {
     final isSingleChar = icon.length == 1;
-    return tileExtent * (isSingleChar ? 0.6 : 0.5);
+    return tileExtent * (isSingleChar ? 0.55 : 0.45);
   }
 }

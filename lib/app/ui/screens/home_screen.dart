@@ -56,24 +56,34 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Stack(
               children: [
+                // Background Overlay
                 BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                  filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
                   child: Container(color: theme.AppTheme.getBackgroundOverlayColor(themeType)),
                 ),
+                
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // Header / Scoreboard
                         _Scoreboard(
                           themeType: themeType,
                           settings: settings,
                           scores: scores,
                           activePlayers: settings.activePlayers,
                         ),
-                        const SizedBox(height: 10),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
+
+                        // Game Mode & Difficulty Selectors (Only if game not in progress or just started)
+                        if (!game.gameLogic.isGameOver && game.gameLogic.moveHistory.isEmpty) ...[
+                           _GameControls(settings: settings, themeType: themeType),
+                           const SizedBox(height: 16),
+                        ],
+
+                        // Turn Indicator / Status
                         Consumer<GameProvider>(
                           builder: (context, game, _) {
                             final player = game.gameLogic.currentPlayer;
@@ -88,29 +98,33 @@ class _HomeScreenState extends State<HomeScreen> {
                                 return FadeTransition(opacity: anim, child: SlideTransition(position: slide, child: child));
                               },
                               child: Container(
-                                key: ValueKey(isOver ? 'over' : 'turn'),
-                                padding: const EdgeInsets.all(14.0),
+                                key: ValueKey(isOver ? 'over' : 'turn-${player.index}'),
+                                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16.0),
+                                  borderRadius: BorderRadius.circular(20.0),
                                   gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: theme.AppTheme.getGlassSurfaceColors(themeType)),
-                                  border: Border.all(color: glassBorderColor, width: 1.6),
+                                  border: Border.all(color: glassBorderColor, width: 1.2),
+                                  boxShadow: [
+                                    BoxShadow(color: color.withAlpha(40), blurRadius: 12.0, spreadRadius: -2.0),
+                                  ]
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     if (!isOver) ...[
                                       Text(context.read<SettingsProvider>().getPlayerIcon(player), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-                                      const SizedBox(width: 8),
-                                      Text("${name.toUpperCase()}'s Turn"),
+                                      const SizedBox(width: 10),
+                                      Text("${name.toUpperCase()}'s Turn", style: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.5)),
                                     ] else ...[
                                       if (winner != null) ...[
                                         Text(context.read<SettingsProvider>().getPlayerIcon(winner), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.read<SettingsProvider>().getPlayerColor(winner))),
-                                        const SizedBox(width: 8),
-                                        Text("${context.read<SettingsProvider>().getPlayerName(winner).toUpperCase()} WINS"),
+                                        const SizedBox(width: 10),
+                                        Text("${context.read<SettingsProvider>().getPlayerName(winner).toUpperCase()} WINS", style: TextStyle(fontWeight: FontWeight.bold, color: context.read<SettingsProvider>().getPlayerColor(winner), letterSpacing: 1.0)),
                                       ] else ...[
-                                        const Icon(Icons.handshake_rounded, color: Colors.white),
-                                        const SizedBox(width: 8),
-                                        const Text("DRAW"),
+                                        const Icon(Icons.handshake_rounded, color: Colors.white70),
+                                        const SizedBox(width: 10),
+                                        const Text("DRAW", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, letterSpacing: 1.0)),
                                       ]
                                     ]
                                   ],
@@ -119,18 +133,27 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           },
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
+
+                        // Game Board
                         Expanded(
-                          child: _GlassCard(
-                            glassColor: glassColor,
-                            glassBorderColor: glassBorderColor,
-                            child: const Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: GameBoard(),
+                          child: Center(
+                            child: AspectRatio(
+                              aspectRatio: 1.0,
+                              child: _GlassCard(
+                                glassColor: glassColor,
+                                glassBorderColor: glassBorderColor,
+                                child: const Padding(
+                                  padding: EdgeInsets.all(12.0),
+                                  child: GameBoard(),
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
+
+                        // Bottom Actions
                         _BottomActions(
                           themeType: themeType,
                           onUndo: () => context.read<GameProvider>().undoLastMove(),
@@ -143,6 +166,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
+
+                // Settings Button
                 SafeArea(
                   child: Align(
                     alignment: Alignment.topRight,
@@ -157,6 +182,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
+
+                // Confetti Overlay
                 Consumer<SettingsProvider>(
                   builder: (context, s, _) => ParticlesOverlay(controller: _confetti, enabled: s.isConfettiEnabled),
                 ),
@@ -165,6 +192,107 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _GameControls extends StatelessWidget {
+  final SettingsProvider settings;
+  final theme.AppThemeType themeType;
+
+  const _GameControls({required this.settings, required this.themeType});
+
+  @override
+  Widget build(BuildContext context) {
+    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    final activeColor = theme.AppTheme.getNeonGlowColor(themeType);
+
+    return Column(
+      children: [
+        // Game Mode Selector
+        Container(
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.black26,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: glassBorderColor.withAlpha(50)),
+          ),
+          child: Row(
+            children: [
+              _buildModeOption(context, GameMode.pvp, "PvP", Icons.people_rounded, activeColor),
+              _buildModeOption(context, GameMode.pve, "PvAI", Icons.smart_toy_rounded, activeColor),
+            ],
+          ),
+        ),
+        
+        // Difficulty Selector (Only for PvAI)
+        if (settings.gameMode == GameMode.pve) ...[
+          const SizedBox(height: 10),
+          Container(
+            height: 36,
+             decoration: BoxDecoration(
+              color: Colors.black26,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: glassBorderColor.withAlpha(50)),
+            ),
+            child: Row(
+              children: [
+                _buildDiffOption(context, AIDifficulty.easy, "Easy", Colors.greenAccent),
+                _buildDiffOption(context, AIDifficulty.medium, "Med", Colors.amberAccent),
+                _buildDiffOption(context, AIDifficulty.hard, "Hard", Colors.orangeAccent),
+                _buildDiffOption(context, AIDifficulty.impossible, "Imp", Colors.redAccent),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildModeOption(BuildContext context, GameMode mode, String label, IconData icon, Color activeColor) {
+    final isSelected = settings.gameMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => settings.setGameMode(mode),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: isSelected ? activeColor.withAlpha(50) : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            border: isSelected ? Border.all(color: activeColor.withAlpha(150)) : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: isSelected ? activeColor : Colors.white60),
+              const SizedBox(width: 6),
+              Text(label, style: TextStyle(color: isSelected ? activeColor : Colors.white60, fontWeight: FontWeight.bold, fontSize: 13)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiffOption(BuildContext context, AIDifficulty diff, String label, Color color) {
+    final isSelected = settings.aiDifficulty == diff;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => settings.setAIDifficulty(diff),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withAlpha(40) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            border: isSelected ? Border.all(color: color.withAlpha(120)) : null,
+          ),
+          child: Center(
+            child: Text(label, style: TextStyle(color: isSelected ? color : Colors.white54, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, fontSize: 11)),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -187,23 +315,19 @@ class _GlassCard extends StatelessWidget {
         ),
         border: Border.all(color: glassBorderColor, width: 1.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha((0.1 * 255).round()), blurRadius: 20.0, spreadRadius: 0, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withAlpha((0.2 * 255).round()), blurRadius: 25.0, spreadRadius: 0, offset: const Offset(0, 8)),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24.0),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18.0, sigmaY: 18.0),
+          filter: ImageFilter.blur(sigmaX: 25.0, sigmaY: 25.0),
           child: child,
         ),
       ),
     );
   }
 }
-
-// Removed main menu button UI per redesign
-
-// Play screen merged into HomeScreen
 
 class _SettingsButton extends StatefulWidget {
   final theme.AppThemeType themeType;
@@ -284,33 +408,45 @@ class HistoryScreen extends StatelessWidget {
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
     final matches = context.watch<GameProvider>().matchHistory;
     return Scaffold(
-      appBar: AppBar(title: const Text('Match History')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView.separated(
-          itemCount: matches.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, i) {
-            final m = matches[i];
-            final winnerName = m.winner != null ? settings.getPlayerName(m.winner!) : 'Draw';
-            final winnerColor = m.winner != null ? settings.getPlayerColor(m.winner!) : Colors.white70;
-            return Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16.0),
-                color: glassColor,
-                border: Border.all(color: glassBorderColor, width: 1.5),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.emoji_events_rounded, color: winnerColor),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text('${m.boardSize}x${m.boardSize}, win ${m.winCondition} • $winnerName')),
-                  Text('${m.moveCount} moves'),
-                ],
-              ),
-            );
-          },
+      appBar: AppBar(title: const Text('Match History'), backgroundColor: Colors.transparent, elevation: 0),
+      extendBodyBehindAppBar: true,
+      body: Container(
+        decoration: BoxDecoration(
+           gradient: LinearGradient(
+             begin: Alignment.topLeft,
+             end: Alignment.bottomRight,
+             colors: theme.AppTheme.getGradientColors(themeType),
+           ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ListView.separated(
+              itemCount: matches.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, i) {
+                final m = matches[i];
+                final winnerName = m.winner != null ? settings.getPlayerName(m.winner!) : 'Draw';
+                final winnerColor = m.winner != null ? settings.getPlayerColor(m.winner!) : Colors.white70;
+                return Container(
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16.0),
+                    color: glassColor,
+                    border: Border.all(color: glassBorderColor, width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.emoji_events_rounded, color: winnerColor),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('${m.boardSize}x${m.boardSize}, win ${m.winCondition} • $winnerName')),
+                      Text('${m.moveCount} moves'),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -375,14 +511,14 @@ class _Scoreboard extends StatelessWidget {
                 duration: const Duration(milliseconds: 240),
                 child: Row(
                   children: [
-                    Container(width: circle, height: circle, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                    Container(width: circle, height: circle, decoration: BoxDecoration(color: color, shape: BoxShape.circle, boxShadow: [BoxShadow(color: color.withAlpha(150), blurRadius: 8)])),
                     SizedBox(width: gap),
                     Expanded(
                       child: Text(
                         settings.getPlayerIcon(p),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: symbolFont),
+                        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: symbolFont, shadows: [Shadow(color: color.withAlpha(150), blurRadius: 8)]),
                       ),
                     ),
                     AnimatedSwitcher(
@@ -492,8 +628,8 @@ class _ActionButtonState extends State<_ActionButton> with SingleTickerProviderS
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(widget.icon, color: Colors.white),
-                const SizedBox(width: 10),
-                Text(widget.label, style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
+                // const SizedBox(width: 10),
+                // Text(widget.label, style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
               ],
             ),
           ),

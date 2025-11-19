@@ -29,6 +29,8 @@ class SettingsProvider extends ChangeNotifier {
     PlayerConfig(player: Player.triangle, name: 'Player △', icon: '△'),
   ];
   List<Player> _activePlayers = [Player.x, Player.o];
+  GameMode _gameMode = GameMode.pvp;
+  AIDifficulty _aiDifficulty = AIDifficulty.medium;
 
   Future<void> loadPersistence() async {
     final prefs = await SharedPreferences.getInstance();
@@ -40,7 +42,13 @@ class SettingsProvider extends ChangeNotifier {
       final icon = prefs.getString('player_${config.player.name}_icon');
       if (name != null) config.name = name;
       if (icon != null) config.icon = icon;
+      if (name != null) config.name = name;
+      if (icon != null) config.icon = icon;
     }
+    final modeIndex = prefs.getInt('gameMode');
+    if (modeIndex != null) _gameMode = GameMode.values[modeIndex];
+    final diffIndex = prefs.getInt('aiDifficulty');
+    if (diffIndex != null) _aiDifficulty = AIDifficulty.values[diffIndex];
     notifyListeners();
   }
 
@@ -52,6 +60,8 @@ class SettingsProvider extends ChangeNotifier {
   GameThemeMode get currentTheme => _currentTheme;
   List<PlayerConfig> get playerConfigs => _playerConfigs;
   List<Player> get activePlayers => _activePlayers;
+  GameMode get gameMode => _gameMode;
+  AIDifficulty get aiDifficulty => _aiDifficulty;
 
   void toggleSound() {
     _isSoundEnabled = !_isSoundEnabled;
@@ -118,11 +128,22 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  void setActivePlayers(List<Player> players) {
     if (players.length >= 2 && players.length <= 3) {
       _activePlayers = players;
       notifyListeners();
     }
+  }
+
+  void setGameMode(GameMode mode) {
+    _gameMode = mode;
+    SharedPreferences.getInstance().then((p) => p.setInt('gameMode', mode.index));
+    notifyListeners();
+  }
+
+  void setAIDifficulty(AIDifficulty difficulty) {
+    _aiDifficulty = difficulty;
+    SharedPreferences.getInstance().then((p) => p.setInt('aiDifficulty', difficulty.index));
+    notifyListeners();
   }
 
   String getPlayerName(Player player) {
@@ -166,3 +187,6 @@ class SettingsProvider extends ChangeNotifier {
     return restricted.length > 2 ? restricted.substring(0, 2) : restricted;
   }
 }
+
+enum GameMode { pvp, pve }
+enum AIDifficulty { easy, medium, hard, impossible }

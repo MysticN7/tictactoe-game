@@ -31,13 +31,14 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
               onPressed: () => Navigator.pop(context),
             ),
             title: const Text(
               'Settings',
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
+            centerTitle: true,
           ),
           body: Container(
             decoration: BoxDecoration(
@@ -51,9 +52,10 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
               children: [
                 BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
-                  child: Container(color: Colors.black.withAlpha((0.2 * 255).round())),
+                  child: Container(color: Colors.black.withOpacity(0.2)),
                 ),
                 SafeArea(
+                  bottom: false,
                   child: IndexedStack(
                     index: _index,
                     children: const [
@@ -65,20 +67,25 @@ class _SettingsRootScreenState extends State<SettingsRootScreen> {
                     ],
                   ),
                 ),
+                Positioned(
+                  bottom: 30,
+                  left: 20,
+                  right: 20,
+                  child: _LiquidNavigationBar(
+                    themeType: themeType,
+                    selectedIndex: _index,
+                    onChanged: (i) => setState(() => _index = i),
+                    destinations: const [
+                      _NavItem(icon: Icons.grid_view_rounded, label: 'Game'),
+                      _NavItem(icon: Icons.people_alt_rounded, label: 'Players'),
+                      _NavItem(icon: Icons.graphic_eq_rounded, label: 'Audio'),
+                      _NavItem(icon: Icons.palette_rounded, label: 'Theme'),
+                      _NavItem(icon: Icons.info_outline_rounded, label: 'About'),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-          bottomNavigationBar: _LiquidNavigationBar(
-            themeType: themeType,
-            selectedIndex: _index,
-            onChanged: (i) => setState(() => _index = i),
-            destinations: const [
-              _NavItem(icon: Icons.grid_on, label: 'Game'),
-              _NavItem(icon: Icons.person, label: 'Players'),
-              _NavItem(icon: Icons.volume_up, label: 'Audio'),
-              _NavItem(icon: Icons.palette, label: 'Theme'),
-              _NavItem(icon: Icons.info, label: 'About'),
-            ],
           ),
         );
       },
@@ -92,130 +99,66 @@ class _NavItem {
   const _NavItem({required this.icon, required this.label});
 }
 
-class _LiquidNavigationBar extends StatefulWidget {
+class _LiquidNavigationBar extends StatelessWidget {
   final theme.AppThemeType themeType;
   final int selectedIndex;
   final ValueChanged<int> onChanged;
   final List<_NavItem> destinations;
+
   const _LiquidNavigationBar({
     required this.themeType,
     required this.selectedIndex,
     required this.onChanged,
     required this.destinations,
   });
-  @override
-  State<_LiquidNavigationBar> createState() => _LiquidNavigationBarState();
-}
-
-class _LiquidNavigationBarState extends State<_LiquidNavigationBar> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _blobScale;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 240));
-    _blobScale = Tween<double>(begin: 0.9, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-  }
-
-  @override
-  void didUpdateWidget(covariant _LiquidNavigationBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedIndex != widget.selectedIndex) {
-      _controller.forward(from: 0.0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    final glassColor = theme.AppTheme.getGlassColor(widget.themeType);
-    final borderColor = theme.AppTheme.getGlassBorderColor(widget.themeType);
-    final neon = theme.AppTheme.getNeonGlowColor(widget.themeType);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      decoration: BoxDecoration(
-        color: glassColor,
-        border: Border(
-          top: BorderSide(color: borderColor, width: 1.5),
-        ),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha((0.18 * 255).round()), blurRadius: 12.0, spreadRadius: 1.0),
-        ],
-      ),
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final itemCount = widget.destinations.length;
-              final itemWidth = width / itemCount;
-              return SizedBox(
-                height: 68,
-                child: Stack(
-                  children: [
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 240),
-                      curve: Curves.easeOut,
-                      left: widget.selectedIndex * itemWidth + itemWidth * 0.15,
-                      top: 8,
-                      child: ScaleTransition(
-                        scale: _blobScale,
-                        child: Container(
-                          width: itemWidth * 0.7,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: neon.withOpacity(widget.themeType == theme.AppThemeType.liquidGlow ? 0.25 : 0.18),
-                            borderRadius: BorderRadius.circular(26),
-                            boxShadow: [
-                              BoxShadow(color: neon.withOpacity(0.35), blurRadius: 12.0, spreadRadius: 2.0),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: List.generate(itemCount, (i) {
-                        final item = widget.destinations[i];
-                        final selected = i == widget.selectedIndex;
-                        return Expanded(
-                          child: InkWell(
-                            onTap: () => widget.onChanged(i),
-                            borderRadius: BorderRadius.circular(20),
-                            splashColor: neon.withOpacity(0.2),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(item.icon, color: selected ? Colors.white : Colors.white70),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    item.label,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: selected ? FontWeight.bold : FontWeight.w600,
-                                      color: selected ? Colors.white : Colors.white70,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
+    final glassColor = theme.AppTheme.getGlassColor(themeType);
+    final borderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(32),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          height: 70,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: glassColor.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: borderColor.withOpacity(0.2), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(destinations.length, (index) {
+              final item = destinations[index];
+              final isSelected = index == selectedIndex;
+              return GestureDetector(
+                onTap: () => onChanged(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutBack,
+                  padding: EdgeInsets.all(isSelected ? 12 : 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    item.icon,
+                    color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+                    size: isSelected ? 28 : 24,
+                  ),
                 ),
               );
-            },
+            }),
           ),
         ),
       ),
@@ -239,10 +182,7 @@ class _GlassCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            glassColor,
-            glassColor.withAlpha((0.7 * 255).round()),
-          ],
+          colors: theme.AppTheme.getGlassSurfaceColors(themeType),
         ),
         border: Border.all(
           color: glassBorderColor,
@@ -250,7 +190,7 @@ class _GlassCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha((0.1 * 255).round()),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 20.0,
             spreadRadius: 0,
             offset: const Offset(0, 4),
@@ -279,6 +219,7 @@ class _GameSettingsPage extends StatelessWidget {
     
     return ListView(
       physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
       children: [
         const Padding(
           padding: EdgeInsets.all(20.0),
@@ -302,9 +243,9 @@ class _GameSettingsPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(
-                        color: glassColor.withAlpha((0.3 * 255).round()),
+                        color: glassColor.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: glassBorderColor.withAlpha((0.5 * 255).round()), width: 1.5),
+                        border: Border.all(color: glassBorderColor.withOpacity(0.5), width: 1.5),
                       ),
                       child: const Icon(Icons.grid_on_rounded, color: Colors.white, size: 24),
                     ),
@@ -331,66 +272,38 @@ class _GameSettingsPage extends StatelessWidget {
                         settings.setBoardSize(size);
                         context.read<GameProvider>().resetGame();
                       },
-                      child: Container(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20.0),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: isSelected
-                                ? [
-                                    glassBorderColor.withAlpha((0.4 * 255).round()),
-                                    glassBorderColor.withAlpha((0.2 * 255).round()),
-                                  ]
-                                : [
-                                    glassColor.withAlpha((0.3 * 255).round()),
-                                    glassColor.withAlpha((0.1 * 255).round()),
-                                  ],
-                          ),
+                          color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
                           border: Border.all(
-                            color: isSelected
-                                ? glassBorderColor
-                                : glassBorderColor.withAlpha((0.3 * 255).round()),
-                            width: isSelected ? 2.5 : 1.5,
+                            color: isSelected ? glassBorderColor : glassBorderColor.withOpacity(0.3),
+                            width: isSelected ? 2.0 : 1.5,
                           ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: glassBorderColor.withAlpha((0.4 * 255).round()),
-                                    blurRadius: 12.0,
-                                    spreadRadius: 2.0,
-                                  ),
-                                ]
-                              : null,
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20.0),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '$size',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : Colors.white70,
-                                    ),
-                                  ),
-                                  Text(
-                                    '×$size',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: isSelected ? Colors.white70 : Colors.white54,
-                                    ),
-                                  ),
-                                ],
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '$size',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? Colors.white : Colors.white70,
+                                ),
                               ),
-                            ),
+                              Text(
+                                '×$size',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isSelected ? Colors.white70 : Colors.white54,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -399,14 +312,6 @@ class _GameSettingsPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        _GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
                 child: Row(
@@ -414,9 +319,9 @@ class _GameSettingsPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(
-                        color: glassColor.withAlpha((0.3 * 255).round()),
+                        color: glassColor.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: glassBorderColor.withAlpha((0.5 * 255).round()), width: 1.5),
+                        border: Border.all(color: glassBorderColor.withOpacity(0.5), width: 1.5),
                       ),
                       child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 24),
                     ),
@@ -443,66 +348,38 @@ class _GameSettingsPage extends StatelessWidget {
                         settings.setWinCondition(value);
                         context.read<GameProvider>().resetGame();
                       },
-                      child: Container(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
                         width: 70,
                         height: 70,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(18.0),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: isSelected
-                                ? [
-                                    glassBorderColor.withAlpha((0.4 * 255).round()),
-                                    glassBorderColor.withAlpha((0.2 * 255).round()),
-                                  ]
-                                : [
-                                    glassColor.withAlpha((0.3 * 255).round()),
-                                    glassColor.withAlpha((0.1 * 255).round()),
-                                  ],
-                          ),
+                          color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
                           border: Border.all(
-                            color: isSelected
-                                ? glassBorderColor
-                                : glassBorderColor.withAlpha((0.3 * 255).round()),
-                            width: isSelected ? 2.5 : 1.5,
+                            color: isSelected ? glassBorderColor : glassBorderColor.withOpacity(0.3),
+                            width: isSelected ? 2.0 : 1.5,
                           ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: glassBorderColor.withAlpha((0.4 * 255).round()),
-                                    blurRadius: 12.0,
-                                    spreadRadius: 2.0,
-                                  ),
-                                ]
-                              : null,
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(18.0),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '$value',
-                                    style: TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : Colors.white70,
-                                    ),
-                                  ),
-                                  Text(
-                                    'in a row',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: isSelected ? Colors.white70 : Colors.white54,
-                                    ),
-                                  ),
-                                ],
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '$value',
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? Colors.white : Colors.white70,
+                                ),
                               ),
-                            ),
+                              Text(
+                                'in a row',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isSelected ? Colors.white70 : Colors.white54,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -511,39 +388,76 @@ class _GameSettingsPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: _DynamicTip(boardSize: settings.boardSize, winCondition: settings.winCondition),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
+        const SizedBox(height: 16),
         _GlassCard(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _ModeButton(
-                    title: '2 Players',
-                    icons: 'X  O',
-                    selected: settings.activePlayers.length == 2,
-                    onTap: () {
-                      settings.setActivePlayers([Player.x, Player.o]);
-                      context.read<GameProvider>().resetGame();
-                    },
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: glassColor.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(color: glassBorderColor.withOpacity(0.5), width: 1.5),
+                      ),
+                      child: const Icon(Icons.people_rounded, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Game Mode',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _ModeButton(
-                    title: '3 Players',
-                    icons: 'X  O  △',
-                    selected: settings.activePlayers.length == 3,
-                    onTap: () {
-                      settings.setActivePlayers([Player.x, Player.o, Player.triangle]);
-                      context.read<GameProvider>().resetGame();
-                    },
-                  ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _ModeButton(
+                        title: '2 Players',
+                        icons: 'X  O',
+                        selected: settings.activePlayers.length == 2,
+                        onTap: () {
+                          settings.setActivePlayers([Player.x, Player.o]);
+                          context.read<GameProvider>().resetGame();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ModeButton(
+                        title: '3 Players',
+                        icons: 'X  O  △',
+                        selected: settings.activePlayers.length == 3,
+                        onTap: () {
+                          settings.setActivePlayers([Player.x, Player.o, Player.triangle]);
+                          context.read<GameProvider>().resetGame();
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ],
@@ -561,68 +475,41 @@ class _ModeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
     final themeType = settings.currentTheme.toAppThemeType();
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20.0),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: selected
-                ? [
-                    glassBorderColor.withAlpha((0.4 * 255).round()),
-                    glassBorderColor.withAlpha((0.2 * 255).round()),
-                  ]
-                : [
-                    glassColor.withAlpha((0.3 * 255).round()),
-                    glassColor.withAlpha((0.1 * 255).round()),
-                  ],
-          ),
+          color: selected ? Colors.white.withOpacity(0.2) : Colors.transparent,
           border: Border.all(
-            color: selected ? glassBorderColor : glassBorderColor.withAlpha((0.3 * 255).round()),
-            width: selected ? 2.5 : 1.5,
+            color: selected ? glassBorderColor : glassBorderColor.withOpacity(0.3),
+            width: selected ? 2.0 : 1.5,
           ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: glassBorderColor.withAlpha((0.4 * 255).round()),
-                    blurRadius: 12.0,
-                    spreadRadius: 2.0,
-                  ),
-                ]
-              : null,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20.0),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  icons,
-                  style: TextStyle(
-                    fontSize: 28.0,
-                    fontWeight: FontWeight.bold,
-                    color: selected ? Colors.white : Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15.0,
-                    fontWeight: selected ? FontWeight.bold : FontWeight.w600,
-                    color: selected ? Colors.white : Colors.white70,
-                  ),
-                ),
-              ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              icons,
+              style: TextStyle(
+                fontSize: 28.0,
+                fontWeight: FontWeight.bold,
+                color: selected ? Colors.white : Colors.white70,
+              ),
             ),
-          ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 15.0,
+                fontWeight: selected ? FontWeight.bold : FontWeight.w600,
+                color: selected ? Colors.white : Colors.white70,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -683,10 +570,11 @@ class _PlayersPageState extends State<_PlayersPage> {
     final settings = context.watch<SettingsProvider>();
     return ListView(
       physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
       children: [
         const Padding(
           padding: EdgeInsets.all(16.0),
-          child: Text('Players', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          child: Text('Players', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
         ),
         ...settings.playerConfigs.map((config) {
           final color = settings.getPlayerColor(config.player);
@@ -698,16 +586,16 @@ class _PlayersPageState extends State<_PlayersPage> {
                 ListTile(
                   leading: Container(
                     width: 40, height: 40,
-                    decoration: BoxDecoration(color: color.withAlpha((0.2 * 255).round()), borderRadius: BorderRadius.circular(10), border: Border.all(color: color, width: 2)),
+                    decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(10), border: Border.all(color: color, width: 2)),
                     child: Center(child: Text(config.icon, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color))),
                   ),
-                  title: Text(config.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${config.player.toString().split('.').last.toUpperCase()} Player'),
+                  title: Text(config.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  subtitle: Text('${config.player.toString().split('.').last.toUpperCase()} Player', style: TextStyle(color: Colors.white.withOpacity(0.7))),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: TextField(
-                    decoration: InputDecoration(labelText: 'Player Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withAlpha((0.1 * 255).round())),
+                    decoration: InputDecoration(labelText: 'Player Name', labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withOpacity(0.1)),
                     style: const TextStyle(color: Colors.white),
                     controller: nameController,
                     onChanged: (v) {
@@ -720,7 +608,7 @@ class _PlayersPageState extends State<_PlayersPage> {
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: TextField(
-                    decoration: InputDecoration(labelText: 'Player Icon', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withAlpha((0.1 * 255).round())),
+                    decoration: InputDecoration(labelText: 'Player Icon', labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withOpacity(0.1)),
                     style: const TextStyle(color: Colors.white, fontSize: 18),
                     controller: iconController,
                     maxLength: 2,
@@ -748,14 +636,15 @@ class _AudioHapticsPage extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
     return ListView(
       physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
       children: [
       const Padding(
         padding: EdgeInsets.all(16.0),
-        child: Text('Audio & Haptics', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        child: Text('Audio & Haptics', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
       ),
-      _GlassCard(child: SwitchListTile(title: const Text('Sound'), value: settings.isSoundEnabled, onChanged: (_) => settings.toggleSound(), secondary: const Icon(Icons.volume_up))),
-      _GlassCard(child: SwitchListTile(title: const Text('Vibration'), value: settings.isVibrationEnabled, onChanged: (_) => settings.toggleVibration(), secondary: const Icon(Icons.vibration))),
-      _GlassCard(child: SwitchListTile(title: const Text('Confetti'), value: settings.isConfettiEnabled, onChanged: (_) => settings.toggleConfetti(), secondary: const Icon(Icons.celebration))),
+      _GlassCard(child: SwitchListTile(title: const Text('Sound', style: TextStyle(color: Colors.white)), value: settings.isSoundEnabled, onChanged: (_) => settings.toggleSound(), secondary: const Icon(Icons.volume_up, color: Colors.white))),
+      _GlassCard(child: SwitchListTile(title: const Text('Vibration', style: TextStyle(color: Colors.white)), value: settings.isVibrationEnabled, onChanged: (_) => settings.toggleVibration(), secondary: const Icon(Icons.vibration, color: Colors.white))),
+      _GlassCard(child: SwitchListTile(title: const Text('Confetti', style: TextStyle(color: Colors.white)), value: settings.isConfettiEnabled, onChanged: (_) => settings.toggleConfetti(), secondary: const Icon(Icons.celebration, color: Colors.white))),
     ]);
   }
 }
@@ -767,17 +656,18 @@ class _AppearancePage extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
     return ListView(
       physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
       children: [
       const Padding(
         padding: EdgeInsets.all(16.0),
-        child: Text('Appearance', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        child: Text('Appearance', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
       ),
       _GlassCard(child: Column(children: [
-        _ThemeOption(name: 'Light', themeMode: GameThemeMode.light, selected: settings.currentTheme == GameThemeMode.light, onTap: () => settings.setTheme(GameThemeMode.light)),
-        const Divider(),
-        _ThemeOption(name: 'Dark', themeMode: GameThemeMode.dark, selected: settings.currentTheme == GameThemeMode.dark, onTap: () => settings.setTheme(GameThemeMode.dark)),
-        const Divider(),
-        _ThemeOption(name: 'Liquid Glow', themeMode: GameThemeMode.liquidGlow, selected: settings.currentTheme == GameThemeMode.liquidGlow, onTap: () => settings.setTheme(GameThemeMode.liquidGlow)),
+        _ThemeOption(name: 'Glassmorphism', themeMode: GameThemeMode.glassmorphism, selected: settings.currentTheme == GameThemeMode.glassmorphism, onTap: () => settings.setTheme(GameThemeMode.glassmorphism)),
+        const Divider(color: Colors.white24),
+        _ThemeOption(name: 'Liquid Glass', themeMode: GameThemeMode.liquidGlass, selected: settings.currentTheme == GameThemeMode.liquidGlass, onTap: () => settings.setTheme(GameThemeMode.liquidGlass)),
+        const Divider(color: Colors.white24),
+        _ThemeOption(name: 'Neon Glass', themeMode: GameThemeMode.neonGlass, selected: settings.currentTheme == GameThemeMode.neonGlass, onTap: () => settings.setTheme(GameThemeMode.neonGlass)),
       ])),
     ]);
   }
@@ -791,239 +681,113 @@ class _ThemeOption extends StatelessWidget {
   const _ThemeOption({required this.name, required this.themeMode, required this.selected, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return ListTile(title: Text(name), trailing: selected ? const Icon(Icons.check, color: Colors.green) : null, onTap: onTap);
+    return ListTile(
+      title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+      trailing: selected ? const Icon(Icons.check_circle_rounded, color: Colors.cyanAccent) : null,
+      onTap: onTap,
+    );
   }
 }
 
 class _AboutPage extends StatelessWidget {
   const _AboutPage();
-  
-  Future<void> _launchURL(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final settings = Provider.of<SettingsProvider>(context);
-    final themeType = settings.currentTheme.toAppThemeType();
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    
     return ListView(
       physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 100),
       children: [
         const Padding(
           padding: EdgeInsets.all(16.0),
           child: Text('About', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
         ),
         _GlassCard(
-          child: Column(
-            children: [
-              const ListTile(
-                leading: Icon(Icons.grid_on_rounded, color: Colors.blue),
-                title: Text('Customizable Board', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                subtitle: Text('3x3, 4x4, or 5x5 board sizes', style: TextStyle(color: Colors.white70)),
-              ),
-              const Divider(),
-              const ListTile(
-                leading: Icon(Icons.palette_rounded, color: Colors.purple),
-                title: Text('Multiple Themes', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                subtitle: Text('Light, Dark, and Liquid Glow', style: TextStyle(color: Colors.white70)),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        _GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: glassColor.withAlpha((0.3 * 255).round()),
-                        borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: glassBorderColor.withAlpha((0.5 * 255).round()), width: 1.5),
-                      ),
-                      child: const Icon(Icons.privacy_tip_rounded, color: Colors.white, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Privacy Policy',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                const Text('Tic Tac Toe 3 Player', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 8),
+                const Text('Version 1.0.0', style: TextStyle(color: Colors.white70)),
+                const SizedBox(height: 16),
+                const Text('A premium Tic Tac Toe experience with 3-player support and beautiful glassmorphism themes.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70)),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () => launchUrl(Uri.parse('https://github.com/yourusername/tictactoe_3_player')),
+                  icon: const Icon(Icons.code),
+                  label: const Text('View Source Code'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'We respect your privacy. This app does not collect personal information.',
-                      style: TextStyle(color: Colors.white, fontSize: 14, height: 1.5),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.ads_click_rounded, color: Colors.orange, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Ads:',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 28.0),
-                      child: Text(
-                        'We use Google AdMob to show ads.',
-                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 28.0),
-                      child: Wrap(
-                        children: [
-                          const Text(
-                            'Google may collect anonymous data to serve relevant ads. For details, see ',
-                            style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                          ),
-                          GestureDetector(
-                            onTap: () => _launchURL('https://policies.google.com/privacy'),
-                            child: const Text(
-                              'Google Privacy Policy',
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontSize: 14,
-                                decoration: TextDecoration.underline,
-                                decorationColor: Colors.blue,
-                              ),
-                            ),
-                          ),
-                          const Text(
-                            '.',
-                            style: TextStyle(color: Colors.white70, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.data_usage_rounded, color: Colors.green, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Data:',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 28.0),
-                      child: Text(
-                        'No personal data is shared or sold.\nOnly anonymized info is used to improve the app.',
-                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.security_rounded, color: Colors.blue, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Security:',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 28.0),
-                      child: Text(
-                        'We take reasonable steps to protect your data.',
-                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.child_care_rounded, color: Colors.pink, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Children:',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 28.0),
-                      child: Text(
-                        'The app is not intended for children under 13.',
-                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.email_rounded, color: Colors.cyan, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Contact:',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 28.0),
-                      child: GestureDetector(
-                        onTap: () => _launchURL('mailto:liquidarc.studio@gmail.com'),
-                        child: const Text(
-                          'Email: liquidarc.studio@gmail.com',
-                          style: TextStyle(
-                            color: Colors.cyan,
-                            fontSize: 14,
-                            decoration: TextDecoration.underline,
-                            decorationColor: Colors.cyan,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DynamicTip extends StatelessWidget {
+  final int boardSize;
+  final int winCondition;
+
+  const _DynamicTip({super.key, required this.boardSize, required this.winCondition});
+
+  @override
+  Widget build(BuildContext context) {
+    String tip = "";
+    Color color = Colors.white70;
+    IconData icon = Icons.lightbulb_outline_rounded;
+
+    if (winCondition > boardSize) {
+      tip = "Impossible! Win condition cannot be larger than board size.";
+      color = const Color(0xFFFF5252);
+      icon = Icons.warning_amber_rounded;
+    } else if (boardSize == 3 && winCondition == 3) {
+      tip = "Classic Tic-Tac-Toe. Perfect for quick matches.";
+      color = const Color(0xFF69F0AE);
+    } else if (boardSize == 4) {
+      if (winCondition == 3) {
+         tip = "Easier to win on a larger board. Good for beginners.";
+      } else {
+         tip = "Standard 4x4 challenge. Strategic play required.";
+      }
+    } else if (boardSize == 5) {
+      if (winCondition == 3) {
+        tip = "Very easy to win. Expect fast rounds!";
+      } else if (winCondition == 4) {
+        tip = "Balanced for 5x5. Great for 3 players.";
+        color = const Color(0xFF69F0AE);
+      } else {
+        tip = "Hardcore mode! Block your opponents carefully.";
+        color = const Color(0xFFFF4081);
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              tip,
+              style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

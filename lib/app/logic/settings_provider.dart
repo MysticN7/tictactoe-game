@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tic_tac_toe_3_player/app/logic/game_logic.dart';
 
-enum GameThemeMode { light, dark, liquidGlow }
+enum GameThemeMode { glassmorphism, liquidGlass, neonGlass }
 
 class PlayerConfig {
   final Player player;
@@ -22,7 +22,7 @@ class SettingsProvider extends ChangeNotifier {
   bool _isConfettiEnabled = true;
   int _boardSize = 3;
   int _winCondition = 3;
-  GameThemeMode _currentTheme = GameThemeMode.liquidGlow;
+  GameThemeMode _currentTheme = GameThemeMode.liquidGlass;
   List<PlayerConfig> _playerConfigs = [
     PlayerConfig(player: Player.x, name: 'Player X', icon: 'X'),
     PlayerConfig(player: Player.o, name: 'Player O', icon: 'O'),

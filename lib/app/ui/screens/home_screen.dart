@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../logic/scores_provider.dart';
 import '../../logic/game_logic.dart';
 import '../../logic/settings_provider.dart';
@@ -9,6 +10,7 @@ import '../theme.dart' as theme;
 import '../widgets/game_board.dart';
 import '../widgets/particles_overlay.dart';
 import 'settings_root_screen.dart';
+import '../../utils/admob_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,10 +22,30 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ParticlesController _confetti = ParticlesController();
   int _lastHistorySize = 0;
+  BannerAd? _bannerAd;
+  bool _isBannerAdReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBannerAd();
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = AdMobService.createBannerAd()
+      ..load().then((_) {
+        if (mounted) {
+          setState(() {
+            _isBannerAdReady = true;
+          });
+        }
+      });
+  }
 
   @override
   void dispose() {
     _confetti.dispose();
+    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -45,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return Scaffold(
           extendBodyBehindAppBar: true,
-          backgroundColor: Colors.transparent,
+          backgroundColor: Colors.black,
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -61,20 +83,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(color: theme.AppTheme.getBackgroundOverlayColor(themeType)),
                 ),
                 SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _Scoreboard(
-                          themeType: themeType,
-                          settings: settings,
-                          scores: scores,
-                          activePlayers: settings.activePlayers,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _Scoreboard(
+                              themeType: themeType,
+                              settings: settings,
+                              scores: scores,
+                              activePlayers: settings.activePlayers,
+                            ),
+                            _SettingsButton(
+                              themeType: themeType,
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const SettingsRootScreen()),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 10),
-                        const SizedBox(height: 12),
-                        Consumer<GameProvider>(
+                      ),
+                      if (game.tournamentRound != TournamentRound.none)
+                        _TournamentStatus(themeType: themeType, game: game, settings: settings),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Consumer<GameProvider>(
                           builder: (context, game, _) {
                             final player = game.gameLogic.currentPlayer;
                             final name = context.read<SettingsProvider>().getPlayerName(player!);
@@ -89,28 +125,31 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                               child: Container(
                                 key: ValueKey(isOver ? 'over' : 'turn'),
-                                padding: const EdgeInsets.all(14.0),
+                                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16.0),
+                                  borderRadius: BorderRadius.circular(30.0),
                                   gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: theme.AppTheme.getGlassSurfaceColors(themeType)),
-                                  border: Border.all(color: glassBorderColor, width: 1.6),
+                                  border: Border.all(color: glassBorderColor, width: 1.5),
+                                  boxShadow: [
+                                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, spreadRadius: 1),
+                                  ],
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     if (!isOver) ...[
                                       Text(context.read<SettingsProvider>().getPlayerIcon(player), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
                                       const SizedBox(width: 8),
-                                      Text("${name.toUpperCase()}'s Turn"),
+                                      Text("${name.toUpperCase()}'s Turn", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                                     ] else ...[
                                       if (winner != null) ...[
                                         Text(context.read<SettingsProvider>().getPlayerIcon(winner), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.read<SettingsProvider>().getPlayerColor(winner))),
                                         const SizedBox(width: 8),
-                                        Text("${context.read<SettingsProvider>().getPlayerName(winner).toUpperCase()} WINS"),
+                                        Text("${context.read<SettingsProvider>().getPlayerName(winner).toUpperCase()} WINS", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                       ] else ...[
                                         const Icon(Icons.handshake_rounded, color: Colors.white),
                                         const SizedBox(width: 8),
-                                        const Text("DRAW"),
+                                        const Text("DRAW", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                       ]
                                     ]
                                   ],
@@ -119,42 +158,48 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           },
                         ),
-                        const SizedBox(height: 12),
-                        Expanded(
-                          child: _GlassCard(
-                            glassColor: glassColor,
-                            glassBorderColor: glassBorderColor,
-                            child: const Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: GameBoard(),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: _GlassCard(
+                              glassColor: glassColor,
+                              glassBorderColor: glassBorderColor,
+                              child: const Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: GameBoard(),
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        _BottomActions(
-                          themeType: themeType,
-                          onUndo: () => context.read<GameProvider>().undoLastMove(),
-                          onRestart: () => context.read<GameProvider>().resetGame(),
-                          onHistory: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const HistoryScreen()),
+                      ),
+                      if (game.tournamentRound != TournamentRound.none && game.gameLogic.isGameOver && game.tournamentRound != TournamentRound.champion)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: ElevatedButton.icon(
+                            onPressed: () => game.nextTournamentMatch(),
+                            icon: const Icon(Icons.play_arrow_rounded),
+                            label: const Text("Next Match"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.AppTheme.getNeonGlowColor(themeType),
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                SafeArea(
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: _SettingsButton(
-                        themeType: themeType,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const SettingsRootScreen()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                        child: _BottomActions(
+                      if (_isBannerAdReady)
+                        SizedBox(
+                          height: _bannerAd!.size.height.toDouble(),
+                          width: _bannerAd!.size.width.toDouble(),
+                          child: AdWidget(ad: _bannerAd!),
                         ),
-                      ),
-                    ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 ),
                 Consumer<SettingsProvider>(
@@ -165,6 +210,53 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _TournamentStatus extends StatelessWidget {
+  final theme.AppThemeType themeType;
+  final GameProvider game;
+  final SettingsProvider settings;
+
+  const _TournamentStatus({required this.themeType, required this.game, required this.settings});
+
+  @override
+  Widget build(BuildContext context) {
+    String statusText = "";
+    switch (game.tournamentRound) {
+      case TournamentRound.round1:
+        statusText = "Round 1: Qualifiers";
+        break;
+      case TournamentRound.round2:
+        statusText = "Round 2: Semifinals";
+        break;
+      case TournamentRound.finalMatch:
+        statusText = "Final Match";
+        break;
+      case TournamentRound.champion:
+        statusText = "Champion: ${settings.getPlayerName(game.tournamentChampion!)}";
+        break;
+      default:
+        statusText = "";
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      decoration: BoxDecoration(
+        color: theme.AppTheme.getNeonGlowColor(themeType).withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.AppTheme.getNeonGlowColor(themeType).withOpacity(0.5)),
+      ),
+      child: Text(
+        statusText.toUpperCase(),
+        style: TextStyle(
+          color: theme.AppTheme.getNeonGlowColor(themeType),
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+        ),
+      ),
     );
   }
 }
@@ -187,7 +279,7 @@ class _GlassCard extends StatelessWidget {
         ),
         border: Border.all(color: glassBorderColor, width: 1.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha((0.1 * 255).round()), blurRadius: 20.0, spreadRadius: 0, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 25.0, spreadRadius: 0, offset: const Offset(0, 8)),
         ],
       ),
       child: ClipRRect(
@@ -201,10 +293,6 @@ class _GlassCard extends StatelessWidget {
   }
 }
 
-// Removed main menu button UI per redesign
-
-// Play screen merged into HomeScreen
-
 class _SettingsButton extends StatefulWidget {
   final theme.AppThemeType themeType;
   final VoidCallback onTap;
@@ -217,8 +305,7 @@ class _SettingsButtonState extends State<_SettingsButton> with SingleTickerProvi
   late AnimationController _controller;
   late Animation<double> _scale;
   late Animation<double> _rotation;
-  bool _hover = false;
-
+  
   @override
   void initState() {
     super.initState();
@@ -242,31 +329,25 @@ class _SettingsButtonState extends State<_SettingsButton> with SingleTickerProvi
   Widget build(BuildContext context) {
     final glassColor = theme.AppTheme.getGlassColor(widget.themeType);
     final borderColor = theme.AppTheme.getGlassBorderColor(widget.themeType);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: ScaleTransition(
-        scale: _scale,
-        child: RotationTransition(
-          turns: _rotation,
-          child: InkWell(
-            onTap: _press,
-            borderRadius: BorderRadius.circular(20),
-            splashColor: borderColor.withAlpha((0.25 * 255).round()),
-            highlightColor: Colors.transparent,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: glassColor,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: borderColor, width: 1.6),
-                boxShadow: [
-                  BoxShadow(color: borderColor.withAlpha(_hover ? 120 : 70), blurRadius: _hover ? 14.0 : 10.0, spreadRadius: 0.8),
-                ],
-              ),
-              child: const Icon(Icons.settings_rounded, size: 22),
+    return ScaleTransition(
+      scale: _scale,
+      child: RotationTransition(
+        turns: _rotation,
+        child: InkWell(
+          onTap: _press,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: glassColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: borderColor, width: 1.5),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10.0, spreadRadius: 1),
+              ],
             ),
+            child: const Icon(Icons.settings_rounded, size: 24, color: Colors.white),
           ),
         ),
       ),
@@ -282,35 +363,81 @@ class HistoryScreen extends StatelessWidget {
     final themeType = settings.currentTheme.toAppThemeType();
     final glassColor = theme.AppTheme.getGlassColor(themeType);
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    final gradientColors = theme.AppTheme.getGradientColors(themeType);
     final matches = context.watch<GameProvider>().matchHistory;
+    
     return Scaffold(
-      appBar: AppBar(title: const Text('Match History')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView.separated(
-          itemCount: matches.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, i) {
-            final m = matches[i];
-            final winnerName = m.winner != null ? settings.getPlayerName(m.winner!) : 'Draw';
-            final winnerColor = m.winner != null ? settings.getPlayerColor(m.winner!) : Colors.white70;
-            return Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16.0),
-                color: glassColor,
-                border: Border.all(color: glassBorderColor, width: 1.5),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.emoji_events_rounded, color: winnerColor),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text('${m.boardSize}x${m.boardSize}, win ${m.winCondition} • $winnerName')),
-                  Text('${m.moveCount} moves'),
-                ],
-              ),
-            );
-          },
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Match History', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        centerTitle: true,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+             begin: Alignment.topLeft,
+             end: Alignment.bottomRight,
+             colors: gradientColors,
+          ),
+        ),
+        child: Stack(
+          children: [
+             BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                child: Container(color: theme.AppTheme.getBackgroundOverlayColor(themeType)),
+             ),
+             SafeArea(
+               child: matches.isEmpty 
+               ? const Center(child: Text("No matches yet", style: TextStyle(color: Colors.white70, fontSize: 18)))
+               : ListView.separated(
+                 padding: const EdgeInsets.all(16.0),
+                 itemCount: matches.length,
+                 separatorBuilder: (_, __) => const SizedBox(height: 10),
+                 itemBuilder: (context, i) {
+                   final m = matches[i];
+                   final winnerName = m.winner != null ? settings.getPlayerName(m.winner!) : 'Draw';
+                   final winnerColor = m.winner != null ? settings.getPlayerColor(m.winner!) : Colors.white70;
+                   return Container(
+                     padding: const EdgeInsets.all(16.0),
+                     decoration: BoxDecoration(
+                       borderRadius: BorderRadius.circular(20.0),
+                       color: glassColor,
+                       border: Border.all(color: glassBorderColor, width: 1.5),
+                     ),
+                     child: Row(
+                       children: [
+                         Container(
+                           padding: const EdgeInsets.all(8),
+                           decoration: BoxDecoration(
+                             color: winnerColor.withOpacity(0.2),
+                             shape: BoxShape.circle,
+                           ),
+                           child: Icon(Icons.emoji_events_rounded, color: winnerColor, size: 20),
+                         ),
+                         const SizedBox(width: 12),
+                         Expanded(
+                           child: Column(
+                             crossAxisAlignment: CrossAxisAlignment.start,
+                             children: [
+                               Text(winnerName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                               Text('${m.boardSize}x${m.boardSize} • Win ${m.winCondition}', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                             ],
+                           ),
+                         ),
+                         Text('${m.moveCount} moves', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                       ],
+                     ),
+                   );
+                 },
+               ),
+             ),
+          ],
         ),
       ),
     );
@@ -327,80 +454,49 @@ class _Scoreboard extends StatelessWidget {
   Widget build(BuildContext context) {
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
     final players = activePlayers;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final perItem = width / (players.isNotEmpty ? players.length : 1);
-        final scale = (perItem / 160.0).clamp(0.9, 1.8);
-        final marginH = 6.0 * scale;
-        final padV = 12.0 * scale;
-        final padH = 14.0 * scale;
-        final radius = 16.0 * scale;
-        final circle = 12.0 * scale;
-        final gap = 8.0 * scale;
-        final symbolFont = 18.0 * scale;
-        final countFont = 22.0 * scale;
-        final blurActive = (12.0 * scale).clamp(8.0, 16.0);
-        final blurInactive = (8.0 * scale).clamp(6.0, 12.0);
-        final borderWidth = (1.8 * scale).clamp(1.6, 2.4);
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: players.map((p) {
-            final color = settings.getPlayerColor(p);
-            final winCount = scores.wins[p] ?? 0;
-            final isActive = activePlayers.contains(p);
-            return Expanded(
-              child: AnimatedContainer(
-                margin: EdgeInsets.symmetric(horizontal: marginH),
-                padding: EdgeInsets.symmetric(vertical: padV, horizontal: padH),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(radius),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: theme.AppTheme.getGlassSurfaceColors(themeType),
-                  ),
-                  border: Border.all(
-                    color: isActive ? glassBorderColor : glassBorderColor.withAlpha((0.4 * 255).round()),
-                    width: borderWidth,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withAlpha((isActive ? 90 : 35)),
-                      blurRadius: isActive ? blurActive : blurInactive,
-                      spreadRadius: 0.8,
-                    ),
-                  ],
+    return Expanded(
+      child: Row(
+        children: players.map((p) {
+          final color = settings.getPlayerColor(p);
+          final winCount = scores.wins[p] ?? 0;
+          return Expanded(
+            child: Container(
+              margin: const EdgeInsets.only(right: 8.0),
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16.0),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: theme.AppTheme.getGlassSurfaceColors(themeType),
                 ),
-                duration: const Duration(milliseconds: 240),
-                child: Row(
-                  children: [
-                    Container(width: circle, height: circle, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                    SizedBox(width: gap),
-                    Expanded(
-                      child: Text(
-                        settings.getPlayerIcon(p),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: symbolFont),
-                      ),
-                    ),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-                      child: Text(
-                        '$winCount',
-                        key: ValueKey('wins-$p-$winCount'),
-                        style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: countFont),
-                      ),
-                    ),
-                  ],
+                border: Border.all(
+                  color: glassBorderColor.withOpacity(0.5),
+                  width: 1.5,
                 ),
               ),
-            );
-          }).toList(),
-        );
-      },
+              child: Row(
+                children: [
+                  Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      settings.getPlayerName(p),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontWeight: FontWeight.w600, fontSize: 12),
+                    ),
+                  ),
+                  Text(
+                    '$winCount',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }
@@ -410,40 +506,43 @@ class _BottomActions extends StatelessWidget {
   final VoidCallback onUndo;
   final VoidCallback onRestart;
   final VoidCallback onHistory;
-  const _BottomActions({required this.themeType, required this.onUndo, required this.onRestart, required this.onHistory});
+  final VoidCallback onTournament;
+  final bool isTournamentActive;
+  final bool canStartTournament;
+
+  const _BottomActions({
+    required this.themeType,
+    required this.onUndo,
+    required this.onRestart,
+    required this.onHistory,
+    required this.onTournament,
+    required this.isTournamentActive,
+    required this.canStartTournament,
+  });
+
   @override
   Widget build(BuildContext context) {
     final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
     final actionColors = theme.AppTheme.getGlassSurfaceColors(themeType);
-    Widget buildButton(IconData icon, String label, VoidCallback onTap) {
+    
+    Widget buildButton(IconData icon, String label, VoidCallback onTap, {bool isActive = false, bool isDisabled = false}) {
+      final opacity = isDisabled ? 0.5 : 1.0;
       return Expanded(
-        child: _ActionButton(
-          gradientColors: actionColors,
-          borderColor: glassBorderColor,
-          icon: icon,
-          label: label,
-          onTap: onTap,
+        child: Opacity(
+          opacity: opacity,
+          child: _ActionButton(
+            gradientColors: isActive 
+                ? [theme.AppTheme.getNeonGlowColor(themeType).withOpacity(0.4), theme.AppTheme.getNeonGlowColor(themeType).withOpacity(0.1)] 
+                : actionColors,
+            borderColor: isActive ? theme.AppTheme.getNeonGlowColor(themeType) : glassBorderColor,
+            icon: icon,
+            label: label,
+            onTap: isDisabled ? () {} : onTap,
+          ),
         ),
       );
     }
     return Row(
-      children: [
-        buildButton(Icons.undo_rounded, 'Undo', onUndo),
-        const SizedBox(width: 12),
-        buildButton(Icons.restart_alt_rounded, 'Restart', onRestart),
-        const SizedBox(width: 12),
-        buildButton(Icons.history_rounded, 'History', onHistory),
-      ],
-    );
-  }
-}
-
-class _ActionButton extends StatefulWidget {
-  final List<Color> gradientColors;
-  final Color borderColor;
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
   const _ActionButton({required this.gradientColors, required this.borderColor, required this.icon, required this.label, required this.onTap});
   @override
   State<_ActionButton> createState() => _ActionButtonState();
@@ -452,7 +551,7 @@ class _ActionButton extends StatefulWidget {
 class _ActionButtonState extends State<_ActionButton> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scale;
-  bool _hover = false;
+  
   @override
   void initState() {
     super.initState();
@@ -470,32 +569,27 @@ class _ActionButtonState extends State<_ActionButton> with SingleTickerProviderS
   }
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: ScaleTransition(
-        scale: _scale,
-        child: GestureDetector(
-          onTap: _press,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18.0),
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: widget.gradientColors),
-              border: Border.all(color: widget.borderColor, width: _hover ? 2.0 : 1.6),
-              boxShadow: [
-                BoxShadow(color: widget.borderColor.withAlpha(_hover ? 130 : 90), blurRadius: _hover ? 14.0 : 10.0, spreadRadius: 0.9),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(widget.icon, color: Colors.white),
-                const SizedBox(width: 10),
-                Text(widget.label, style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
-              ],
-            ),
+    return ScaleTransition(
+      scale: _scale,
+      child: GestureDetector(
+        onTap: _press,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.0),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: widget.gradientColors),
+            border: Border.all(color: widget.borderColor, width: 1.5),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8.0, spreadRadius: 0.5),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(widget.icon, color: Colors.white, size: 22),
+              const SizedBox(height: 4),
+              Text(widget.label, style: const TextStyle(fontSize: 12.0, fontWeight: FontWeight.w600, color: Colors.white)),
+            ],
           ),
         ),
       ),

@@ -1,222 +1,148 @@
 import 'package:flutter/material.dart';
 import 'package:tic_tac_toe_3_player/app/logic/settings_provider.dart';
 
-class AppTheme {
-  static ThemeData getTheme(AppThemeType themeType) {
-    switch (themeType) {
-      case AppThemeType.light:
-        return lightTheme;
-      case AppThemeType.dark:
-        return darkTheme;
-      case AppThemeType.liquidGlow:
-        return liquidGlowTheme;
-    }
-  }
+enum AppThemeType {
+  glassmorphism,
+  liquidGlass,
+  neonGlass,
+}
 
-  static final ThemeData lightTheme = ThemeData(
-    brightness: Brightness.light,
-    primaryColor: const Color(0xFF2196F3),
-    scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-    cardColor: Colors.white.withAlpha((0.8 * 255).round()),
-    textTheme: const TextTheme(
-      displayLarge: TextStyle(
-        fontFamily: 'Roboto',
-        color: Color(0xFF2196F3),
-        fontSize: 32.0,
-        fontWeight: FontWeight.bold,
-      ),
-      bodyLarge: TextStyle(
-        fontFamily: 'Roboto',
-        color: Color(0xFF212121),
-        fontSize: 16.0,
-      ),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: const Color(0xFF2196F3),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.0),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      ),
-    ),
-  );
-
-  static final ThemeData darkTheme = ThemeData(
-    brightness: Brightness.dark,
-    primaryColor: const Color(0xFF64B5F6),
-    scaffoldBackgroundColor: const Color(0xFF121212),
-    cardColor: const Color(0x1AFFFFFF),
-    textTheme: const TextTheme(
-      displayLarge: TextStyle(
-        fontFamily: 'Roboto',
-        color: Color(0xFF64B5F6),
-        fontSize: 32.0,
-        fontWeight: FontWeight.bold,
-      ),
-      bodyLarge: TextStyle(
-        fontFamily: 'Roboto',
-        color: Colors.white,
-        fontSize: 16.0,
-      ),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: const Color(0xFF64B5F6),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.0),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      ),
-    ),
-  );
-
-  static final ThemeData liquidGlowTheme = ThemeData(
-    brightness: Brightness.dark,
-    primaryColor: const Color(0xFF00FFFF),
-    scaffoldBackgroundColor: const Color(0xFF0D0D2B),
-    cardColor: const Color(0x1AFFFFFF),
-    textTheme: const TextTheme(
-      displayLarge: TextStyle(
-        fontFamily: 'Roboto',
-        color: Color(0xFF00FFFF),
-        fontSize: 32.0,
-        fontWeight: FontWeight.bold,
-      ),
-      bodyLarge: TextStyle(
-        fontFamily: 'Roboto',
-        color: Colors.white,
-        fontSize: 16.0,
-      ),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: const Color(0xFFF50057),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30.0),
-          side: const BorderSide(color: Color(0xFF00FFFF), width: 2.0),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      ),
-    ),
-  );
-
-  // Glass morphism colors for different themes (iOS 16 style)
-  static Color getGlassColor(AppThemeType themeType) {
-    switch (themeType) {
-      case AppThemeType.light:
-        return Colors.white.withAlpha((0.3 * 255).round());
-      case AppThemeType.dark:
-        return Colors.white.withAlpha((0.12 * 255).round());
-      case AppThemeType.liquidGlow:
-        return Colors.white.withAlpha((0.22 * 255).round());
-    }
-  }
-
-  static Color getGlassBorderColor(AppThemeType themeType) {
-    switch (themeType) {
-      case AppThemeType.light:
-        return Colors.white.withAlpha((0.5 * 255).round());
-      case AppThemeType.dark:
-        return const Color(0xFF64B5F6).withAlpha((0.5 * 255).round());
-      case AppThemeType.liquidGlow:
-        return const Color(0xFF00FFFF).withAlpha((0.75 * 255).round());
-    }
-  }
-
-  static List<Color> getGradientColors(AppThemeType themeType) {
-    switch (themeType) {
-      case AppThemeType.light:
-        return [
-          const Color(0xFFE3F2FD),
-          const Color(0xFFBBDEFB),
-          const Color(0xFF90CAF9),
-        ];
-      case AppThemeType.dark:
-        return [
-          const Color(0xFF0A0A0F),
-          const Color(0xFF14141A),
-          const Color(0xFF1A1A24),
-          const Color(0xFF0F0F12),
-        ];
-      case AppThemeType.liquidGlow:
-        return [
-          const Color(0xFF050A24),
-          const Color(0xFF0F1A3D),
-          const Color(0xFF1A2558),
-          const Color(0xFF2A2E6B),
-        ];
-    }
-  }
-
-  static Color getNeonGlowColor(AppThemeType themeType) {
-    switch (themeType) {
-      case AppThemeType.light:
-        return const Color(0xFF2196F3);
-      case AppThemeType.dark:
-        return const Color(0xFF64B5F6);
-      case AppThemeType.liquidGlow:
-        return const Color(0xFF00E5FF);
-    }
-  }
-
-  static Color getWinningLineColor(AppThemeType themeType) {
-    switch (themeType) {
-      case AppThemeType.light:
-        return const Color(0xFF4CAF50);
-      case AppThemeType.dark:
-        return const Color(0xFF81C784);
-      case AppThemeType.liquidGlow:
-        return const Color(0xFFFF4DFF);
-    }
-  }
-
-  static List<Color> getGlassSurfaceColors(AppThemeType themeType) {
-    switch (themeType) {
-      case AppThemeType.light:
-        return [
-          Colors.white.withAlpha((0.30 * 255).round()),
-          Colors.white.withAlpha((0.22 * 255).round()),
-        ];
-      case AppThemeType.dark:
-        return [
-          Colors.white.withAlpha((0.16 * 255).round()),
-          Colors.white.withAlpha((0.10 * 255).round()),
-        ];
-      case AppThemeType.liquidGlow:
-        return [
-          const Color(0x66FFFFFF),
-          const Color(0x33FFFFFF),
-        ];
-    }
-  }
-
-  static Color getBackgroundOverlayColor(AppThemeType themeType) {
-    switch (themeType) {
-      case AppThemeType.light:
-        return Colors.white.withAlpha((0.08 * 255).round());
-      case AppThemeType.dark:
-        return Colors.black.withAlpha((0.12 * 255).round());
-      case AppThemeType.liquidGlow:
-        return const Color(0x2200E5FF);
+extension ThemeModeExtension on GameThemeMode {
+  AppThemeType toAppThemeType() {
+    switch (this) {
+      case GameThemeMode.light:
+        return AppThemeType.glassmorphism;
+      case GameThemeMode.dark:
+        return AppThemeType.neonGlass;
+      case GameThemeMode.liquidGlow:
+        return AppThemeType.liquidGlass;
     }
   }
 }
 
-enum AppThemeType { light, dark, liquidGlow }
+class AppTheme {
+  static ThemeData getTheme(AppThemeType type) {
+    switch (type) {
+      case AppThemeType.glassmorphism:
+        return ThemeData(
+          brightness: Brightness.light,
+          primaryColor: Colors.blueAccent,
+          scaffoldBackgroundColor: Colors.white,
+          fontFamily: 'Roboto', // Or your custom font
+          useMaterial3: true,
+        );
+      case AppThemeType.liquidGlass:
+        return ThemeData(
+          brightness: Brightness.dark,
+          primaryColor: Colors.cyanAccent,
+          scaffoldBackgroundColor: Colors.black,
+          fontFamily: 'Roboto',
+          useMaterial3: true,
+        );
+      case AppThemeType.neonGlass:
+        return ThemeData(
+          brightness: Brightness.dark,
+          primaryColor: Colors.purpleAccent,
+          scaffoldBackgroundColor: const Color(0xFF050510),
+          fontFamily: 'Roboto',
+          useMaterial3: true,
+        );
+    }
+  }
 
-extension GameThemeModeExtension on GameThemeMode {
-  AppThemeType toAppThemeType() {
-    switch (this) {
-      case GameThemeMode.light:
-        return AppThemeType.light;
-      case GameThemeMode.dark:
-        return AppThemeType.dark;
-      case GameThemeMode.liquidGlow:
-        return AppThemeType.liquidGlow;
+  static List<Color> getGradientColors(AppThemeType type) {
+    switch (type) {
+      case AppThemeType.glassmorphism:
+        return [
+          const Color(0xFFE0C3FC), // Soft Purple
+          const Color(0xFF8EC5FC), // Soft Blue
+        ];
+      case AppThemeType.liquidGlass:
+        return [
+          const Color(0xFF0F2027), // Deep Dark Blue
+          const Color(0xFF203A43),
+          const Color(0xFF2C5364), // Liquid Blue-Grey
+        ];
+      case AppThemeType.neonGlass:
+        return [
+          const Color(0xFF240b36), // Deep Purple
+          const Color(0xFFc31432), // Neon Red/Pink
+        ];
+    }
+  }
+
+  static Color getGlassColor(AppThemeType type) {
+    switch (type) {
+      case AppThemeType.glassmorphism:
+        return Colors.white.withOpacity(0.25);
+      case AppThemeType.liquidGlass:
+        return Colors.white.withOpacity(0.12);
+      case AppThemeType.neonGlass:
+        return Colors.black.withOpacity(0.4);
+    }
+  }
+
+  static Color getGlassBorderColor(AppThemeType type) {
+    switch (type) {
+      case AppThemeType.glassmorphism:
+        return Colors.white.withOpacity(0.6);
+      case AppThemeType.liquidGlass:
+        return Colors.cyanAccent.withOpacity(0.3);
+      case AppThemeType.neonGlass:
+        return Colors.purpleAccent.withOpacity(0.5);
+    }
+  }
+
+  static List<Color> getGlassSurfaceColors(AppThemeType type) {
+    switch (type) {
+      case AppThemeType.glassmorphism:
+        return [
+          Colors.white.withOpacity(0.4),
+          Colors.white.withOpacity(0.1),
+        ];
+      case AppThemeType.liquidGlass:
+        return [
+          Colors.white.withOpacity(0.15),
+          Colors.white.withOpacity(0.05),
+        ];
+      case AppThemeType.neonGlass:
+        return [
+          Colors.white.withOpacity(0.1),
+          Colors.white.withOpacity(0.02),
+        ];
+    }
+  }
+
+  static Color getBackgroundOverlayColor(AppThemeType type) {
+    switch (type) {
+      case AppThemeType.glassmorphism:
+        return Colors.white.withOpacity(0.1);
+      case AppThemeType.liquidGlass:
+        return Colors.black.withOpacity(0.3);
+      case AppThemeType.neonGlass:
+        return Colors.black.withOpacity(0.6);
+    }
+  }
+
+  static Color getNeonGlowColor(AppThemeType type) {
+    switch (type) {
+      case AppThemeType.glassmorphism:
+        return Colors.blueAccent;
+      case AppThemeType.liquidGlass:
+        return Colors.cyanAccent;
+      case AppThemeType.neonGlass:
+        return Colors.purpleAccent;
+    }
+  }
+  
+  static Color getWinningLineColor(AppThemeType type) {
+     switch (type) {
+      case AppThemeType.glassmorphism:
+        return Colors.deepPurpleAccent;
+      case AppThemeType.liquidGlass:
+        return Colors.cyanAccent;
+      case AppThemeType.neonGlass:
+        return Colors.amberAccent;
     }
   }
 }

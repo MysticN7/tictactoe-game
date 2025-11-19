@@ -2,15 +2,28 @@ import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdMobService {
-  // NOTE: Using Google test ad units for development to verify integration
-  // Banner (test): ca-app-pub-3940256099942544/6300978111
-  // Interstitial (test): ca-app-pub-3940256099942544/1033173712
-  //
-  // For release, swap these back to your real IDs:
-  //   Banner:       ca-app-pub-4384120827738431/2390002413
-  //   Interstitial: ca-app-pub-4384120827738431/4237560263
+  // Production Ad Unit IDs
+  // Banner:       ca-app-pub-4384120827738431/2390002413
+  // Interstitial: ca-app-pub-4384120827738431/4237560263
   static String get bannerAdUnitId => 'ca-app-pub-4384120827738431/2390002413';
   static String get interstitialAdUnitId => 'ca-app-pub-4384120827738431/4237560263';
+
+  static BannerAd createBannerAd() {
+    return BannerAd(
+      adUnitId: bannerAdUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          if (kDebugMode) print('AdMob: Banner ad loaded');
+        },
+        onAdFailedToLoad: (ad, error) {
+          if (kDebugMode) print('AdMob: Banner ad failed to load: $error');
+          ad.dispose();
+        },
+      ),
+    )..load();
+  }
 
   static InterstitialAd? _interstitialAd;
   static bool _isLoadingInterstitial = false;

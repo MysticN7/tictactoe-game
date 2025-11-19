@@ -192,24 +192,61 @@ class _GameTileState extends State<_GameTile>
                 child: playerIcon.isNotEmpty
                     ? ScaleTransition(
                         scale: _scaleAnimation,
-                        child: Text(
-                          playerIcon,
-                          style: TextStyle(
-                            fontSize: _markerFontSize(widget.tileExtent, playerIcon),
-                            fontWeight: FontWeight.bold,
-                            color: widget.isWinning ? winningColor : playerColor,
-                            shadows: [
-                              Shadow(
-                                color: widget.isWinning
-                                    ? winningColor.withAlpha((0.9 * 255).round())
-                                    : playerColor.withAlpha((0.6 * 255).round()),
-                                blurRadius: 8.0,
-                              ),
-                            ],
-                          ),
-                        ),
+                        child: _buildMarker(playerIcon, winningColor, playerColor),
                       )
                     : null,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMarker(String icon, Color winningColor, Color playerColor) {
+    IconData? iconData;
+    if (icon == 'X') iconData = Icons.close_rounded;
+    else if (icon == 'O') iconData = Icons.circle_outlined;
+    else if (icon == '△') iconData = Icons.change_history_rounded;
+
+    final color = widget.isWinning ? winningColor : playerColor;
+    final shadowColor = widget.isWinning
+        ? winningColor.withAlpha((0.9 * 255).round())
+        : playerColor.withAlpha((0.6 * 255).round());
+
+    if (iconData != null) {
+      return Icon(
+        iconData,
+        size: widget.tileExtent * 0.6,
+        color: color,
+        shadows: [
+          Shadow(
+            color: shadowColor,
+            blurRadius: 12.0,
+          ),
+          Shadow(
+            color: shadowColor.withOpacity(0.5),
+            blurRadius: 20.0,
+          ),
+        ],
+      );
+    }
+
+    return Text(
+      icon,
+      style: TextStyle(
+        fontSize: _markerFontSize(widget.tileExtent, icon),
+        fontWeight: FontWeight.bold,
+        color: color,
+        shadows: [
+          Shadow(
+            color: shadowColor,
+            blurRadius: 8.0,
+          ),
+        ],
+      ),
+    );
+  }
               ),
             ),
           );

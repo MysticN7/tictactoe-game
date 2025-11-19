@@ -22,15 +22,35 @@ class GameMatch {
   });
 }
 
+enum TournamentRound {
+  none,
+  round1, // 3 players
+  round2, // 2 losers from R1
+  finalMatch, // Winner R1 vs Winner R2
+  champion // Tournament Over
+}
+
 class GameProvider extends ChangeNotifier {
   GameLogic _gameLogic;
   SettingsProvider? _settingsProvider;
   ScoresProvider? _scoresProvider;
   List<GameMatch> _matchHistory = [];
 
+  // Tournament State
+  TournamentRound _tournamentRound = TournamentRound.none;
+  Player? _round1Winner;
+  Player? _round2Winner;
+  Player? _tournamentChampion;
+  List<Player> _round2Players = [];
+
   GameProvider() : _gameLogic = GameLogic() {
     AdMobService.createInterstitialAd();
   }
+
+  TournamentRound get tournamentRound => _tournamentRound;
+  Player? get round1Winner => _round1Winner;
+  Player? get round2Winner => _round2Winner;
+  Player? get tournamentChampion => _tournamentChampion;
 
   void setSettingsProvider(SettingsProvider settingsProvider) {
     _settingsProvider = settingsProvider;
@@ -43,7 +63,10 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _onSettingsChanged() {
-    _updateGameFromSettings();
+    // If tournament is active, don't reset game on settings change unless critical
+    if (_tournamentRound == TournamentRound.none) {
+      _updateGameFromSettings();
+    }
   }
 
   void _updateGameFromSettings() {
@@ -58,12 +81,45 @@ class GameProvider extends ChangeNotifier {
       _gameLogic.updateBoardSize(_settingsProvider!.boardSize);
       _gameLogic.updateWinCondition(_settingsProvider!.winCondition);
       _gameLogic.updatePlayers(_settingsProvider!.activePlayers);
+      
+      // Reset scores if board size or win condition changed
+      if (_gameLogic.boardSize != _settingsProvider!.boardSize || 
+          _gameLogic.winCondition != _settingsProvider!.winCondition) {
+        _scoresProvider?.reset();
+      }
       notifyListeners();
     }
   }
 
   GameLogic get gameLogic => _gameLogic;
   List<GameMatch> get matchHistory => _matchHistory;
+
+  void startTournament() {
+    if (_settingsProvider == null) return;
+    // Force 3 players for tournament if not already
+    if (_settingsProvider!.activePlayers.length != 3) {
+       _settingsProvider!.setActivePlayers([Player.x, Player.o, Player.triangle]);
+    }
+    
+    _tournamentRound = TournamentRound.round1;
+    _round1Winner = null;
+    _round2Winner = null;
+    _tournamentChampion = null;
+    _round2Players = [];
+    
+    // Round 1: All 3 players
+    _gameLogic = GameLogic(
+      boardSize: _settingsProvider!.boardSize,
+      winCondition: _settingsProvider!.winCondition,
+      players: _settingsProvider!.activePlayers,
+    );
+    notifyListeners();
+  }
+
+  void stopTournament() {
+    _tournamentRound = TournamentRound.none;
+    resetGame();
+  }
 
   void makeMove(int row, int col) {
     if (_gameLogic.makeMove(row, col)) {
@@ -76,17 +132,9 @@ class GameProvider extends ChangeNotifier {
 
       if (_gameLogic.isGameOver) {
         if (_gameLogic.winner != null) {
-          _scoresProvider?.increment(_gameLogic.winner!);
-          if (_settingsProvider?.isSoundEnabled ?? false) {
-            SoundService.playWinSound();
-          }
-          if (_settingsProvider?.isVibrationEnabled ?? false) {
-            VibrationService.vibratePattern();
-          }
+          _handleWin(_gameLogic.winner!);
         } else {
-          if (_settingsProvider?.isSoundEnabled ?? false) {
-            SoundService.playDrawSound();
-          }
+          _handleDraw();
         }
 
         // Save match to history
@@ -98,7 +146,10 @@ class GameProvider extends ChangeNotifier {
           moveCount: _gameLogic.moveHistory.length,
         ));
 
-        AdMobService.showInterstitialAd();
+        // Smart Ads: 40% chance to show interstitial
+        if (DateTime.now().millisecond % 10 < 4) {
+           AdMobService.showInterstitialAd();
+        }
       }
       notifyListeners();
     } else {
@@ -106,6 +157,76 @@ class GameProvider extends ChangeNotifier {
         SoundService.playErrorSound();
       }
     }
+  }
+
+  void _handleWin(Player winner) {
+    _scoresProvider?.increment(winner);
+    if (_settingsProvider?.isSoundEnabled ?? false) {
+      SoundService.playWinSound();
+    }
+    if (_settingsProvider?.isVibrationEnabled ?? false) {
+      VibrationService.vibratePattern();
+    }
+
+    if (_tournamentRound != TournamentRound.none) {
+      _advanceTournament(winner);
+    }
+  }
+
+  void _handleDraw() {
+    if (_settingsProvider?.isSoundEnabled ?? false) {
+      SoundService.playDrawSound();
+    }
+    // In tournament, a draw might need a replay or handling. 
+    // For now, let's just let them replay the round manually or auto-restart?
+    // User didn't specify. Let's keep it as is, user can hit "Restart" to retry round.
+  }
+
+  void _advanceTournament(Player winner) {
+    switch (_tournamentRound) {
+      case TournamentRound.round1:
+        _round1Winner = winner;
+        // Identify losers
+        final allPlayers = _settingsProvider!.activePlayers;
+        _round2Players = allPlayers.where((p) => p != winner).toList();
+        
+        // Auto-start Round 2 after a delay or wait for user?
+        // Let's wait for user to click "Next Match"
+        break;
+      case TournamentRound.round2:
+        _round2Winner = winner;
+        break;
+      case TournamentRound.finalMatch:
+        _tournamentChampion = winner;
+        _tournamentRound = TournamentRound.champion;
+        break;
+      default:
+        break;
+    }
+  }
+
+  void nextTournamentMatch() {
+    if (_tournamentRound == TournamentRound.round1 && _round1Winner != null) {
+      // Start Round 2
+      _tournamentRound = TournamentRound.round2;
+      _gameLogic = GameLogic(
+        boardSize: _settingsProvider!.boardSize,
+        winCondition: _settingsProvider!.winCondition,
+        players: _round2Players,
+      );
+    } else if (_tournamentRound == TournamentRound.round2 && _round2Winner != null) {
+      // Start Final
+      _tournamentRound = TournamentRound.finalMatch;
+      _gameLogic = GameLogic(
+        boardSize: _settingsProvider!.boardSize,
+        winCondition: _settingsProvider!.winCondition,
+        players: [_round1Winner!, _round2Winner!],
+      );
+    } else if (_tournamentRound == TournamentRound.champion) {
+      // Restart Tournament
+      startTournament();
+    }
+    notifyListeners();
   }
 
   bool undoLastMove() {
@@ -123,11 +244,20 @@ class GameProvider extends ChangeNotifier {
   }
 
   void resetGame() {
-    _gameLogic = GameLogic(
-      boardSize: _settingsProvider?.boardSize ?? 3,
-      winCondition: _settingsProvider?.winCondition ?? 3,
-      players: _settingsProvider?.activePlayers ?? [Player.x, Player.o],
-    );
+    if (_tournamentRound != TournamentRound.none) {
+      // In tournament, reset restarts the CURRENT match
+      _gameLogic = GameLogic(
+        boardSize: _settingsProvider?.boardSize ?? 3,
+        winCondition: _settingsProvider?.winCondition ?? 3,
+        players: _gameLogic.players, // Keep current round players
+      );
+    } else {
+      _gameLogic = GameLogic(
+        boardSize: _settingsProvider?.boardSize ?? 3,
+        winCondition: _settingsProvider?.winCondition ?? 3,
+        players: _settingsProvider?.activePlayers ?? [Player.x, Player.o],
+      );
+    }
     AdMobService.createInterstitialAd();
     notifyListeners();
   }

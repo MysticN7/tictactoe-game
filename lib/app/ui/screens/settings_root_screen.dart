@@ -62,6 +62,27 @@ class SettingsRootScreen extends StatelessWidget {
                         labels: const ['3x3', '4x4', '5x5'],
                         selectedValue: settings.boardSize,
                         onChanged: (val) => settings.setBoardSize(val),
+                      ),
+                    ),
+                    const Divider(height: 20, color: Colors.white10),
+                    _SettingRow(
+                      label: 'Win Condition',
+                      child: _SegmentedControl(
+                        values: const [3, 4, 5],
+                        labels: const ['3', '4', '5'],
+                        selectedValue: settings.winCondition,
+                        onChanged: (val) => settings.setWinCondition(val),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              _SectionHeader(title: 'SOUND & HAPTICS'),
+              const SizedBox(height: 10),
+              LiquidContainer(
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     _SwitchRow(
@@ -252,6 +273,134 @@ class _SwitchRow extends StatelessWidget {
       ],
     );
   }
+}
+
+class _SegmentedControl extends StatelessWidget {
+  final List<int> values;
+  final List<String> labels;
+  final int selectedValue;
+  final ValueChanged<int> onChanged;
+
+  const _SegmentedControl({
+    required this.values,
+    required this.labels,
+    required this.selectedValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final themeType = settings.currentTheme.toAppThemeType();
+    final activeColor = AppTheme.getNeonGlowColor(themeType);
+    final textColor = AppTheme.getTextColor(themeType);
+
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(values.length, (index) {
+          final isSelected = selectedValue == values[index];
+          return GestureDetector(
+            onTap: () => onChanged(values[index]),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected ? activeColor.withOpacity(0.3) : Colors.transparent,
+                borderRadius: BorderRadius.circular(15),
+                border: isSelected ? Border.all(color: activeColor.withOpacity(0.6)) : null,
+              ),
+              child: Text(
+                labels[index],
+                style: TextStyle(
+                  color: isSelected ? activeColor : textColor.withOpacity(0.5),
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _PlayerConfigRow extends StatelessWidget {
+  final Player player;
+
+  const _PlayerConfigRow({required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final themeType = settings.currentTheme.toAppThemeType();
+    final textColor = AppTheme.getTextColor(themeType);
+    final playerColor = settings.getPlayerColor(player);
+    final playerName = settings.getPlayerName(player);
+    final playerIcon = settings.getPlayerIcon(player);
+
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: playerColor.withOpacity(0.2),
+            shape: BoxShape.circle,
+            border: Border.all(color: playerColor.withOpacity(0.6), width: 2),
+          ),
+          child: Center(
+            child: Text(
+              playerIcon,
+              style: TextStyle(
+                color: playerColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                playerName,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                'Player ${player.name.toUpperCase()}',
+                style: TextStyle(
+                  color: textColor.withOpacity(0.5),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: Icon(Icons.edit_rounded, color: textColor.withOpacity(0.7)),
+          onPressed: () => _showEditPlayerDialog(context, player, settings, themeType, textColor),
+        ),
+      ],
+    );
+  }
+
+  void _showEditPlayerDialog(BuildContext context, Player player, SettingsProvider settings, AppThemeType themeType, Color textColor) {
+    final nameController = TextEditingController(text: settings.getPlayerName(player));
+    final iconController = TextEditingController(text: settings.getPlayerIcon(player));
     final glassColor = AppTheme.getGlassColor(themeType);
 
     showDialog(

@@ -154,7 +154,12 @@ class GameLogic {
     return null;
   }
 
+  void reset() {
+    _initializeBoard();
+  }
+
   void updateBoardSize(int newSize) {
+
     boardSize = newSize;
     _initializeBoard();
   }

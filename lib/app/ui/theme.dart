@@ -42,7 +42,7 @@ class AppTheme {
     brightness: Brightness.dark,
     primaryColor: const Color(0xFF0A84FF), // iOS Blue-ish
     scaffoldBackgroundColor: const Color(0xFF000000),
-    textTheme: GoogleFonts.sfProDisplayTextTheme(ThemeData.dark().textTheme),
+    textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
     colorScheme: const ColorScheme.dark(
       primary: Color(0xFF0A84FF),
       secondary: Color(0xFF5E5CE6),

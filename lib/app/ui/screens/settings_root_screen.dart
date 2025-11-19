@@ -41,76 +41,6 @@ class SettingsRootScreen extends StatelessWidget {
               const SizedBox(height: 10),
               LiquidContainer(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _ThemeSelector(),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              _SectionHeader(title: 'GAMEPLAY'),
-              const SizedBox(height: 10),
-              LiquidContainer(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _SettingRow(
-                      label: 'Game Mode',
-                      child: _SegmentedControl(
-                        values: const [0, 1, 2], // GameMode indices
-                        labels: const ['PvP', 'Vs AI', 'Tourney'],
-                        selectedValue: settings.gameMode.index,
-                        onChanged: (val) {
-                           settings.setGameMode(GameMode.values[val]);
-                           if (GameMode.values[val] == GameMode.tournament) {
-                             settings.setActivePlayers([Player.x, Player.o, Player.triangle]);
-                           }
-                        },
-                      ),
-                    ),
-                    if (settings.gameMode == GameMode.pve) ...[
-                      const Divider(height: 20, color: Colors.white10),
-                      _SettingRow(
-                        label: 'Difficulty',
-                        child: _SegmentedControl(
-                          values: const [0, 1, 2], // AIDifficulty indices
-                          labels: const ['Easy', 'Med', 'Hard'],
-                          selectedValue: settings.aiDifficulty.index,
-                          onChanged: (val) => settings.setAIDifficulty(AIDifficulty.values[val]),
-                        ),
-                      ),
-                    ],
-                    const Divider(height: 20, color: Colors.white10),
-                    _SettingRow(
-                      label: 'Board Size',
-                      child: _SegmentedControl(
-                        values: const [3, 4, 5],
-                        labels: const ['3x3', '4x4', '5x5'],
-                        selectedValue: settings.boardSize,
-                        onChanged: (val) => settings.setBoardSize(val),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8, bottom: 4),
-                      child: Text(
-                        _getBoardTip(settings.boardSize),
-                        style: TextStyle(
-                          color: AppTheme.getTextColor(themeType).withOpacity(0.5),
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const Divider(height: 20, color: Colors.white10),
-                    _SettingRow(
-                      label: 'Win Condition',
-                      child: _SegmentedControl(
-                        values: const [3, 4, 5],
-                        labels: const ['3', '4', '5'],
-                        selectedValue: settings.winCondition,
-                        onChanged: (val) => settings.setWinCondition(val),
                       ),
                     ),
                   ],
@@ -168,25 +98,6 @@ class SettingsRootScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _getBoardTip(int size) {
-    switch (size) {
-      case 3: return "Classic mode. Best with 3 to win.";
-      case 4: return "More space. Try 4 to win for a challenge.";
-      case 5: return "Expert mode. 4 or 5 to win recommended.";
-      default: return "";
-    }
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {

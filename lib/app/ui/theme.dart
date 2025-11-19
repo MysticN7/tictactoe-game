@@ -79,18 +79,18 @@ class AppTheme {
   static List<Color> getGradientColors(AppThemeType type) {
     switch (type) {
       case AppThemeType.liquidGlass:
-        return [const Color(0xFF2E2E40), const Color(0xFF050505)];
+        return [const Color(0xFF000000), const Color(0xFF1C1C1E)];
       case AppThemeType.nebula:
-        return [const Color(0xFF2E0249), const Color(0xFF000000)];
+        return [const Color(0xFF0D0D2B), const Color(0xFF2D1B4E)];
       case AppThemeType.crystal:
-        return [const Color(0xFFE0EAFC), const Color(0xFFCFDEF3)];
+        return [const Color(0xFFF2F2F7), const Color(0xFFFFFFFF)];
     }
   }
 
   static Color getBackgroundOverlayColor(AppThemeType type) {
     switch (type) {
       case AppThemeType.liquidGlass:
-        return Colors.black.withOpacity(0.3);
+        return Colors.black.withOpacity(0.5);
       case AppThemeType.nebula:
         return const Color(0xFF1A0B2E).withOpacity(0.4);
       case AppThemeType.crystal:
@@ -138,24 +138,24 @@ class AppTheme {
       case AppThemeType.nebula:
         return const Color(0xFFBF5AF2);
       case AppThemeType.crystal:
-        return const Color(0xFF30D158);
+        return const Color(0xFF0A84FF); // Blue for Crystal
+    }
+  }
+
+  static Color getTextColor(AppThemeType type) {
+    switch (type) {
+      case AppThemeType.liquidGlass:
+      case AppThemeType.nebula:
+        return Colors.white;
+      case AppThemeType.crystal:
+        return Colors.black87;
     }
   }
 
   static Color getWinningLineColor(AppThemeType type) {
     switch (type) {
       case AppThemeType.liquidGlass:
-        return const Color(0xFF32D74B); // iOS Green
-      case AppThemeType.nebula:
-        return const Color(0xFFFFD60A); // Yellow
-      case AppThemeType.crystal:
-        return const Color(0xFFFF375F); // Pink
-    }
-  }
-  
-  static Color getTextColor(AppThemeType type) {
-     switch (type) {
-      case AppThemeType.liquidGlass:
+        return const Color(0xFF0A84FF);
       case AppThemeType.nebula:
         return Colors.white;
       case AppThemeType.crystal:

@@ -10,6 +10,7 @@ import '../widgets/game_board.dart';
 import '../widgets/particles_overlay.dart';
 import '../widgets/liquid_components.dart';
 import 'settings_root_screen.dart';
+import 'tournament_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,11 +22,25 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ParticlesController _confetti = ParticlesController();
   int _lastHistorySize = 0;
+  bool _isPlaying = false;
 
   @override
   void dispose() {
     _confetti.dispose();
     super.dispose();
+  }
+
+  void _startGame(VoidCallback startMethod) {
+    startMethod();
+    setState(() {
+      _isPlaying = true;
+    });
+  }
+
+  void _exitGame() {
+    setState(() {
+      _isPlaying = false;
+    });
   }
 
   @override
@@ -36,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final gradientColors = AppTheme.getGradientColors(themeType);
         final textColor = AppTheme.getTextColor(themeType);
 
+        // Confetti Logic
         if (settings.isConfettiEnabled && game.matchHistory.length > _lastHistorySize) {
           if (game.matchHistory.isNotEmpty && game.matchHistory.first.winner != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) => _confetti.play());
@@ -65,61 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Header: Settings & Title
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "TIC TAC TOE",
-                              style: TextStyle(
-                                color: textColor,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 24,
-                                letterSpacing: 2.0,
-                              ),
-                            ),
-                            _SettingsButton(themeType: themeType),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Scoreboard
-                        _Scoreboard(
-                          themeType: themeType,
-                          settings: settings,
-                          scores: scores,
-                          activePlayers: settings.activePlayers,
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Game Board
-                        Expanded(
-                          child: Center(
-                            child: AspectRatio(
-                              aspectRatio: 1.0,
-                              child: LiquidContainer(
-                                padding: const EdgeInsets.all(16.0),
-                                child: const GameBoard(),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Bottom Actions
-                        _BottomActions(
-                          themeType: themeType,
-                          onUndo: () => context.read<GameProvider>().undoLastMove(),
-                          onRestart: () => context.read<GameProvider>().resetGame(),
-                          onHistory: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const HistoryScreen()),
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: _isPlaying 
+                      ? _buildGameView(context, settings, scores, game, themeType, textColor)
+                      : _buildMainMenu(context, settings, game, themeType, textColor),
                   ),
                 ),
 
@@ -132,6 +96,277 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMainMenu(BuildContext context, SettingsProvider settings, GameProvider game, AppThemeType themeType, Color textColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _SettingsButton(themeType: themeType),
+          ],
+        ),
+        const Spacer(flex: 1),
+        Center(
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.getGlassColor(themeType),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.getGlassBorderColor(themeType), width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.getNeonGlowColor(themeType).withOpacity(0.3),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                    )
+                  ],
+                ),
+                child: Icon(Icons.grid_4x4_rounded, size: 60, color: AppTheme.getNeonGlowColor(themeType)),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                "TIC TAC TOE",
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 32,
+                  letterSpacing: 3.0,
+                  shadows: [
+                    Shadow(
+                      color: AppTheme.getNeonGlowColor(themeType).withOpacity(0.5),
+                      blurRadius: 20,
+                    )
+                  ],
+                ),
+              ),
+              Text(
+                "ULTIMATE",
+                style: TextStyle(
+                  color: textColor.withOpacity(0.7),
+                  fontWeight: FontWeight.w300,
+                  fontSize: 16,
+                  letterSpacing: 8.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Spacer(flex: 2),
+        _MenuButton(
+          label: "LOCAL PvP",
+          icon: Icons.people_rounded,
+          themeType: themeType,
+          onTap: () => _startGame(() => game.startPvP()),
+        ),
+        const SizedBox(height: 16),
+        _MenuButton(
+          label: "VS AI",
+          icon: Icons.smart_toy_rounded,
+          themeType: themeType,
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (context) => _DifficultyDialog(
+                themeType: themeType,
+                onSelect: (difficulty) {
+                  Navigator.pop(context);
+                  _startGame(() => game.startPvAI(difficulty));
+                },
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        _MenuButton(
+          label: "TOURNAMENT",
+          icon: Icons.emoji_events_rounded,
+          themeType: themeType,
+          isSpecial: true,
+          onTap: () {
+             // For tournament, we might want to push a dedicated screen instead of just setting _isPlaying
+             // But for now, let's use the _isPlaying flow and maybe show TournamentScreen content
+             // Actually, the user requested a dedicated TournamentScreen.
+             // So let's push that screen.
+             game.startTournament();
+             Navigator.of(context).push(
+               MaterialPageRoute(builder: (_) => const TournamentScreen()),
+             );
+          },
+        ),
+        const Spacer(flex: 1),
+      ],
+    );
+  }
+
+  Widget _buildGameView(BuildContext context, SettingsProvider settings, ScoresProvider scores, GameProvider game, AppThemeType themeType, Color textColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
+              onPressed: _exitGame,
+            ),
+            if (game.isAiThinking)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.getNeonGlowColor(themeType).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppTheme.getNeonGlowColor(themeType).withOpacity(0.5)),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 12, 
+                      height: 12, 
+                      child: CircularProgressIndicator(strokeWidth: 2, color: textColor)
+                    ),
+                    const SizedBox(width: 8),
+                    Text("AI Thinking...", style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            _SettingsButton(themeType: themeType),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // Scoreboard
+        _Scoreboard(
+          themeType: themeType,
+          settings: settings,
+          scores: scores,
+          activePlayers: settings.activePlayers,
+        ),
+        const SizedBox(height: 20),
+
+        // Game Board
+        Expanded(
+          child: Center(
+            child: AspectRatio(
+              aspectRatio: 1.0,
+              child: LiquidContainer(
+                padding: const EdgeInsets.all(16.0),
+                child: const GameBoard(),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Bottom Actions
+        _BottomActions(
+          themeType: themeType,
+          onUndo: () => game.undoLastMove(),
+          onRestart: () => game.resetGame(),
+          onHistory: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const HistoryScreen()),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MenuButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final AppThemeType themeType;
+  final VoidCallback onTap;
+  final bool isSpecial;
+
+  const _MenuButton({
+    required this.label,
+    required this.icon,
+    required this.themeType,
+    required this.onTap,
+    this.isSpecial = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final glassColor = AppTheme.getGlassColor(themeType);
+    final borderColor = AppTheme.getGlassBorderColor(themeType);
+    final textColor = AppTheme.getTextColor(themeType);
+    final glowColor = AppTheme.getNeonGlowColor(themeType);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 70,
+        decoration: BoxDecoration(
+          color: isSpecial ? glowColor.withOpacity(0.2) : glassColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSpecial ? glowColor : borderColor,
+            width: isSpecial ? 2 : 1,
+          ),
+          boxShadow: [
+            if (isSpecial)
+              BoxShadow(
+                color: glowColor.withOpacity(0.3),
+                blurRadius: 15,
+                spreadRadius: 1,
+              ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isSpecial ? glowColor : textColor, size: 28),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSpecial ? glowColor : textColor,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DifficultyDialog extends StatelessWidget {
+  final AppThemeType themeType;
+  final Function(AIDifficulty) onSelect;
+
+  const _DifficultyDialog({required this.themeType, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    final glassColor = AppTheme.getGlassColor(themeType);
+    final textColor = AppTheme.getTextColor(themeType);
+
+    return AlertDialog(
+      backgroundColor: glassColor.withOpacity(0.95),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: Text('Select Difficulty', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: AIDifficulty.values.map((d) {
+          return ListTile(
+            title: Text(d.name.toUpperCase(), style: TextStyle(color: textColor)),
+            onTap: () => onSelect(d),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            hoverColor: Colors.white10,
+          );
+        }).toList(),
+      ),
     );
   }
 }
@@ -211,11 +446,11 @@ class HistoryScreen extends StatelessWidget {
       ),
       body: Container(
         decoration: BoxDecoration(
-           gradient: LinearGradient(
-             begin: Alignment.topLeft,
-             end: Alignment.bottomRight,
-             colors: AppTheme.getGradientColors(themeType),
-           ),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: AppTheme.getGradientColors(themeType),
+          ),
         ),
         child: SafeArea(
           child: matches.isEmpty 

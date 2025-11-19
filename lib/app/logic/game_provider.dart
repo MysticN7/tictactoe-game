@@ -96,55 +96,59 @@ class GameProvider extends ChangeNotifier {
   GameLogic get gameLogic => _gameLogic;
   List<GameMatch> get matchHistory => _matchHistory;
 
+  bool _isAiThinking = false;
+  bool get isAiThinking => _isAiThinking;
+
+  void startPvP() {
+    _settingsProvider?.setGameMode(GameMode.pvp);
+    _settingsProvider?.setActivePlayers([Player.x, Player.o]);
+    _gameLogic.updatePlayers([Player.x, Player.o]);
+    resetGame();
+  }
+
+  void startPvAI(AIDifficulty difficulty) {
+    _settingsProvider?.setGameMode(GameMode.pve);
+    _settingsProvider?.setAIDifficulty(difficulty);
+    _settingsProvider?.setActivePlayers([Player.x, Player.o]);
+    _gameLogic.updatePlayers([Player.x, Player.o]);
+    resetGame();
+  }
+
   void startTournament() {
+    _settingsProvider?.setGameMode(GameMode.tournament);
+    _settingsProvider?.setActivePlayers([Player.x, Player.o, Player.triangle]);
     tournament.reset();
-    // Round 1: All 3 players
     _gameLogic.updatePlayers([Player.x, Player.o, Player.triangle]);
     resetGame();
   }
 
   void makeMove(int row, int col) {
+    // Prevent moves if AI is thinking
+    if (_isAiThinking) return;
+
     final currentPlayerBeforeMove = _gameLogic.currentPlayer;
     if (_gameLogic.makeMove(row, col)) {
       _playFeedback();
 
-      // Check if the move resulted in a win (even if game is not over)
-      // In GameLogic, winner is set to the player who just won.
-      // If winner matches the player who just moved, it's a win.
-      // Note: GameLogic might have switched currentPlayer already if game continues.
-      
       if (_gameLogic.winner == currentPlayerBeforeMove) {
-         // It's a win!
          _scoresProvider?.increment(_gameLogic.winner!);
          _playWinFeedback();
          
          if (_settingsProvider?.gameMode == GameMode.tournament) {
             _handleTournamentWin(_gameLogic.winner!);
          } else {
-            // In non-tournament (PvP/PvE), we usually stop at first win unless we want survival there too?
-            // The user request specifically mentioned "Tournament" for this 3-player survival.
-            // But if we are in 3-player PvP, maybe we should also do survival?
-            // "where people can play with 3 players and compete with each other... 3 players will start playing..."
-            // It sounds like this IS the 3-player mode.
-            // So if activePlayers > 2, we continue.
-            
             if (_gameLogic.isGameOver) {
                _saveMatch();
                AdMobService.showInterstitialAd();
-            } else {
-               // Game continues, show a toast or something?
-               // For now, just let it continue.
             }
          }
       } else if (_gameLogic.isGameOver && _gameLogic.winner == null) {
-         // Draw (Board full and no winner, or all eliminated?)
          _playDrawFeedback();
          if (_settingsProvider?.gameMode != GameMode.tournament) {
             _saveMatch();
             AdMobService.showInterstitialAd();
          }
       } else {
-        // Normal move, no win yet
         _handleAiTurn();
       }
       notifyListeners();
@@ -156,27 +160,16 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _handleTournamentWin(Player winner) {
-    // In the new survival logic, GameLogic handles the "activePlayers" removal.
-    // We just need to track the tournament state (Round 1 winner, Round 2 winner).
-    
     if (tournament.currentRound == 1) {
       tournament.round1Winner = winner;
-      // Game continues for 2nd place
       tournament.currentRound = 2;
     } else if (tournament.currentRound == 2) {
       tournament.round2Winner = winner;
-      // Now game is over (2 winners found).
-      // The 3rd player is the loser.
-      final loser = tournament.activePlayers.firstWhere((p) => p != winner && p != tournament.round1Winner, orElse: () => Player.triangle); // Fallback
+      final loser = tournament.activePlayers.firstWhere((p) => p != winner && p != tournament.round1Winner, orElse: () => Player.triangle);
       tournament.eliminatedPlayers.add(loser);
       
-      // Setup Final Match
       tournament.currentRound = 3;
       tournament.activePlayers = [tournament.round1Winner!, tournament.round2Winner!];
-      
-      // We need to reset the board for the final match
-      // But we should probably wait for user to click "Next Match" or similar?
-      // For now, let's just update state. The UI should show "Round 2 Over, Start Final".
     } else if (tournament.currentRound == 3) {
       tournament.champion = winner;
       final loser = tournament.activePlayers.firstWhere((p) => p != winner);
@@ -187,7 +180,6 @@ class GameProvider extends ChangeNotifier {
 
   void startNextRound() {
     if (tournament.currentRound == 3) {
-      // Starting Final Match
       _gameLogic.updatePlayers(tournament.activePlayers);
       resetGame();
     }
@@ -195,9 +187,6 @@ class GameProvider extends ChangeNotifier {
 
   void _handleAiTurn() {
     if (_settingsProvider?.gameMode == GameMode.pve && !_gameLogic.isGameOver) {
-      // Simple AI logic: if current player is NOT the first player (Player X), assume it's AI
-      // This allows Player X to be human, and others to be AI if we want
-      // For now, let's stick to: Player X is Human, others are AI in PvE
       if (_gameLogic.currentPlayer != Player.x) {
          _makeAiMove();
       }
@@ -205,14 +194,26 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> _makeAiMove() async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (_gameLogic.isGameOver) return;
+    _isAiThinking = true;
+    notifyListeners();
+    
+    await Future.delayed(const Duration(milliseconds: 800));
+    
+    if (_gameLogic.isGameOver) {
+      _isAiThinking = false;
+      notifyListeners();
+      return;
+    }
 
     final difficulty = _settingsProvider?.aiDifficulty.index ?? 1;
     final move = _gameLogic.getBestMove(_gameLogic.currentPlayer!, difficulty);
     
+    _isAiThinking = false;
+    
     if (move != null) {
       makeMove(move.row, move.col);
+    } else {
+      notifyListeners();
     }
   }
 
@@ -242,6 +243,8 @@ class GameProvider extends ChangeNotifier {
   }
 
   bool undoLastMove() {
+    if (_isAiThinking) return false;
+    
     if (_gameLogic.undoLastMove()) {
       if (_settingsProvider?.isSoundEnabled ?? false) SoundService.playTapSound();
       if (_settingsProvider?.isVibrationEnabled ?? false) VibrationService.vibrate(duration: 30);
@@ -253,6 +256,7 @@ class GameProvider extends ChangeNotifier {
 
   void resetGame() {
     _gameLogic.reset();
+    _isAiThinking = false;
     AdMobService.createInterstitialAd();
     notifyListeners();
   }

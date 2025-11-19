@@ -3,118 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../logic/settings_provider.dart';
 import '../../logic/game_logic.dart';
-import '../theme.dart';
-import '../widgets/liquid_components.dart';
-
-class SettingsRootScreen extends StatelessWidget {
-  const SettingsRootScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final settings = context.watch<SettingsProvider>();
-    final themeType = settings.currentTheme.toAppThemeType();
-    final gradientColors = AppTheme.getGradientColors(themeType);
-    final textColor = AppTheme.getTextColor(themeType);
-
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: LiquidAppBar(
-        title: 'Settings',
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: gradientColors,
-          ),
-        ),
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              _SectionHeader(title: 'APPEARANCE'),
-              const SizedBox(height: 10),
-              LiquidContainer(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _ThemeSelector(),
-                  ],
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _SwitchRow(
-                      label: 'Sound Effects',
-                      value: settings.isSoundEnabled,
-                      onChanged: (_) => settings.toggleSound(),
-                      icon: Icons.volume_up_rounded,
-                    ),
-                    const Divider(height: 20, color: Colors.white10),
-                    _SwitchRow(
-                      label: 'Haptic Feedback',
-                      value: settings.isVibrationEnabled,
-                      onChanged: (_) => settings.toggleVibration(),
-                      icon: Icons.vibration_rounded,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-              
-              _SectionHeader(title: 'VISUAL EFFECTS'),
-              const SizedBox(height: 10),
-              LiquidContainer(
-                padding: const EdgeInsets.all(16),
-                child: _SwitchRow(
-                  label: 'Confetti Celebration',
-                  value: settings.isConfettiEnabled,
-                  onChanged: (_) => settings.toggleConfetti(),
-                  icon: Icons.celebration_rounded,
-                ),
-              ),
-              
-              const SizedBox(height: 30),
-               _SectionHeader(title: 'PLAYERS'),
-              const SizedBox(height: 10),
-              LiquidContainer(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _PlayerConfigRow(player: Player.x),
-                    const Divider(height: 20, color: Colors.white10),
-                    _PlayerConfigRow(player: Player.o),
-                  ],
-                ),
-              ),
-            ],
-          ),
-    final settings = context.watch<SettingsProvider>();
-    final themeType = settings.currentTheme.toAppThemeType();
-    final textColor = AppTheme.getTextColor(themeType);
-    
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, bottom: 4),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: textColor.withOpacity(0.6),
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-}
-
-class _ThemeSelector extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     
     return Column(
@@ -173,18 +61,6 @@ class _ThemeSelector extends StatelessWidget {
               ),
             );
           }).toList(),
-        ),
-      ],
-    );
-  }
-}
-
-class _SettingRow extends StatelessWidget {
-  final String label;
-  final Widget child;
-
-  const _SettingRow({required this.label, required this.child});
-
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();

@@ -22,11 +22,32 @@ class GameMatch {
   });
 }
 
+class TournamentState {
+  int currentRound = 1;
+  Player? round1Winner;
+  Player? round2Winner;
+  Player? champion;
+  List<Player> activePlayers = [Player.x, Player.o, Player.triangle];
+  List<Player> eliminatedPlayers = [];
+  List<Player> waitingPlayers = [];
+
+  void reset() {
+    currentRound = 1;
+    round1Winner = null;
+    round2Winner = null;
+    champion = null;
+    activePlayers = [Player.x, Player.o, Player.triangle];
+    eliminatedPlayers = [];
+    waitingPlayers = [];
+  }
+}
+
 class GameProvider extends ChangeNotifier {
   GameLogic _gameLogic;
   SettingsProvider? _settingsProvider;
   ScoresProvider? _scoresProvider;
   List<GameMatch> _matchHistory = [];
+  final TournamentState tournament = TournamentState();
 
   GameProvider() : _gameLogic = GameLogic() {
     AdMobService.createInterstitialAd();
@@ -43,7 +64,13 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _onSettingsChanged() {
-    _updateGameFromSettings();
+    if (_settingsProvider?.gameMode == GameMode.tournament) {
+       // If switching TO tournament mode, we might want to initialize it
+       // But usually we start tournament explicitly.
+       // For now, just update logic if NOT tournament
+    } else {
+      _updateGameFromSettings();
+    }
   }
 
   void _updateGameFromSettings() {
@@ -65,49 +92,37 @@ class GameProvider extends ChangeNotifier {
   GameLogic get gameLogic => _gameLogic;
   List<GameMatch> get matchHistory => _matchHistory;
 
+  void startTournament() {
+    tournament.reset();
+    // Round 1: All 3 players
+    _gameLogic.updatePlayers([Player.x, Player.o, Player.triangle]);
+    resetGame();
+  }
+
   void makeMove(int row, int col) {
     if (_gameLogic.makeMove(row, col)) {
-      if (_settingsProvider?.isSoundEnabled ?? false) {
-        SoundService.playTapSound();
-      }
-      if (_settingsProvider?.isVibrationEnabled ?? false) {
-        VibrationService.vibrate();
-      }
+      _playFeedback();
 
       if (_gameLogic.isGameOver) {
         if (_gameLogic.winner != null) {
           _scoresProvider?.increment(_gameLogic.winner!);
-          if (_settingsProvider?.isSoundEnabled ?? false) {
-            SoundService.playWinSound();
-          }
-          if (_settingsProvider?.isVibrationEnabled ?? false) {
-            VibrationService.vibratePattern();
+          _playWinFeedback();
+          
+          if (_settingsProvider?.gameMode == GameMode.tournament) {
+            _handleTournamentWin(_gameLogic.winner!);
+          } else {
+            _saveMatch();
+            AdMobService.showInterstitialAd();
           }
         } else {
-          if (_settingsProvider?.isSoundEnabled ?? false) {
-            SoundService.playDrawSound();
+          _playDrawFeedback();
+          if (_settingsProvider?.gameMode != GameMode.tournament) {
+             _saveMatch();
+             AdMobService.showInterstitialAd();
           }
         }
-
-        // Save match to history
-        _matchHistory.insert(0, GameMatch(
-          timestamp: DateTime.now(),
-          winner: _gameLogic.winner,
-          boardSize: _gameLogic.boardSize,
-          winCondition: _gameLogic.winCondition,
-          moveCount: _gameLogic.moveHistory.length,
-        ));
-
-        AdMobService.showInterstitialAd();
       } else {
-        // Check if it's AI's turn
-        if (_settingsProvider?.gameMode == GameMode.pve && !_gameLogic.isGameOver) {
-           // Assuming AI is always the second player (O) for now, or we can randomize
-           // For simplicity, let's say AI is always Player.o
-           if (_gameLogic.currentPlayer == Player.o) {
-             _makeAiMove();
-           }
-        }
+        _handleAiTurn();
       }
       notifyListeners();
     } else {
@@ -117,28 +132,87 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
+  void _handleTournamentWin(Player winner) {
+    if (tournament.currentRound == 1) {
+      tournament.round1Winner = winner;
+      tournament.waitingPlayers.add(winner);
+      tournament.activePlayers.remove(winner);
+      tournament.currentRound = 2;
+    } else if (tournament.currentRound == 2) {
+      tournament.round2Winner = winner;
+      final loser = tournament.activePlayers.firstWhere((p) => p != winner);
+      tournament.eliminatedPlayers.add(loser);
+      tournament.currentRound = 3;
+      tournament.activePlayers = [tournament.round1Winner!, tournament.round2Winner!];
+    } else if (tournament.currentRound == 3) {
+      tournament.champion = winner;
+      final loser = tournament.activePlayers.firstWhere((p) => p != winner);
+      tournament.eliminatedPlayers.add(loser);
+    }
+    notifyListeners();
+  }
+
+  void startNextRound() {
+    if (tournament.currentRound == 2) {
+      _gameLogic.updatePlayers(tournament.activePlayers);
+    } else if (tournament.currentRound == 3) {
+      _gameLogic.updatePlayers(tournament.activePlayers);
+    }
+    resetGame();
+  }
+
+  void _handleAiTurn() {
+    if (_settingsProvider?.gameMode == GameMode.pve && !_gameLogic.isGameOver) {
+      // Simple AI logic: if current player is NOT the first player (Player X), assume it's AI
+      // This allows Player X to be human, and others to be AI if we want
+      // For now, let's stick to: Player X is Human, others are AI in PvE
+      if (_gameLogic.currentPlayer != Player.x) {
+         _makeAiMove();
+      }
+    }
+  }
+
   Future<void> _makeAiMove() async {
-    // Small delay for natural feel
     await Future.delayed(const Duration(milliseconds: 600));
-    
     if (_gameLogic.isGameOver) return;
 
     final difficulty = _settingsProvider?.aiDifficulty.index ?? 1;
-    final move = _gameLogic.getBestMove(Player.o, difficulty);
+    final move = _gameLogic.getBestMove(_gameLogic.currentPlayer!, difficulty);
     
     if (move != null) {
       makeMove(move.row, move.col);
     }
   }
 
+  void _playFeedback() {
+    if (_settingsProvider?.isSoundEnabled ?? false) SoundService.playTapSound();
+    if (_settingsProvider?.isVibrationEnabled ?? false) VibrationService.vibrate();
+  }
+
+  void _playWinFeedback() {
+    if (_settingsProvider?.isSoundEnabled ?? false) SoundService.playWinSound();
+    if (_settingsProvider?.isVibrationEnabled ?? false) VibrationService.vibratePattern();
+  }
+
+  void _playDrawFeedback() {
+    if (_settingsProvider?.isSoundEnabled ?? false) SoundService.playDrawSound();
+  }
+
+  void _saveMatch() {
+    _matchHistory.insert(0, GameMatch(
+      timestamp: DateTime.now(),
+      winner: _gameLogic.winner,
+      boardSize: _gameLogic.boardSize,
+      winCondition: _gameLogic.winCondition,
+      moveCount: _gameLogic.moveHistory.length,
+    ));
+    if (_matchHistory.length > 50) _matchHistory.removeLast();
+  }
+
   bool undoLastMove() {
     if (_gameLogic.undoLastMove()) {
-      if (_settingsProvider?.isSoundEnabled ?? false) {
-        SoundService.playTapSound();
-      }
-      if (_settingsProvider?.isVibrationEnabled ?? false) {
-        VibrationService.vibrate(duration: 30);
-      }
+      if (_settingsProvider?.isSoundEnabled ?? false) SoundService.playTapSound();
+      if (_settingsProvider?.isVibrationEnabled ?? false) VibrationService.vibrate(duration: 30);
       notifyListeners();
       return true;
     }
@@ -146,11 +220,7 @@ class GameProvider extends ChangeNotifier {
   }
 
   void resetGame() {
-    _gameLogic = GameLogic(
-      boardSize: _settingsProvider?.boardSize ?? 3,
-      winCondition: _settingsProvider?.winCondition ?? 3,
-      players: _settingsProvider?.activePlayers ?? [Player.x, Player.o],
-    );
+    _gameLogic.reset();
     AdMobService.createInterstitialAd();
     notifyListeners();
   }

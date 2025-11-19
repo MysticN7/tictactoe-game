@@ -184,26 +184,40 @@ class _GameTileState extends State<_GameTile>
                 child: playerIcon.isNotEmpty
                     ? ScaleTransition(
                         scale: _scaleAnimation,
-                        child: Text(
-                          playerIcon,
-                          style: TextStyle(
-                            fontSize: _markerFontSize(widget.tileExtent, playerIcon),
-                            fontWeight: FontWeight.bold,
-                            color: widget.isWinning ? winningColor : playerColor,
-                            shadows: [
-                              Shadow(
-                                color: widget.isWinning
-                                    ? winningColor
-                                    : playerColor,
-                                blurRadius: 20.0,
-                              ),
-                              Shadow(
-                                color: widget.isWinning
-                                    ? winningColor.withAlpha(200)
-                                    : playerColor.withAlpha(200),
-                                blurRadius: 40.0,
-                              ),
+                        child: ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [
+                              playerColor,
+                              playerColor.withOpacity(0.7),
+                              Colors.white.withOpacity(0.8),
                             ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            stops: const [0.0, 0.6, 1.0],
+                          ).createShader(bounds),
+                          child: Text(
+                            playerIcon,
+                            style: TextStyle(
+                              fontSize: _markerFontSize(widget.tileExtent, playerIcon),
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white, // Required for ShaderMask
+                              shadows: [
+                                BoxShadow(
+                                  color: widget.isWinning
+                                      ? winningColor.withOpacity(0.8)
+                                      : playerColor.withOpacity(0.8),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
+                                ),
+                                BoxShadow(
+                                  color: widget.isWinning
+                                      ? winningColor.withOpacity(0.4)
+                                      : playerColor.withOpacity(0.4),
+                                  blurRadius: 30,
+                                  spreadRadius: 10,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       )

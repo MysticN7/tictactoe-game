@@ -189,5 +189,5 @@ class SettingsProvider extends ChangeNotifier {
   }
 }
 
-enum GameMode { pvp, pve }
+enum GameMode { pvp, pve, tournament }
 enum AIDifficulty { easy, medium, hard, impossible }

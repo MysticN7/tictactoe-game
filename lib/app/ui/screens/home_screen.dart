@@ -91,23 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Scoreboard
                         _Scoreboard(
                           themeType: themeType,
-                          settings: settings,
-                          scores: scores,
-                          activePlayers: settings.activePlayers,
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Game Mode & Difficulty Selectors
-                        if (!game.gameLogic.isGameOver && game.gameLogic.moveHistory.isEmpty) ...[
-                           _GameControls(settings: settings, themeType: themeType),
-                           const SizedBox(height: 20),
-                        ],
-
-                        // Turn Indicator / Status
-                        Center(child: _TurnIndicator(game: game, settings: settings, themeType: themeType)),
-                        const SizedBox(height: 20),
-
-                        // Game Board
                         Expanded(
                           child: Center(
                             child: AspectRatio(
@@ -225,20 +208,6 @@ class _GameControls extends StatelessWidget {
           height: 44,
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: Colors.black12,
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Row(
-            children: [
-              _buildModeOption(context, GameMode.pvp, "PvP", Icons.people_rounded, activeColor, textColor),
-              _buildModeOption(context, GameMode.pve, "PvAI", Icons.smart_toy_rounded, activeColor, textColor),
-            ],
-          ),
-        ),
-        
-        // Difficulty Selector (Only for PvAI)
-        if (settings.gameMode == GameMode.pve) ...[
-          const SizedBox(height: 12),
           Container(
             height: 38,
             padding: const EdgeInsets.all(3),
@@ -704,28 +673,78 @@ class _Scoreboard extends StatelessWidget {
             ),
           ),
         );
-      }).toList(),
-    );
-  }
-}
-
-class _BottomActions extends StatelessWidget {
   final AppThemeType themeType;
-  final VoidCallback onUndo;
-  final VoidCallback onRestart;
-  final VoidCallback onHistory;
-  const _BottomActions({required this.themeType, required this.onUndo, required this.onRestart, required this.onHistory});
+
+  const _TournamentInfo({required this.game, required this.settings, required this.themeType});
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Expanded(child: LiquidButton(label: 'Undo', icon: Icons.undo_rounded, onTap: onUndo, padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8))),
-        const SizedBox(width: 8),
-        Expanded(child: LiquidButton(label: 'Restart', icon: Icons.refresh_rounded, onTap: onRestart, isPrimary: true, padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8))),
-        const SizedBox(width: 8),
-        Expanded(child: LiquidButton(label: 'History', icon: Icons.history_rounded, onTap: onHistory, padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8))),
-      ],
+    final round = game.tournament.currentRound;
+    final activeColor = AppTheme.getNeonGlowColor(themeType);
+    final textColor = AppTheme.getTextColor(themeType);
+
+    String roundTitle = "Round $round";
+    String roundDesc = "";
+
+    if (round == 1) {
+      roundTitle = "THE RUMBLE";
+      roundDesc = "3 Players. Winner advances to Final.";
+    } else if (round == 2) {
+      roundTitle = "THE ELIMINATOR";
+      roundDesc = "1v1. Winner advances to Final.";
+    } else if (round == 3) {
+      roundTitle = "GRAND FINAL";
+      roundDesc = "Champion vs Challenger.";
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: activeColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: activeColor.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            roundTitle,
+            style: TextStyle(
+              color: activeColor,
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            roundDesc,
+            style: TextStyle(
+              color: textColor.withOpacity(0.7),
+              fontSize: 12,
+            ),
+          ),
+          if (game.tournament.round1Winner != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Waiting in Final: ",
+                  style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 12),
+                ),
+                Text(
+                  settings.getPlayerName(game.tournament.round1Winner!),
+                  style: TextStyle(
+                    color: settings.getPlayerColor(game.tournament.round1Winner!),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -9,8 +9,19 @@ class AdMobService {
   // For release, swap these back to your real IDs:
   //   Banner:       ca-app-pub-4384120827738431/2390002413
   //   Interstitial: ca-app-pub-4384120827738431/4237560263
-  static String get bannerAdUnitId => 'ca-app-pub-4384120827738431/2390002413';
-  static String get interstitialAdUnitId => 'ca-app-pub-4384120827738431/4237560263';
+  static String get bannerAdUnitId {
+    if (kDebugMode) {
+      return 'ca-app-pub-3940256099942544/6300978111'; // Test Banner
+    }
+    return 'ca-app-pub-4384120827738431/2390002413';
+  }
+
+  static String get interstitialAdUnitId {
+    if (kDebugMode) {
+      return 'ca-app-pub-3940256099942544/1033173712'; // Test Interstitial
+    }
+    return 'ca-app-pub-4384120827738431/4237560263';
+  }
 
   static InterstitialAd? _interstitialAd;
   static bool _isLoadingInterstitial = false;

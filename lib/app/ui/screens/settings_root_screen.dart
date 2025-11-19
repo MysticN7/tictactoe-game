@@ -1,627 +1,134 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../logic/settings_provider.dart';
-import '../../logic/game_provider.dart';
-import '../theme.dart' as theme;
 import '../../logic/game_logic.dart';
+import '../theme.dart';
+import '../widgets/liquid_components.dart';
 
-class SettingsRootScreen extends StatefulWidget {
+class SettingsRootScreen extends StatelessWidget {
   const SettingsRootScreen({super.key});
 
   @override
-  State<SettingsRootScreen> createState() => _SettingsRootScreenState();
-}
-
-class _SettingsRootScreenState extends State<SettingsRootScreen> {
-  int _index = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<SettingsProvider>(
-      builder: (context, settings, _) {
-        final themeType = settings.currentTheme.toAppThemeType();
-        final gradientColors = theme.AppTheme.getGradientColors(themeType);
-
-        return Scaffold(
-          extendBodyBehindAppBar: true,
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: const Text(
-              'Settings',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: gradientColors,
-              ),
-            ),
-            child: Stack(
-              children: [
-                BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
-                  child: Container(color: Colors.black.withAlpha((0.2 * 255).round())),
-                ),
-                SafeArea(
-                  child: IndexedStack(
-                    index: _index,
-                    children: const [
-                      _GameSettingsPage(),
-                      _PlayersPage(),
-                      _AudioHapticsPage(),
-                      _AppearancePage(),
-                      _AboutPage(),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          bottomNavigationBar: _LiquidNavigationBar(
-            themeType: themeType,
-            selectedIndex: _index,
-            onChanged: (i) => setState(() => _index = i),
-            destinations: const [
-              _NavItem(icon: Icons.grid_on, label: 'Game'),
-              _NavItem(icon: Icons.person, label: 'Players'),
-              _NavItem(icon: Icons.volume_up, label: 'Audio'),
-              _NavItem(icon: Icons.palette, label: 'Theme'),
-              _NavItem(icon: Icons.info, label: 'About'),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _NavItem {
-  final IconData icon;
-  final String label;
-  const _NavItem({required this.icon, required this.label});
-}
-
-class _LiquidNavigationBar extends StatefulWidget {
-  final theme.AppThemeType themeType;
-  final int selectedIndex;
-  final ValueChanged<int> onChanged;
-  final List<_NavItem> destinations;
-  const _LiquidNavigationBar({
-    required this.themeType,
-    required this.selectedIndex,
-    required this.onChanged,
-    required this.destinations,
-  });
-  @override
-  State<_LiquidNavigationBar> createState() => _LiquidNavigationBarState();
-}
-
-class _LiquidNavigationBarState extends State<_LiquidNavigationBar> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _blobScale;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 240));
-    _blobScale = Tween<double>(begin: 0.9, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-  }
-
-  @override
-  void didUpdateWidget(covariant _LiquidNavigationBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedIndex != widget.selectedIndex) {
-      _controller.forward(from: 0.0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final glassColor = theme.AppTheme.getGlassColor(widget.themeType);
-    final borderColor = theme.AppTheme.getGlassBorderColor(widget.themeType);
-    final neon = theme.AppTheme.getNeonGlowColor(widget.themeType);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      decoration: BoxDecoration(
-        color: glassColor,
-        border: Border(
-          top: BorderSide(color: borderColor, width: 1.5),
-        ),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha((0.18 * 255).round()), blurRadius: 12.0, spreadRadius: 1.0),
-        ],
-      ),
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final itemCount = widget.destinations.length;
-              final itemWidth = width / itemCount;
-              return SizedBox(
-                height: 68,
-                child: Stack(
-                  children: [
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 240),
-                      curve: Curves.easeOut,
-                      left: widget.selectedIndex * itemWidth + itemWidth * 0.15,
-                      top: 8,
-                      child: ScaleTransition(
-                        scale: _blobScale,
-                        child: Container(
-                          width: itemWidth * 0.7,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: neon.withOpacity(widget.themeType == theme.AppThemeType.liquidGlow ? 0.25 : 0.18),
-                            borderRadius: BorderRadius.circular(26),
-                            boxShadow: [
-                              BoxShadow(color: neon.withOpacity(0.35), blurRadius: 12.0, spreadRadius: 2.0),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: List.generate(itemCount, (i) {
-                        final item = widget.destinations[i];
-                        final selected = i == widget.selectedIndex;
-                        return Expanded(
-                          child: InkWell(
-                            onTap: () => widget.onChanged(i),
-                            borderRadius: BorderRadius.circular(20),
-                            splashColor: neon.withOpacity(0.2),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(item.icon, color: selected ? Colors.white : Colors.white70),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    item.label,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: selected ? FontWeight.bold : FontWeight.w600,
-                                      color: selected ? Colors.white : Colors.white70,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GlassCard extends StatelessWidget {
-  final Widget child;
-  const _GlassCard({required this.child});
-  @override
-  Widget build(BuildContext context) {
-    final settings = Provider.of<SettingsProvider>(context);
-    final themeType = settings.currentTheme.toAppThemeType();
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.0),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            glassColor,
-            glassColor.withAlpha((0.7 * 255).round()),
-          ],
-        ),
-        border: Border.all(
-          color: glassBorderColor,
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.1 * 255).round()),
-            blurRadius: 20.0,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24.0),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _GameSettingsPage extends StatelessWidget {
-  const _GameSettingsPage();
-  @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     final themeType = settings.currentTheme.toAppThemeType();
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    
-    return ListView(
-      physics: const ClampingScrollPhysics(),
-      children: [
-        const Padding(
-          padding: EdgeInsets.all(20.0),
-          child: Text(
-            'Game Settings',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        _GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: glassColor.withAlpha((0.3 * 255).round()),
-                        borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: glassBorderColor.withAlpha((0.5 * 255).round()), width: 1.5),
-                      ),
-                      child: const Icon(Icons.grid_on_rounded, color: Colors.white, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Board Size',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [3, 4, 5].map((size) {
-                    final isSelected = settings.boardSize == size;
-                    return GestureDetector(
-                      onTap: () {
-                        settings.setBoardSize(size);
-                        context.read<GameProvider>().resetGame();
-                      },
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20.0),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: isSelected
-                                ? [
-                                    glassBorderColor.withAlpha((0.4 * 255).round()),
-                                    glassBorderColor.withAlpha((0.2 * 255).round()),
-                                  ]
-                                : [
-                                    glassColor.withAlpha((0.3 * 255).round()),
-                                    glassColor.withAlpha((0.1 * 255).round()),
-                                  ],
-                          ),
-                          border: Border.all(
-                            color: isSelected
-                                ? glassBorderColor
-                                : glassBorderColor.withAlpha((0.3 * 255).round()),
-                            width: isSelected ? 2.5 : 1.5,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: glassBorderColor.withAlpha((0.4 * 255).round()),
-                                    blurRadius: 12.0,
-                                    spreadRadius: 2.0,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20.0),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '$size',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : Colors.white70,
-                                    ),
-                                  ),
-                                  Text(
-                                    '×$size',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: isSelected ? Colors.white70 : Colors.white54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        _GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: glassColor.withAlpha((0.3 * 255).round()),
-                        borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: glassBorderColor.withAlpha((0.5 * 255).round()), width: 1.5),
-                      ),
-                      child: const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Win Condition',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [3, 4, 5].map((value) {
-                    final isSelected = settings.winCondition == value;
-                    return GestureDetector(
-                      onTap: () {
-                        settings.setWinCondition(value);
-                        context.read<GameProvider>().resetGame();
-                      },
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18.0),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: isSelected
-                                ? [
-                                    glassBorderColor.withAlpha((0.4 * 255).round()),
-                                    glassBorderColor.withAlpha((0.2 * 255).round()),
-                                  ]
-                                : [
-                                    glassColor.withAlpha((0.3 * 255).round()),
-                                    glassColor.withAlpha((0.1 * 255).round()),
-                                  ],
-                          ),
-                          border: Border.all(
-                            color: isSelected
-                                ? glassBorderColor
-                                : glassBorderColor.withAlpha((0.3 * 255).round()),
-                            width: isSelected ? 2.5 : 1.5,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: glassBorderColor.withAlpha((0.4 * 255).round()),
-                                    blurRadius: 12.0,
-                                    spreadRadius: 2.0,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(18.0),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '$value',
-                                    style: TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : Colors.white70,
-                                    ),
-                                  ),
-                                  Text(
-                                    'in a row',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: isSelected ? Colors.white70 : Colors.white54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-        _GlassCard(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _ModeButton(
-                    title: '2 Players',
-                    icons: 'X  O',
-                    selected: settings.activePlayers.length == 2,
-                    onTap: () {
-                      settings.setActivePlayers([Player.x, Player.o]);
-                      context.read<GameProvider>().resetGame();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _ModeButton(
-                    title: '3 Players',
-                    icons: 'X  O  △',
-                    selected: settings.activePlayers.length == 3,
-                    onTap: () {
-                      settings.setActivePlayers([Player.x, Player.o, Player.triangle]);
-                      context.read<GameProvider>().resetGame();
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
+    final gradientColors = AppTheme.getGradientColors(themeType);
+    final textColor = AppTheme.getTextColor(themeType);
 
-class _ModeButton extends StatelessWidget {
-  final String title;
-  final String icons;
-  final bool selected;
-  final VoidCallback onTap;
-  const _ModeButton({required this.title, required this.icons, required this.selected, required this.onTap});
-  @override
-  Widget build(BuildContext context) {
-    final settings = Provider.of<SettingsProvider>(context);
-    final themeType = settings.currentTheme.toAppThemeType();
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: LiquidAppBar(
+        title: 'Settings',
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20.0),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: selected
-                ? [
-                    glassBorderColor.withAlpha((0.4 * 255).round()),
-                    glassBorderColor.withAlpha((0.2 * 255).round()),
-                  ]
-                : [
-                    glassColor.withAlpha((0.3 * 255).round()),
-                    glassColor.withAlpha((0.1 * 255).round()),
-                  ],
+            colors: gradientColors,
           ),
-          border: Border.all(
-            color: selected ? glassBorderColor : glassBorderColor.withAlpha((0.3 * 255).round()),
-            width: selected ? 2.5 : 1.5,
-          ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: glassBorderColor.withAlpha((0.4 * 255).round()),
-                    blurRadius: 12.0,
-                    spreadRadius: 2.0,
-                  ),
-                ]
-              : null,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20.0),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  icons,
-                  style: TextStyle(
-                    fontSize: 28.0,
-                    fontWeight: FontWeight.bold,
-                    color: selected ? Colors.white : Colors.white70,
-                  ),
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              _SectionHeader(title: 'APPEARANCE'),
+              const SizedBox(height: 10),
+              LiquidContainer(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _ThemeSelector(),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15.0,
-                    fontWeight: selected ? FontWeight.bold : FontWeight.w600,
-                    color: selected ? Colors.white : Colors.white70,
-                  ),
+              ),
+              const SizedBox(height: 30),
+
+              _SectionHeader(title: 'GAMEPLAY'),
+              const SizedBox(height: 10),
+              LiquidContainer(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _SettingRow(
+                      label: 'Board Size',
+                      child: _SegmentedControl(
+                        values: const [3, 4, 5],
+                        labels: const ['3x3', '4x4', '5x5'],
+                        selectedValue: settings.boardSize,
+                        onChanged: (val) => settings.setBoardSize(val),
+                      ),
+                    ),
+                    const Divider(height: 30, color: Colors.white10),
+                    _SettingRow(
+                      label: 'Win Condition',
+                      child: _SegmentedControl(
+                        values: const [3, 4, 5],
+                        labels: const ['3', '4', '5'],
+                        selectedValue: settings.winCondition,
+                        onChanged: (val) => settings.setWinCondition(val),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 30),
+
+              _SectionHeader(title: 'AUDIO & HAPTICS'),
+              const SizedBox(height: 10),
+              LiquidContainer(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _SwitchRow(
+                      label: 'Sound Effects',
+                      value: settings.isSoundEnabled,
+                      onChanged: (_) => settings.toggleSound(),
+                      icon: Icons.volume_up_rounded,
+                    ),
+                    const Divider(height: 20, color: Colors.white10),
+                    _SwitchRow(
+                      label: 'Haptic Feedback',
+                      value: settings.isVibrationEnabled,
+                      onChanged: (_) => settings.toggleVibration(),
+                      icon: Icons.vibration_rounded,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+              
+              _SectionHeader(title: 'VISUAL EFFECTS'),
+              const SizedBox(height: 10),
+              LiquidContainer(
+                padding: const EdgeInsets.all(16),
+                child: _SwitchRow(
+                  label: 'Confetti Celebration',
+                  value: settings.isConfettiEnabled,
+                  onChanged: (_) => settings.toggleConfetti(),
+                  icon: Icons.celebration_rounded,
+                ),
+              ),
+              
+              const SizedBox(height: 30),
+               _SectionHeader(title: 'PLAYERS'),
+              const SizedBox(height: 10),
+              LiquidContainer(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _PlayerConfigRow(player: Player.x),
+                    const Divider(height: 20, color: Colors.white10),
+                    _PlayerConfigRow(player: Player.o),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -629,401 +136,307 @@ class _ModeButton extends StatelessWidget {
   }
 }
 
-class _PlayersPage extends StatefulWidget {
-  const _PlayersPage();
-  @override
-  State<_PlayersPage> createState() => _PlayersPageState();
-}
-
-class _PlayersPageState extends State<_PlayersPage> {
-  final Map<Player, TextEditingController> _nameControllers = {};
-  final Map<Player, TextEditingController> _iconControllers = {};
-
-  @override
-  void initState() {
-    super.initState();
-    final settings = context.read<SettingsProvider>();
-    for (final config in settings.playerConfigs) {
-      _nameControllers[config.player] = TextEditingController(text: config.name);
-      _iconControllers[config.player] = TextEditingController(text: config.icon);
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final settings = context.watch<SettingsProvider>();
-    for (final config in settings.playerConfigs) {
-      if (!_nameControllers.containsKey(config.player)) {
-        _nameControllers[config.player] = TextEditingController(text: config.name);
-      } else if (_nameControllers[config.player]!.text != config.name) {
-        _nameControllers[config.player]!.text = config.name;
-      }
-      if (!_iconControllers.containsKey(config.player)) {
-        _iconControllers[config.player] = TextEditingController(text: config.icon);
-      } else if (_iconControllers[config.player]!.text != config.icon) {
-        _iconControllers[config.player]!.text = config.icon;
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    for (final controller in _nameControllers.values) {
-      controller.dispose();
-    }
-    for (final controller in _iconControllers.values) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
-    return ListView(
-      physics: const ClampingScrollPhysics(),
-      children: [
-        const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text('Players', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+    final themeType = settings.currentTheme.toAppThemeType();
+    final textColor = AppTheme.getTextColor(themeType);
+    
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, bottom: 4),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: textColor.withOpacity(0.6),
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
         ),
-        ...settings.playerConfigs.map((config) {
-          final color = settings.getPlayerColor(config.player);
-          final nameController = _nameControllers[config.player] ?? TextEditingController(text: config.name);
-          final iconController = _iconControllers[config.player] ?? TextEditingController(text: config.icon);
-          return _GlassCard(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(color: color.withAlpha((0.2 * 255).round()), borderRadius: BorderRadius.circular(10), border: Border.all(color: color, width: 2)),
-                    child: Center(child: Text(config.icon, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color))),
+      ),
+    );
+  }
+}
+
+class _ThemeSelector extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: AppThemeType.values.map((type) {
+            final isSelected = settings.currentTheme.toAppThemeType() == type;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  // Map AppThemeType back to GameThemeMode
+                  GameThemeMode mode;
+                  switch (type) {
+                    case AppThemeType.liquidGlass: mode = GameThemeMode.liquidGlow; break; // Using liquidGlow as proxy for Liquid Glass
+                    case AppThemeType.nebula: mode = GameThemeMode.dark; break; // Using dark as proxy for Nebula
+                    case AppThemeType.crystal: mode = GameThemeMode.light; break; // Using light as proxy for Crystal
+                  }
+                  settings.setTheme(mode);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? AppTheme.getNeonGlowColor(type) : Colors.transparent,
+                      width: 2,
+                    ),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: AppTheme.getGradientColors(type),
+                    ),
+                    boxShadow: [
+                      if (isSelected)
+                        BoxShadow(
+                          color: AppTheme.getNeonGlowColor(type).withOpacity(0.4),
+                          blurRadius: 12,
+                        ),
+                    ],
                   ),
-                  title: Text(config.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('${config.player.toString().split('.').last.toUpperCase()} Player'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: TextField(
-                    decoration: InputDecoration(labelText: 'Player Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withAlpha((0.1 * 255).round())),
-                    style: const TextStyle(color: Colors.white),
-                    controller: nameController,
-                    onChanged: (v) {
-                      if (v.isNotEmpty) {
-                        settings.updatePlayerName(config.player, v);
-                      }
-                    },
+                  child: Center(
+                    child: Text(
+                      type.name,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppTheme.getTextColor(type),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: TextField(
-                    decoration: InputDecoration(labelText: 'Player Icon', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled: true, fillColor: Colors.white.withAlpha((0.1 * 255).round())),
-                    style: const TextStyle(color: Colors.white, fontSize: 18),
-                    controller: iconController,
-                    maxLength: 2,
-                    textAlign: TextAlign.center,
-                    onChanged: (v) {
-                      if (v.isNotEmpty) {
-                        settings.updatePlayerIcon(config.player, v);
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+              ),
+            );
+          }).toList(),
+        ),
       ],
     );
   }
 }
 
-class _AudioHapticsPage extends StatelessWidget {
-  const _AudioHapticsPage();
+class _SettingRow extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const _SettingRow({required this.label, required this.child});
+
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
-    return ListView(
-      physics: const ClampingScrollPhysics(),
-      children: [
-      const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text('Audio & Haptics', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-      ),
-      _GlassCard(child: SwitchListTile(title: const Text('Sound'), value: settings.isSoundEnabled, onChanged: (_) => settings.toggleSound(), secondary: const Icon(Icons.volume_up))),
-      _GlassCard(child: SwitchListTile(title: const Text('Vibration'), value: settings.isVibrationEnabled, onChanged: (_) => settings.toggleVibration(), secondary: const Icon(Icons.vibration))),
-      _GlassCard(child: SwitchListTile(title: const Text('Confetti'), value: settings.isConfettiEnabled, onChanged: (_) => settings.toggleConfetti(), secondary: const Icon(Icons.celebration))),
-    ]);
-  }
-}
-
-class _AppearancePage extends StatelessWidget {
-  const _AppearancePage();
-  @override
-  Widget build(BuildContext context) {
-    final settings = context.watch<SettingsProvider>();
-    return ListView(
-      physics: const ClampingScrollPhysics(),
-      children: [
-      const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text('Appearance', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-      ),
-      _GlassCard(child: Column(children: [
-        _ThemeOption(name: 'Light', themeMode: GameThemeMode.light, selected: settings.currentTheme == GameThemeMode.light, onTap: () => settings.setTheme(GameThemeMode.light)),
-        const Divider(),
-        _ThemeOption(name: 'Dark', themeMode: GameThemeMode.dark, selected: settings.currentTheme == GameThemeMode.dark, onTap: () => settings.setTheme(GameThemeMode.dark)),
-        const Divider(),
-        _ThemeOption(name: 'Liquid Glow', themeMode: GameThemeMode.liquidGlow, selected: settings.currentTheme == GameThemeMode.liquidGlow, onTap: () => settings.setTheme(GameThemeMode.liquidGlow)),
-      ])),
-    ]);
-  }
-}
-
-class _ThemeOption extends StatelessWidget {
-  final String name;
-  final GameThemeMode themeMode;
-  final bool selected;
-  final VoidCallback onTap;
-  const _ThemeOption({required this.name, required this.themeMode, required this.selected, required this.onTap});
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(title: Text(name), trailing: selected ? const Icon(Icons.check, color: Colors.green) : null, onTap: onTap);
-  }
-}
-
-class _AboutPage extends StatelessWidget {
-  const _AboutPage();
-  
-  Future<void> _launchURL(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final settings = Provider.of<SettingsProvider>(context);
     final themeType = settings.currentTheme.toAppThemeType();
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    
-    return ListView(
-      physics: const ClampingScrollPhysics(),
+    final textColor = AppTheme.getTextColor(themeType);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text('About', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-        ),
-        _GlassCard(
-          child: Column(
-            children: [
-              const ListTile(
-                leading: Icon(Icons.grid_on_rounded, color: Colors.blue),
-                title: Text('Customizable Board', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                subtitle: Text('3x3, 4x4, or 5x5 board sizes', style: TextStyle(color: Colors.white70)),
+        Text(label, style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.w500)),
+        child,
+      ],
+    );
+  }
+}
+
+class _SwitchRow extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final IconData icon;
+
+  const _SwitchRow({required this.label, required this.value, required this.onChanged, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final themeType = settings.currentTheme.toAppThemeType();
+    final textColor = AppTheme.getTextColor(themeType);
+
+    return Row(
+      children: [
+        Icon(icon, color: textColor.withOpacity(0.7), size: 22),
+        const SizedBox(width: 12),
+        Expanded(child: Text(label, style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.w500))),
+        LiquidSwitch(value: value, onChanged: onChanged),
+      ],
+    );
+  }
+}
+
+class _SegmentedControl<T> extends StatelessWidget {
+  final List<T> values;
+  final List<String> labels;
+  final T selectedValue;
+  final ValueChanged<T> onChanged;
+
+  const _SegmentedControl({
+    required this.values,
+    required this.labels,
+    required this.selectedValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final themeType = settings.currentTheme.toAppThemeType();
+    final activeColor = AppTheme.getNeonGlowColor(themeType);
+    final glassColor = AppTheme.getGlassColor(themeType);
+    final textColor = AppTheme.getTextColor(themeType);
+
+    return Container(
+      height: 36,
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(values.length, (index) {
+          final isSelected = values[index] == selectedValue;
+          return GestureDetector(
+            onTap: () => onChanged(values[index]),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? activeColor.withOpacity(0.2) : Colors.transparent,
+                borderRadius: BorderRadius.circular(18),
+                border: isSelected ? Border.all(color: activeColor.withOpacity(0.5)) : null,
               ),
-              const Divider(),
-              const ListTile(
-                leading: Icon(Icons.palette_rounded, color: Colors.purple),
-                title: Text('Multiple Themes', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                subtitle: Text('Light, Dark, and Liquid Glow', style: TextStyle(color: Colors.white70)),
+              child: Text(
+                labels[index],
+                style: TextStyle(
+                  color: isSelected ? activeColor : textColor.withOpacity(0.6),
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
+                ),
               ),
-            ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _PlayerConfigRow extends StatelessWidget {
+  final Player player;
+  const _PlayerConfigRow({required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final themeType = settings.currentTheme.toAppThemeType();
+    final textColor = AppTheme.getTextColor(themeType);
+    final playerColor = settings.getPlayerColor(player);
+
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: playerColor.withOpacity(0.2),
+            shape: BoxShape.circle,
+            border: Border.all(color: playerColor, width: 2),
+          ),
+          child: Center(
+            child: Text(
+              settings.getPlayerIcon(player),
+              style: TextStyle(color: playerColor, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        _GlassCard(
+        const SizedBox(width: 12),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: glassColor.withAlpha((0.3 * 255).round()),
-                        borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(color: glassBorderColor.withAlpha((0.5 * 255).round()), width: 1.5),
-                      ),
-                      child: const Icon(Icons.privacy_tip_rounded, color: Colors.white, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Privacy Policy',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+              Text(
+                settings.getPlayerName(player),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'We respect your privacy. This app does not collect personal information.',
-                      style: TextStyle(color: Colors.white, fontSize: 14, height: 1.5),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.ads_click_rounded, color: Colors.orange, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Ads:',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 28.0),
-                      child: Text(
-                        'We use Google AdMob to show ads.',
-                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 28.0),
-                      child: Wrap(
-                        children: [
-                          const Text(
-                            'Google may collect anonymous data to serve relevant ads. For details, see ',
-                            style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                          ),
-                          GestureDetector(
-                            onTap: () => _launchURL('https://policies.google.com/privacy'),
-                            child: const Text(
-                              'Google Privacy Policy',
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontSize: 14,
-                                decoration: TextDecoration.underline,
-                                decorationColor: Colors.blue,
-                              ),
-                            ),
-                          ),
-                          const Text(
-                            '.',
-                            style: TextStyle(color: Colors.white70, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.data_usage_rounded, color: Colors.green, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Data:',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 28.0),
-                      child: Text(
-                        'No personal data is shared or sold.\nOnly anonymized info is used to improve the app.',
-                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.security_rounded, color: Colors.blue, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Security:',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 28.0),
-                      child: Text(
-                        'We take reasonable steps to protect your data.',
-                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.child_care_rounded, color: Colors.pink, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Children:',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 28.0),
-                      child: Text(
-                        'The app is not intended for children under 13.',
-                        style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.email_rounded, color: Colors.cyan, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Contact:',
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 28.0),
-                      child: GestureDetector(
-                        onTap: () => _launchURL('mailto:liquidarc.studio@gmail.com'),
-                        child: const Text(
-                          'Email: liquidarc.studio@gmail.com',
-                          style: TextStyle(
-                            color: Colors.cyan,
-                            fontSize: 14,
-                            decoration: TextDecoration.underline,
-                            decorationColor: Colors.cyan,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+              Text(
+                'Tap to edit',
+                style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 12),
               ),
             ],
           ),
         ),
+        IconButton(
+          icon: Icon(Icons.edit_rounded, color: textColor.withOpacity(0.7)),
+          onPressed: () => _showEditDialog(context, settings, player),
+        ),
       ],
+    );
+  }
+
+  void _showEditDialog(BuildContext context, SettingsProvider settings, Player player) {
+    final nameController = TextEditingController(text: settings.getPlayerName(player));
+    final iconController = TextEditingController(text: settings.getPlayerIcon(player));
+    final themeType = settings.currentTheme.toAppThemeType();
+    final textColor = AppTheme.getTextColor(themeType);
+    final glassColor = AppTheme.getGlassColor(themeType);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: glassColor.withOpacity(0.95),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Edit ${player.name.toUpperCase()}', style: TextStyle(color: textColor)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              style: TextStyle(color: textColor),
+              decoration: InputDecoration(
+                labelText: 'Name',
+                labelStyle: TextStyle(color: textColor.withOpacity(0.7)),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: textColor.withOpacity(0.3))),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: iconController,
+              style: TextStyle(color: textColor),
+              maxLength: 1,
+              decoration: InputDecoration(
+                labelText: 'Icon (1 char)',
+                labelStyle: TextStyle(color: textColor.withOpacity(0.7)),
+                enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: textColor.withOpacity(0.3))),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: textColor.withOpacity(0.7))),
+          ),
+          TextButton(
+            onPressed: () {
+              settings.updatePlayerName(player, nameController.text);
+              settings.updatePlayerIcon(player, iconController.text);
+              Navigator.pop(context);
+            },
+            child: Text('Save', style: TextStyle(color: AppTheme.getNeonGlowColor(themeType), fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 }

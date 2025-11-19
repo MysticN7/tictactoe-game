@@ -5,9 +5,10 @@ import '../../logic/scores_provider.dart';
 import '../../logic/game_logic.dart';
 import '../../logic/settings_provider.dart';
 import '../../logic/game_provider.dart';
-import '../theme.dart' as theme;
+import '../theme.dart';
 import '../widgets/game_board.dart';
 import '../widgets/particles_overlay.dart';
+import '../widgets/liquid_components.dart';
 import 'settings_root_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -32,9 +33,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Consumer3<SettingsProvider, ScoresProvider, GameProvider>(
       builder: (context, settings, scores, game, _) {
         final themeType = settings.currentTheme.toAppThemeType();
-        final gradientColors = theme.AppTheme.getGradientColors(themeType);
-        final glassColor = theme.AppTheme.getGlassColor(themeType);
-        final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+        final gradientColors = AppTheme.getGradientColors(themeType);
+        final glassColor = AppTheme.getGlassColor(themeType);
+        final glassBorderColor = AppTheme.getGlassBorderColor(themeType);
+        final textColor = AppTheme.getTextColor(themeType);
 
         if (settings.isConfettiEnabled && game.matchHistory.length > _lastHistorySize) {
           if (game.matchHistory.isNotEmpty && game.matchHistory.first.winner != null) {
@@ -58,100 +60,66 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // Background Overlay
                 BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
-                  child: Container(color: theme.AppTheme.getBackgroundOverlayColor(themeType)),
+                  filter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
+                  child: Container(color: AppTheme.getBackgroundOverlayColor(themeType)),
                 ),
                 
                 SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Header / Scoreboard
+                        // Header: Settings & Title
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "TIC TAC TOE",
+                              style: TextStyle(
+                                color: textColor,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 24,
+                                letterSpacing: 2.0,
+                              ),
+                            ),
+                            _SettingsButton(themeType: themeType),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Scoreboard
                         _Scoreboard(
                           themeType: themeType,
                           settings: settings,
                           scores: scores,
                           activePlayers: settings.activePlayers,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
 
-                        // Game Mode & Difficulty Selectors (Only if game not in progress or just started)
+                        // Game Mode & Difficulty Selectors
                         if (!game.gameLogic.isGameOver && game.gameLogic.moveHistory.isEmpty) ...[
                            _GameControls(settings: settings, themeType: themeType),
-                           const SizedBox(height: 16),
+                           const SizedBox(height: 20),
                         ],
 
                         // Turn Indicator / Status
-                        Consumer<GameProvider>(
-                          builder: (context, game, _) {
-                            final player = game.gameLogic.currentPlayer;
-                            final name = context.read<SettingsProvider>().getPlayerName(player!);
-                            final color = context.read<SettingsProvider>().getPlayerColor(player);
-                            final isOver = game.gameLogic.isGameOver;
-                            final winner = game.gameLogic.winner;
-                            return AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 320),
-                              transitionBuilder: (child, anim) {
-                                final slide = Tween<Offset>(begin: const Offset(0, -0.06), end: Offset.zero).animate(anim);
-                                return FadeTransition(opacity: anim, child: SlideTransition(position: slide, child: child));
-                              },
-                              child: Container(
-                                key: ValueKey(isOver ? 'over' : 'turn-${player.index}'),
-                                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 20.0),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20.0),
-                                  gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: theme.AppTheme.getGlassSurfaceColors(themeType)),
-                                  border: Border.all(color: glassBorderColor, width: 1.2),
-                                  boxShadow: [
-                                    BoxShadow(color: color.withAlpha(40), blurRadius: 12.0, spreadRadius: -2.0),
-                                  ]
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (!isOver) ...[
-                                      Text(context.read<SettingsProvider>().getPlayerIcon(player), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-                                      const SizedBox(width: 10),
-                                      Text("${name.toUpperCase()}'s Turn", style: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.5)),
-                                    ] else ...[
-                                      if (winner != null) ...[
-                                        Text(context.read<SettingsProvider>().getPlayerIcon(winner), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.read<SettingsProvider>().getPlayerColor(winner))),
-                                        const SizedBox(width: 10),
-                                        Text("${context.read<SettingsProvider>().getPlayerName(winner).toUpperCase()} WINS", style: TextStyle(fontWeight: FontWeight.bold, color: context.read<SettingsProvider>().getPlayerColor(winner), letterSpacing: 1.0)),
-                                      ] else ...[
-                                        const Icon(Icons.handshake_rounded, color: Colors.white70),
-                                        const SizedBox(width: 10),
-                                        const Text("DRAW", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white70, letterSpacing: 1.0)),
-                                      ]
-                                    ]
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
+                        Center(child: _TurnIndicator(game: game, settings: settings, themeType: themeType)),
+                        const SizedBox(height: 20),
 
                         // Game Board
                         Expanded(
                           child: Center(
                             child: AspectRatio(
                               aspectRatio: 1.0,
-                              child: _GlassCard(
-                                glassColor: glassColor,
-                                glassBorderColor: glassBorderColor,
-                                child: const Padding(
-                                  padding: EdgeInsets.all(12.0),
-                                  child: GameBoard(),
-                                ),
+                              child: LiquidContainer(
+                                padding: const EdgeInsets.all(16.0),
+                                child: const GameBoard(),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
 
                         // Bottom Actions
                         _BottomActions(
@@ -163,22 +131,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                ),
-
-                // Settings Button
-                SafeArea(
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: _SettingsButton(
-                        themeType: themeType,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const SettingsRootScreen()),
-                        ),
-                      ),
                     ),
                   ),
                 ),
@@ -196,44 +148,103 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class _TurnIndicator extends StatelessWidget {
+  final GameProvider game;
+  final SettingsProvider settings;
+  final AppThemeType themeType;
+
+  const _TurnIndicator({required this.game, required this.settings, required this.themeType});
+
+  @override
+  Widget build(BuildContext context) {
+    final player = game.gameLogic.currentPlayer;
+    final name = settings.getPlayerName(player!);
+    final color = settings.getPlayerColor(player);
+    final isOver = game.gameLogic.isGameOver;
+    final winner = game.gameLogic.winner;
+    final glassBorderColor = AppTheme.getGlassBorderColor(themeType);
+    final textColor = AppTheme.getTextColor(themeType);
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 320),
+      transitionBuilder: (child, anim) {
+        final slide = Tween<Offset>(begin: const Offset(0, -0.1), end: Offset.zero).animate(anim);
+        return FadeTransition(opacity: anim, child: SlideTransition(position: slide, child: child));
+      },
+      child: Container(
+        key: ValueKey(isOver ? 'over' : 'turn-${player.index}'),
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 24.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30.0),
+          color: AppTheme.getGlassColor(themeType),
+          border: Border.all(color: glassBorderColor, width: 1.2),
+          boxShadow: [
+            if (!isOver) BoxShadow(color: color.withOpacity(0.3), blurRadius: 15.0, spreadRadius: -2.0),
+          ]
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isOver) ...[
+              Text(settings.getPlayerIcon(player), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+              const SizedBox(width: 10),
+              Text("${name.toUpperCase()}'S TURN", style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 1.0, color: textColor)),
+            ] else ...[
+              if (winner != null) ...[
+                Text(settings.getPlayerIcon(winner), style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: settings.getPlayerColor(winner))),
+                const SizedBox(width: 10),
+                Text("${settings.getPlayerName(winner).toUpperCase()} WINS!", style: TextStyle(fontWeight: FontWeight.w900, color: settings.getPlayerColor(winner), letterSpacing: 1.2, fontSize: 16)),
+              ] else ...[
+                Icon(Icons.handshake_rounded, color: textColor.withOpacity(0.7)),
+                const SizedBox(width: 10),
+                Text("DRAW", style: TextStyle(fontWeight: FontWeight.bold, color: textColor.withOpacity(0.7), letterSpacing: 1.0)),
+              ]
+            ]
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _GameControls extends StatelessWidget {
   final SettingsProvider settings;
-  final theme.AppThemeType themeType;
+  final AppThemeType themeType;
 
   const _GameControls({required this.settings, required this.themeType});
 
   @override
   Widget build(BuildContext context) {
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    final activeColor = theme.AppTheme.getNeonGlowColor(themeType);
+    final activeColor = AppTheme.getNeonGlowColor(themeType);
+    final textColor = AppTheme.getTextColor(themeType);
 
     return Column(
       children: [
         // Game Mode Selector
         Container(
-          height: 40,
+          height: 44,
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: Colors.black26,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: glassBorderColor.withAlpha(50)),
+            color: Colors.black12,
+            borderRadius: BorderRadius.circular(22),
           ),
           child: Row(
             children: [
-              _buildModeOption(context, GameMode.pvp, "PvP", Icons.people_rounded, activeColor),
-              _buildModeOption(context, GameMode.pve, "PvAI", Icons.smart_toy_rounded, activeColor),
+              _buildModeOption(context, GameMode.pvp, "PvP", Icons.people_rounded, activeColor, textColor),
+              _buildModeOption(context, GameMode.pve, "PvAI", Icons.smart_toy_rounded, activeColor, textColor),
             ],
           ),
         ),
         
         // Difficulty Selector (Only for PvAI)
         if (settings.gameMode == GameMode.pve) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Container(
-            height: 36,
+            height: 38,
+            padding: const EdgeInsets.all(3),
              decoration: BoxDecoration(
-              color: Colors.black26,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: glassBorderColor.withAlpha(50)),
+              color: Colors.black12,
+              borderRadius: BorderRadius.circular(19),
             ),
             child: Row(
               children: [
@@ -249,25 +260,28 @@ class _GameControls extends StatelessWidget {
     );
   }
 
-  Widget _buildModeOption(BuildContext context, GameMode mode, String label, IconData icon, Color activeColor) {
+  Widget _buildModeOption(BuildContext context, GameMode mode, String label, IconData icon, Color activeColor, Color textColor) {
     final isSelected = settings.gameMode == mode;
     return Expanded(
       child: GestureDetector(
-        onTap: () => settings.setGameMode(mode),
+        onTap: () {
+          // Micro-interaction: Haptic feedback could go here
+          settings.setGameMode(mode);
+        },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.all(2),
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
           decoration: BoxDecoration(
-            color: isSelected ? activeColor.withAlpha(50) : Colors.transparent,
+            color: isSelected ? activeColor.withOpacity(0.2) : Colors.transparent,
             borderRadius: BorderRadius.circular(18),
-            border: isSelected ? Border.all(color: activeColor.withAlpha(150)) : null,
+            border: isSelected ? Border.all(color: activeColor.withOpacity(0.6)) : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: isSelected ? activeColor : Colors.white60),
-              const SizedBox(width: 6),
-              Text(label, style: TextStyle(color: isSelected ? activeColor : Colors.white60, fontWeight: FontWeight.bold, fontSize: 13)),
+              Icon(icon, size: 18, color: isSelected ? activeColor : textColor.withOpacity(0.5)),
+              const SizedBox(width: 8),
+              Text(label, style: TextStyle(color: isSelected ? activeColor : textColor.withOpacity(0.5), fontWeight: FontWeight.bold, fontSize: 14)),
             ],
           ),
         ),
@@ -282,47 +296,14 @@ class _GameControls extends StatelessWidget {
         onTap: () => settings.setAIDifficulty(diff),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: isSelected ? color.withAlpha(40) : Colors.transparent,
+            color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
-            border: isSelected ? Border.all(color: color.withAlpha(120)) : null,
+            border: isSelected ? Border.all(color: color.withOpacity(0.6)) : null,
           ),
           child: Center(
-            child: Text(label, style: TextStyle(color: isSelected ? color : Colors.white54, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, fontSize: 11)),
+            child: Text(label, style: TextStyle(color: isSelected ? color : Colors.white38, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, fontSize: 12)),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GlassCard extends StatelessWidget {
-  final Color glassColor;
-  final Color glassBorderColor;
-  final Widget child;
-  const _GlassCard({required this.glassColor, required this.glassBorderColor, required this.child});
-  @override
-  Widget build(BuildContext context) {
-    final themeType = context.read<SettingsProvider>().currentTheme.toAppThemeType();
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.0),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: theme.AppTheme.getGlassSurfaceColors(themeType),
-        ),
-        border: Border.all(color: glassBorderColor, width: 1.5),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha((0.2 * 255).round()), blurRadius: 25.0, spreadRadius: 0, offset: const Offset(0, 8)),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24.0),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 25.0, sigmaY: 25.0),
-          child: child,
         ),
       ),
     );
@@ -330,25 +311,21 @@ class _GlassCard extends StatelessWidget {
 }
 
 class _SettingsButton extends StatefulWidget {
-  final theme.AppThemeType themeType;
-  final VoidCallback onTap;
-  const _SettingsButton({required this.themeType, required this.onTap});
+  final AppThemeType themeType;
+  const _SettingsButton({required this.themeType});
   @override
   State<_SettingsButton> createState() => _SettingsButtonState();
 }
 
 class _SettingsButtonState extends State<_SettingsButton> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scale;
   late Animation<double> _rotation;
-  bool _hover = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
-    _scale = Tween<double>(begin: 1.0, end: 0.92).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-    _rotation = Tween<double>(begin: 0.0, end: 0.15).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _rotation = Tween<double>(begin: 0.0, end: 0.5).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOutBack));
   }
 
   @override
@@ -357,41 +334,29 @@ class _SettingsButtonState extends State<_SettingsButton> with SingleTickerProvi
     super.dispose();
   }
 
-  void _press() {
-    _controller.forward().then((_) => _controller.reverse());
-    widget.onTap();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final glassColor = theme.AppTheme.getGlassColor(widget.themeType);
-    final borderColor = theme.AppTheme.getGlassBorderColor(widget.themeType);
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: ScaleTransition(
-        scale: _scale,
-        child: RotationTransition(
-          turns: _rotation,
-          child: InkWell(
-            onTap: _press,
-            borderRadius: BorderRadius.circular(20),
-            splashColor: borderColor.withAlpha((0.25 * 255).round()),
-            highlightColor: Colors.transparent,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: glassColor,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: borderColor, width: 1.6),
-                boxShadow: [
-                  BoxShadow(color: borderColor.withAlpha(_hover ? 120 : 70), blurRadius: _hover ? 14.0 : 10.0, spreadRadius: 0.8),
-                ],
-              ),
-              child: const Icon(Icons.settings_rounded, size: 22),
-            ),
+    final glassColor = AppTheme.getGlassColor(widget.themeType);
+    final borderColor = AppTheme.getGlassBorderColor(widget.themeType);
+    final textColor = AppTheme.getTextColor(widget.themeType);
+
+    return RotationTransition(
+      turns: _rotation,
+      child: InkWell(
+        onTap: () {
+          _controller.forward().then((_) => _controller.reverse());
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsRootScreen()));
+        },
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: glassColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor, width: 1.5),
           ),
+          child: Icon(Icons.settings_rounded, color: textColor, size: 24),
         ),
       ),
     );
@@ -404,49 +369,73 @@ class HistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     final themeType = settings.currentTheme.toAppThemeType();
-    final glassColor = theme.AppTheme.getGlassColor(themeType);
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    final glassColor = AppTheme.getGlassColor(themeType);
+    final glassBorderColor = AppTheme.getGlassBorderColor(themeType);
+    final textColor = AppTheme.getTextColor(themeType);
     final matches = context.watch<GameProvider>().matchHistory;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Match History'), backgroundColor: Colors.transparent, elevation: 0),
       extendBodyBehindAppBar: true,
+      appBar: LiquidAppBar(
+        title: 'Match History',
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Container(
         decoration: BoxDecoration(
            gradient: LinearGradient(
              begin: Alignment.topLeft,
              end: Alignment.bottomRight,
-             colors: theme.AppTheme.getGradientColors(themeType),
+             colors: AppTheme.getGradientColors(themeType),
            ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ListView.separated(
+          child: matches.isEmpty 
+            ? Center(child: Text("No matches yet", style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 18)))
+            : ListView.separated(
+              padding: const EdgeInsets.all(20),
               itemCount: matches.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, i) {
                 final m = matches[i];
                 final winnerName = m.winner != null ? settings.getPlayerName(m.winner!) : 'Draw';
-                final winnerColor = m.winner != null ? settings.getPlayerColor(m.winner!) : Colors.white70;
+                final winnerColor = m.winner != null ? settings.getPlayerColor(m.winner!) : textColor.withOpacity(0.7);
                 return Container(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16.0),
+                    borderRadius: BorderRadius.circular(20.0),
                     color: glassColor,
-                    border: Border.all(color: glassBorderColor, width: 1.5),
+                    border: Border.all(color: glassBorderColor, width: 1.0),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.emoji_events_rounded, color: winnerColor),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text('${m.boardSize}x${m.boardSize}, win ${m.winCondition} • $winnerName')),
-                      Text('${m.moveCount} moves'),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: winnerColor.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.emoji_events_rounded, color: winnerColor, size: 20),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(winnerName, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                            const SizedBox(height: 4),
+                            Text('${m.boardSize}x${m.boardSize} • Win ${m.winCondition}', style: TextStyle(color: textColor.withOpacity(0.6), fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      Text('${m.moveCount} moves', style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 14)),
                     ],
                   ),
                 );
               },
             ),
-          ),
         ),
       ),
     );
@@ -454,187 +443,94 @@ class HistoryScreen extends StatelessWidget {
 }
 
 class _Scoreboard extends StatelessWidget {
-  final theme.AppThemeType themeType;
+  final AppThemeType themeType;
   final SettingsProvider settings;
   final ScoresProvider scores;
   final List<Player> activePlayers;
   const _Scoreboard({required this.themeType, required this.settings, required this.scores, required this.activePlayers});
   @override
   Widget build(BuildContext context) {
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
+    final glassBorderColor = AppTheme.getGlassBorderColor(themeType);
+    final textColor = AppTheme.getTextColor(themeType);
     final players = activePlayers;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final perItem = width / (players.isNotEmpty ? players.length : 1);
-        final scale = (perItem / 160.0).clamp(0.9, 1.8);
-        final marginH = 6.0 * scale;
-        final padV = 12.0 * scale;
-        final padH = 14.0 * scale;
-        final radius = 16.0 * scale;
-        final circle = 12.0 * scale;
-        final gap = 8.0 * scale;
-        final symbolFont = 18.0 * scale;
-        final countFont = 22.0 * scale;
-        final blurActive = (12.0 * scale).clamp(8.0, 16.0);
-        final blurInactive = (8.0 * scale).clamp(6.0, 12.0);
-        final borderWidth = (1.8 * scale).clamp(1.6, 2.4);
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: players.map((p) {
-            final color = settings.getPlayerColor(p);
-            final winCount = scores.wins[p] ?? 0;
-            final isActive = activePlayers.contains(p);
-            return Expanded(
-              child: AnimatedContainer(
-                margin: EdgeInsets.symmetric(horizontal: marginH),
-                padding: EdgeInsets.symmetric(vertical: padV, horizontal: padH),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(radius),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: theme.AppTheme.getGlassSurfaceColors(themeType),
-                  ),
-                  border: Border.all(
-                    color: isActive ? glassBorderColor : glassBorderColor.withAlpha((0.4 * 255).round()),
-                    width: borderWidth,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withAlpha((isActive ? 90 : 35)),
-                      blurRadius: isActive ? blurActive : blurInactive,
-                      spreadRadius: 0.8,
-                    ),
-                  ],
-                ),
-                duration: const Duration(milliseconds: 240),
-                child: Row(
-                  children: [
-                    Container(width: circle, height: circle, decoration: BoxDecoration(color: color, shape: BoxShape.circle, boxShadow: [BoxShadow(color: color.withAlpha(150), blurRadius: 8)])),
-                    SizedBox(width: gap),
-                    Expanded(
-                      child: Text(
-                        settings.getPlayerIcon(p),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: symbolFont, shadows: [Shadow(color: color.withAlpha(150), blurRadius: 8)]),
-                      ),
-                    ),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-                      child: Text(
-                        '$winCount',
-                        key: ValueKey('wins-$p-$winCount'),
-                        style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: countFont),
-                      ),
-                    ),
-                  ],
-                ),
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: players.map((p) {
+        final color = settings.getPlayerColor(p);
+        final winCount = scores.wins[p] ?? 0;
+        final isActive = activePlayers.contains(p);
+        
+        return Expanded(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 6),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              color: AppTheme.getGlassColor(themeType),
+              border: Border.all(
+                color: isActive ? color.withOpacity(0.5) : glassBorderColor,
+                width: isActive ? 2 : 1,
               ),
-            );
-          }).toList(),
+              boxShadow: [
+                if (isActive) BoxShadow(color: color.withOpacity(0.2), blurRadius: 12, spreadRadius: 1),
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 40, 
+                  height: 40, 
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.2), 
+                    shape: BoxShape.circle,
+                    border: Border.all(color: color.withOpacity(0.6), width: 2),
+                  ),
+                  child: Center(child: Text(settings.getPlayerIcon(p), style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 20))),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  settings.getPlayerName(p),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: textColor.withOpacity(0.9), fontWeight: FontWeight.w600, fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                  child: Text(
+                    '$winCount',
+                    key: ValueKey('wins-$p-$winCount'),
+                    style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 24),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
-      },
+      }).toList(),
     );
   }
 }
 
 class _BottomActions extends StatelessWidget {
-  final theme.AppThemeType themeType;
+  final AppThemeType themeType;
   final VoidCallback onUndo;
   final VoidCallback onRestart;
   final VoidCallback onHistory;
   const _BottomActions({required this.themeType, required this.onUndo, required this.onRestart, required this.onHistory});
   @override
   Widget build(BuildContext context) {
-    final glassBorderColor = theme.AppTheme.getGlassBorderColor(themeType);
-    final actionColors = theme.AppTheme.getGlassSurfaceColors(themeType);
-    Widget buildButton(IconData icon, String label, VoidCallback onTap) {
-      return Expanded(
-        child: _ActionButton(
-          gradientColors: actionColors,
-          borderColor: glassBorderColor,
-          icon: icon,
-          label: label,
-          onTap: onTap,
-        ),
-      );
-    }
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        buildButton(Icons.undo_rounded, 'Undo', onUndo),
-        const SizedBox(width: 12),
-        buildButton(Icons.restart_alt_rounded, 'Restart', onRestart),
-        const SizedBox(width: 12),
-        buildButton(Icons.history_rounded, 'History', onHistory),
+        LiquidButton(label: 'Undo', icon: Icons.undo_rounded, onTap: onUndo),
+        const SizedBox(width: 16),
+        LiquidButton(label: 'Restart', icon: Icons.refresh_rounded, onTap: onRestart, isPrimary: true),
+        const SizedBox(width: 16),
+        LiquidButton(label: 'History', icon: Icons.history_rounded, onTap: onHistory),
       ],
-    );
-  }
-}
-
-class _ActionButton extends StatefulWidget {
-  final List<Color> gradientColors;
-  final Color borderColor;
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _ActionButton({required this.gradientColors, required this.borderColor, required this.icon, required this.label, required this.onTap});
-  @override
-  State<_ActionButton> createState() => _ActionButtonState();
-}
-
-class _ActionButtonState extends State<_ActionButton> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scale;
-  bool _hover = false;
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 120));
-    _scale = Tween<double>(begin: 1.0, end: 0.96).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-  }
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-  void _press() {
-    _controller.forward().then((_) => _controller.reverse());
-    widget.onTap();
-  }
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: ScaleTransition(
-        scale: _scale,
-        child: GestureDetector(
-          onTap: _press,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18.0),
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: widget.gradientColors),
-              border: Border.all(color: widget.borderColor, width: _hover ? 2.0 : 1.6),
-              boxShadow: [
-                BoxShadow(color: widget.borderColor.withAlpha(_hover ? 130 : 90), blurRadius: _hover ? 14.0 : 10.0, spreadRadius: 0.9),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(widget.icon, color: Colors.white),
-                // const SizedBox(width: 10),
-                // Text(widget.label, style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

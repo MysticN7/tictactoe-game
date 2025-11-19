@@ -45,43 +45,6 @@ class SettingsRootScreen extends StatelessWidget {
                   children: [
                     _ThemeSelector(),
                   ],
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              _SectionHeader(title: 'GAMEPLAY'),
-              const SizedBox(height: 10),
-              LiquidContainer(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _SettingRow(
-                      label: 'Board Size',
-                      child: _SegmentedControl(
-                        values: const [3, 4, 5],
-                        labels: const ['3x3', '4x4', '5x5'],
-                        selectedValue: settings.boardSize,
-                        onChanged: (val) => settings.setBoardSize(val),
-                      ),
-                    ),
-                    const Divider(height: 20, color: Colors.white10),
-                    _SettingRow(
-                      label: 'Win Condition',
-                      child: _SegmentedControl(
-                        values: const [3, 4, 5],
-                        labels: const ['3', '4', '5'],
-                        selectedValue: settings.winCondition,
-                        onChanged: (val) => settings.setWinCondition(val),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              _SectionHeader(title: 'SOUND & HAPTICS'),
-              const SizedBox(height: 10),
-              LiquidContainer(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
@@ -130,18 +93,6 @@ class SettingsRootScreen extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     final themeType = settings.currentTheme.toAppThemeType();
     final textColor = AppTheme.getTextColor(themeType);

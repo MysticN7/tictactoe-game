@@ -10,12 +10,18 @@ class GameBoard extends StatelessWidget {
   const GameBoard({super.key});
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Consumer2<GameProvider, SettingsProvider>(
       builder: (context, gameProvider, settingsProvider, child) {
         final game = gameProvider.gameLogic;
         final themeType = settingsProvider.currentTheme.toAppThemeType();
-        final winningPositions = game.winningLine?.positions ?? <int>[];
+        
+        // Collect all winning positions from all winning lines
+        final Set<int> winningPositions = {};
+        for (final line in game.allWinningLines) {
+          winningPositions.addAll(line.positions);
+        }
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -97,13 +103,13 @@ class _GameTileState extends State<_GameTile>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 800),
     );
     _controller.value = 1.0;
-    _scaleAnimation = Tween<double>(begin: 0.88, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
     );
-    _glowAnimation = Tween<double>(begin: 0.3, end: 0.8).animate(
+    _glowAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
     if (widget.isWinning) {
@@ -119,6 +125,7 @@ class _GameTileState extends State<_GameTile>
     } else if (!widget.isWinning && oldWidget.isWinning) {
       _controller.stop();
       _controller.reset();
+      _controller.value = 1.0;
     }
     if (widget.player != null && oldWidget.player == null) {
       _controller.forward(from: 0.0);
@@ -149,7 +156,7 @@ class _GameTileState extends State<_GameTile>
         builder: (context, child) {
           return Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24.0), // More rounded
+              borderRadius: BorderRadius.circular(20.0),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -157,29 +164,29 @@ class _GameTileState extends State<_GameTile>
               ),
               border: Border.all(
                 color: widget.isWinning
-                    ? winningColor.withAlpha(((0.8 + _glowAnimation.value * 0.2) * 255).round())
+                    ? winningColor.withOpacity(_glowAnimation.value)
                     : widget.player != null
-                        ? playerColor.withAlpha((0.5 * 255).round())
-                        : glassBorderColor.withAlpha(50),
+                        ? playerColor.withOpacity(0.6)
+                        : glassBorderColor.withOpacity(0.3),
                 width: widget.isWinning ? 3.0 : 1.5,
               ),
               boxShadow: [
                 if (widget.isWinning)
                   BoxShadow(
-                    color: winningColor.withAlpha(((0.6 + _glowAnimation.value * 0.4) * 255).round()),
+                    color: winningColor.withOpacity(_glowAnimation.value * 0.6),
                     blurRadius: 20.0,
                     spreadRadius: 2.0,
                   )
                 else if (widget.player != null)
                   BoxShadow(
-                    color: playerColor.withAlpha((0.4 * 255).round()),
-                    blurRadius: 15.0,
+                    color: playerColor.withOpacity(0.3),
+                    blurRadius: 10.0,
                     spreadRadius: 1.0,
                   ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24.0),
+              borderRadius: BorderRadius.circular(20.0),
               child: Center(
                 child: playerIcon.isNotEmpty
                     ? ScaleTransition(
@@ -188,33 +195,26 @@ class _GameTileState extends State<_GameTile>
                           shaderCallback: (bounds) => LinearGradient(
                             colors: [
                               playerColor,
-                              playerColor.withOpacity(0.7),
-                              Colors.white.withOpacity(0.8),
+                              playerColor.withOpacity(0.8),
+                              Colors.white,
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            stops: const [0.0, 0.6, 1.0],
+                            stops: const [0.0, 0.7, 1.0],
                           ).createShader(bounds),
                           child: Text(
                             playerIcon,
                             style: TextStyle(
                               fontSize: _markerFontSize(widget.tileExtent, playerIcon),
                               fontWeight: FontWeight.w900,
-                              color: Colors.white, // Required for ShaderMask
+                              color: Colors.white,
                               shadows: [
                                 BoxShadow(
                                   color: widget.isWinning
                                       ? winningColor.withOpacity(0.8)
-                                      : playerColor.withOpacity(0.8),
+                                      : playerColor.withOpacity(0.6),
                                   blurRadius: 15,
                                   spreadRadius: 2,
-                                ),
-                                BoxShadow(
-                                  color: widget.isWinning
-                                      ? winningColor.withOpacity(0.4)
-                                      : playerColor.withOpacity(0.4),
-                                  blurRadius: 30,
-                                  spreadRadius: 10,
                                 ),
                               ],
                             ),
@@ -232,6 +232,6 @@ class _GameTileState extends State<_GameTile>
 
   double _markerFontSize(double tileExtent, String icon) {
     final isSingleChar = icon.length == 1;
-    return tileExtent * (isSingleChar ? 0.55 : 0.45);
+    return tileExtent * (isSingleChar ? 0.6 : 0.4);
   }
 }

@@ -65,9 +65,13 @@ class GameProvider extends ChangeNotifier {
 
   void _onSettingsChanged() {
     if (_settingsProvider?.gameMode == GameMode.tournament) {
-       // If switching TO tournament mode, we might want to initialize it
-       // But usually we start tournament explicitly.
-       // For now, just update logic if NOT tournament
+       // If we just switched to tournament, start it
+       if (tournament.currentRound == 1 && tournament.activePlayers.length == 3) {
+          // Already setup or just started?
+          // Let's force start if we are not in a valid tournament state
+       }
+       // For simplicity, whenever we switch to Tournament, let's reset/start it
+       startTournament();
     } else {
       _updateGameFromSettings();
     }
@@ -100,28 +104,47 @@ class GameProvider extends ChangeNotifier {
   }
 
   void makeMove(int row, int col) {
+    final currentPlayerBeforeMove = _gameLogic.currentPlayer;
     if (_gameLogic.makeMove(row, col)) {
       _playFeedback();
 
-      if (_gameLogic.isGameOver) {
-        if (_gameLogic.winner != null) {
-          _scoresProvider?.increment(_gameLogic.winner!);
-          _playWinFeedback();
-          
-          if (_settingsProvider?.gameMode == GameMode.tournament) {
+      // Check if the move resulted in a win (even if game is not over)
+      // In GameLogic, winner is set to the player who just won.
+      // If winner matches the player who just moved, it's a win.
+      // Note: GameLogic might have switched currentPlayer already if game continues.
+      
+      if (_gameLogic.winner == currentPlayerBeforeMove) {
+         // It's a win!
+         _scoresProvider?.increment(_gameLogic.winner!);
+         _playWinFeedback();
+         
+         if (_settingsProvider?.gameMode == GameMode.tournament) {
             _handleTournamentWin(_gameLogic.winner!);
-          } else {
+         } else {
+            // In non-tournament (PvP/PvE), we usually stop at first win unless we want survival there too?
+            // The user request specifically mentioned "Tournament" for this 3-player survival.
+            // But if we are in 3-player PvP, maybe we should also do survival?
+            // "where people can play with 3 players and compete with each other... 3 players will start playing..."
+            // It sounds like this IS the 3-player mode.
+            // So if activePlayers > 2, we continue.
+            
+            if (_gameLogic.isGameOver) {
+               _saveMatch();
+               AdMobService.showInterstitialAd();
+            } else {
+               // Game continues, show a toast or something?
+               // For now, just let it continue.
+            }
+         }
+      } else if (_gameLogic.isGameOver && _gameLogic.winner == null) {
+         // Draw (Board full and no winner, or all eliminated?)
+         _playDrawFeedback();
+         if (_settingsProvider?.gameMode != GameMode.tournament) {
             _saveMatch();
             AdMobService.showInterstitialAd();
-          }
-        } else {
-          _playDrawFeedback();
-          if (_settingsProvider?.gameMode != GameMode.tournament) {
-             _saveMatch();
-             AdMobService.showInterstitialAd();
-          }
-        }
+         }
       } else {
+        // Normal move, no win yet
         _handleAiTurn();
       }
       notifyListeners();
@@ -133,17 +156,27 @@ class GameProvider extends ChangeNotifier {
   }
 
   void _handleTournamentWin(Player winner) {
+    // In the new survival logic, GameLogic handles the "activePlayers" removal.
+    // We just need to track the tournament state (Round 1 winner, Round 2 winner).
+    
     if (tournament.currentRound == 1) {
       tournament.round1Winner = winner;
-      tournament.waitingPlayers.add(winner);
-      tournament.activePlayers.remove(winner);
+      // Game continues for 2nd place
       tournament.currentRound = 2;
     } else if (tournament.currentRound == 2) {
       tournament.round2Winner = winner;
-      final loser = tournament.activePlayers.firstWhere((p) => p != winner);
+      // Now game is over (2 winners found).
+      // The 3rd player is the loser.
+      final loser = tournament.activePlayers.firstWhere((p) => p != winner && p != tournament.round1Winner, orElse: () => Player.triangle); // Fallback
       tournament.eliminatedPlayers.add(loser);
+      
+      // Setup Final Match
       tournament.currentRound = 3;
       tournament.activePlayers = [tournament.round1Winner!, tournament.round2Winner!];
+      
+      // We need to reset the board for the final match
+      // But we should probably wait for user to click "Next Match" or similar?
+      // For now, let's just update state. The UI should show "Round 2 Over, Start Final".
     } else if (tournament.currentRound == 3) {
       tournament.champion = winner;
       final loser = tournament.activePlayers.firstWhere((p) => p != winner);
@@ -153,12 +186,11 @@ class GameProvider extends ChangeNotifier {
   }
 
   void startNextRound() {
-    if (tournament.currentRound == 2) {
+    if (tournament.currentRound == 3) {
+      // Starting Final Match
       _gameLogic.updatePlayers(tournament.activePlayers);
-    } else if (tournament.currentRound == 3) {
-      _gameLogic.updatePlayers(tournament.activePlayers);
+      resetGame();
     }
-    resetGame();
   }
 
   void _handleAiTurn() {

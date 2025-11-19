@@ -9,6 +9,7 @@ class LiquidButton extends StatefulWidget {
   final IconData? icon;
   final VoidCallback onTap;
   final bool isPrimary;
+  final EdgeInsetsGeometry? padding;
 
   const LiquidButton({
     super.key,
@@ -16,6 +17,7 @@ class LiquidButton extends StatefulWidget {
     this.icon,
     required this.onTap,
     this.isPrimary = false,
+    this.padding,
   });
 
   @override
@@ -66,7 +68,7 @@ class _LiquidButtonState extends State<LiquidButton> with SingleTickerProviderSt
       child: ScaleTransition(
         scale: _scale,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          padding: widget.padding ?? const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             color: widget.isPrimary ? glowColor.withOpacity(0.2) : glassColor,
